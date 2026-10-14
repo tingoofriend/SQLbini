@@ -1,6 +1,6 @@
 # Query Workbench
 
-> **Status**: In Design
+> **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-14
 > **Last Verified**: 2026-10-14
@@ -38,10 +38,13 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
 
 **What is on screen** (one puzzle at a time)
 
-1. **Counter scene** (top strip, ~120 px) — a small pixel-art view of the
+1. **Counter scene** (top strip, 120 px at every `ui_scale` — the pixel art
+   stays ×4; only its text scales) — a small pixel-art view of the
    counter with the current speaker and a speech bubble holding the request
-   or reaction, plus the puzzle title and a message-log button (Request &
-   Reaction Dialogue owns its content and behaviour).
+   or reaction, plus the puzzle title, a message-log button and, at its right
+   edge, the **Hint**, **Manual** and **Back Room** tabs (Request & Reaction
+   Dialogue owns the scene's content and behaviour; each tab's system owns
+   what it opens).
 2. **Editor** — an SQL editor with syntax highlighting (keywords, strings,
    numbers, comments), line numbers, undo/redo, and auto-closing of brackets and
    quotes (a setting; on by default in Chapter 1).
@@ -54,9 +57,9 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
    stored — Puzzle Definition rule 3). Always shown for the visible dataset, not
    for the Back Room.
 6. **Feedback area** — the latest Run note, Submit verdict or error (Hidden-Data
-   Grader Visual/Audio), plus entry points: **Hint** (Hint System), **Manual**
-   (Store Manual), **Back Room** tab (Back Room — shown from Chapter 2 only;
-   in Chapter 1 the tab and its shortcut are absent).
+   Grader Visual/Audio). The entry points live in the counter scene (rule 1):
+   **Hint** (Hint System), **Manual** (Store Manual), **Back Room** (Back Room —
+   shown from Chapter 2 only; in Chapter 1 the tab and its shortcut are absent).
 
 **Run**
 
@@ -115,13 +118,14 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
 |---|---|
 | Run | Ctrl+Enter |
 | Submit | Ctrl+Shift+Enter |
-| Next pane (request → editor → schema → results → feedback) | F6 (Shift+F6 back) |
+| Next pane (counter scene → editor → schema → results → feedback) | F6 (Shift+F6 back) |
 | Leave the editor (so Tab moves focus) | Esc |
-| Hint / Manual / Back Room | Ctrl+H / Ctrl+M / Ctrl+B |
+| Hint / Manual / Back Room | Ctrl+H / Ctrl+M / Ctrl+B (Back Room: Chapter 2+) |
 | Message log | Ctrl+L |
 
-    Inside the editor, Tab indents. All shortcuts are remappable (Accessibility
-    Options, Vertical Slice).
+    Inside the editor, Tab indents — except that in an empty editor showing
+    onboarding ghost text, Tab accepts it (`onboarding-first-shift.md`). All
+    shortcuts are remappable (Accessibility Options, Vertical Slice).
 16. The editor accepts text from an active IME (Korean and Japanese layouts),
     including composition; SQL keywords are ASCII but string literals may hold
     any Unicode.
@@ -220,7 +224,7 @@ hidden data — that is the game). The 5-row drinks query → no note.
 The **readability** constants are defined as:
 
 `row_px = round(1.5 × table_font_px × ui_scale)`;
-`H_table = 0.40 × (720 − 120 − 32) − 48`;
+`H_table = 0.40 × (720 − strip_h − 32) − 48 × ui_scale`;
 `rows_visible = floor(H_table / row_px)`
 
 **Variables:**
@@ -230,10 +234,13 @@ The **readability** constants are defined as:
 | table_font_px | int | 14–32 (default 16) | data file | Result-table and schema font size |
 | ui_scale | float | 1.0–2.0, step 0.25 (default 1.0) | data file | Multiplies all fonts (Accessibility Options) |
 | contrast_min | float | 4.5 | constant | WCAG AA minimum for text in every theme and state; glyphs, borders and focus rings ≥ 3:1 |
-| H_table | int (px) | ≈ 179 | calculated | Height of one result table body: 40% of the area under the ~120 px counter scene and 32 px of margins, minus 48 px for header and count line |
+| strip_h | int (px) | 120 | constant | Counter-scene height — fixed at every `ui_scale` (pixel art stays ×4; `request-and-reaction-dialogue.md`) |
+| H_table | int (px) | ≈ 131–179 | calculated | Height of one result table body: 40% of the area under the counter scene and 32 px of margins, minus the header and count line (48 px × `ui_scale`) |
 
-**Output Range:** at defaults `row_px = 24`, `rows_visible = 7`; at `ui_scale =
-2.0`, `row_px = 48`, `rows_visible = 3`. The 14 px floor keeps CJK text in string
+**Output Range:** at defaults `row_px = 24`, `H_table ≈ 179`, `rows_visible = 7`.
+By `ui_scale`: 1.25 → 5 rows; 1.5 → `row_px = 36`, `H_table ≈ 155`, 4 rows;
+1.75 → 3 rows; 2.0 → `row_px = 48`, `H_table ≈ 131`, **2 rows** (accepted: large
+text trades rows for legibility; the tables scroll). The 14 px floor keeps CJK text in string
 literals legible; 18/16 keeps the editor one step above the tables. Chapter 1's
 24 visible rows need scrolling in a full `SELECT *`; that is accepted.
 **Example:** 1-5 at defaults: target 3 rows and the 5-row drinks result both fit
@@ -268,7 +275,9 @@ discarded by request order.
 - **If Run returns zero rows**: the table shows "0 rows" and every target row is marked "− missing" (when column counts match).
 - **If the column count differs from the target**: no row marks; one line states both counts ("You returned 3 columns; the request needs 2").
 - **If the player's columns are in a different order from the target** (same count): row marks compare by position, so rows show "+ extra" / "− missing"; the column headers of both tables stay visible so the swap can be seen.
-- **If the result has more rows than `display_rows_max`**: rows beyond it are paged or virtualised (Formulas); the row count is still exact (up to 5,000, then "5,000+ rows — too many").
+- **If the result has more rows than `display_rows_max`**: only the first `display_rows_max` rows are built (no paging at MVP); the count line stays exact ("1,000 rows — showing the first 200", up to 5,000, then "5,000+ rows — too many") and marks cover all rows (Formulas).
+- **If Run returns a sandbox rejection or limit** (`MULTI_STATEMENT`, `NOT_A_QUERY`, `UNSUPPORTED`, `TIMEOUT`): the error strip (rule 13) shows the voiced line and the sandbox's fixed message; no underline; the previous result, if any, stays and is marked stale. `MULTI_STATEMENT` is the likely beginner case (two queries in the editor) — its voiced line says to run one at a time.
+- **If the target cannot be computed** (sandbox `CONTENT_ERROR` on the reference): the Target table shows "Target unavailable — content error", no marks or Run note, and the error is logged for content; Run and Submit stay available (the grader treats the submit as an internal error, not counted).
 - **If the result is truncated by the sandbox (over 5,000 rows)**: shown as "5,000+ rows — too many to compare"; no row marks; Submit would be a SUBMIT_ERROR.
 - **If the player runs again while a Run is in flight**: the older result is discarded; only the newest is shown.
 - **If the puzzle is ordered** (Chapter 2+): row marks ignore order; when every row matches but the order differs, one line says "Rows match; order differs" and the Run note is hidden (it requires order too).
@@ -298,20 +307,23 @@ discarded by request order.
 
 | System | GDD | What the workbench needs | Status |
 |---|---|---|---|
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Title, request, schema, visible dataset, `reference_sql` | Designed (pending review) |
-| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | `query`/`scratch` results and errors | Designed (pending review) |
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Submit verdicts; `canon` for row marks; Run match bit | Designed (pending review) |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Title, request, schema, visible dataset, `reference_sql` | In Review |
+| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | `query`/`scratch` results and errors | In Review |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Submit verdicts; `canon` for row marks; Run match bit | In Review |
 
 **Hosted / soft dependencies** (the workbench shows their entry points; it works
 without them): Back Room, Hint System, Store Manual, Constraint Challenges,
 Request & Reaction Dialogue (text), Onboarding: First Shift, Accessibility
-Options (VS) — none has a GDD yet.
+Options (VS). All but Back Room and Accessibility Options have GDDs, and each
+lists the workbench.
 
 **Downstream:** Playtest Log (consumes Run/Submit events), Audio (VS — UI sounds),
 Shift & Chapter Progression (reacts to PASS via the grader).
 
-**Bidirectionality:** the grader, puzzle definition and sandbox GDDs list the
-Query Workbench ✓. The hosted systems must list it when designed.
+**Bidirectionality:** the grader, puzzle definition, sandbox, hint, store
+manual, constraint challenges, dialogue, onboarding, progression and playtest
+log GDDs list the Query Workbench ✓. Back Room and Accessibility Options must
+list it when designed.
 
 ## Visual/Audio Requirements
 
@@ -327,9 +339,11 @@ is plain red text without a glyph.
 
 **Layout at 1280×720** (16 px margins; final spec in `/ux-design`)
 - **Counter scene** (top, ~120 px; changed 2026-10-14 from a 56 px request bar —
-  user chose pixel-art NPCs with speech bubbles): the speaker at the counter
-  with a speech bubble; Hint / Manual / Back Room as small tabs at its right
-  edge. Details in `request-and-reaction-dialogue.md`.
+  user chose pixel-art NPCs with speech bubbles; fixed at 120 px for every
+  `ui_scale`, 2026-10-14 review): the speaker at the counter with a speech
+  bubble; message-log button, then Hint / Manual / Back Room as small tabs at
+  its right edge (Back Room from Chapter 2). Details in
+  `request-and-reaction-dialogue.md`.
 - **Left column (~46% width):** editor (~62% of the column height), Run / Submit
   row directly under it (Run and Submit separated — UI Requirement 2), schema
   browser beneath as a "shelf" strip (~120 px, collapsible).
@@ -416,9 +430,11 @@ This system *is* the main gameplay screen; its full screen-level spec belongs to
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/hidden-data-grader.md` | Core Rules 8–12, Visual/Audio | `canon`, match bit, verdict visuals, "Run never passes" | Designed (pending review) |
-| `design/gdd/sql-execution-sandbox.md` | Core Rules 7, 13 | Modes, result shape, `error_kind`/`error_text`, `R_cap` truncation | Designed (pending review) |
-| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–5 | Puzzle fields; target computed from `reference_sql`; `visible_rows_max` | Designed (pending review) |
+| `design/gdd/hidden-data-grader.md` | Core Rules 8–12, Visual/Audio | `canon`, match bit, verdict visuals, "Run never passes" | In Review |
+| `design/gdd/sql-execution-sandbox.md` | Core Rules 7, 13, Edge Cases | Modes, result shape, `error_kind`/`error_text`, `R_cap` truncation | In Review |
+| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–5 | Puzzle fields; target computed from `reference_sql`; `visible_rows_max` (Open Question 6) | In Review |
+| `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1, Formulas, Visual/Audio | Counter scene (fixed 120 px, ×4), message log | Designed |
+| `design/gdd/onboarding-first-shift.md` | Core Rules 11, 15 | Guided 1-1 Submit; Tab accepts ghost text | Designed |
 | `design/gdd/game-concept.md` | Overview, Rules 8, 11 | Pillars 2–3; concept review findings (Run vs Submit, row-diff marking, onboarding) | Source of intent |
 | `docs/engine-reference/godot/modules/ui.md` | UI Requirements 4, 7 | Dual focus (4.6), AccessKit (4.5), FoldableContainer (4.5) | Verified for 4.6, not re-verified for 4.7 |
 | `prototypes/sqlbini-spike-2026-10-14/` | Overview | `CodeEdit` with SQL highlighting proven | Evidence |
@@ -432,7 +448,7 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 [UI] = a retained screenshot in `production/qa/evidence/`.*
 
 **Screen and Run**
-- **QW-01 [UI]** GIVEN a puzzle open at 1280×720 with default settings, WHEN the screen is captured, THEN the counter scene, editor, schema browser, Your result, Target and feedback area (with Hint / Manual / Back Room) are all visible without overlap; the schema browser collapses; the two tables scroll independently.
+- **QW-01 [UI]** GIVEN a Chapter 1 puzzle and a Chapter 2 puzzle open at 1280×720 with default settings, WHEN each screen is captured, THEN the counter scene (with message-log button and Hint / Manual tabs, plus the Back Room tab on the Chapter 2 capture only), editor, schema browser, Your result, Target and feedback area are all visible without overlap; the schema browser collapses; the two tables scroll independently.
 - **QW-02 [Logic]** GIVEN any editor text, WHEN Run is pressed, THEN the sandbox is called in `query` mode (`scratch` with the Back Room tab active), no grader verdict is produced, and a row count is shown ("3 rows").
 - **QW-03 [Logic]** GIVEN 1-5, WHEN `… price < 200` is run, THEN 3 ✓, 0 + extra, 0 − missing.
 - **QW-04 [Logic]** GIVEN 1-5, WHEN `SELECT name, price FROM products WHERE category = 'Drinks'` is run, THEN 3 ✓ plus + extra Cola 500ml 216 and Energy Drink 248, and the summary reads "3 ✓ · 2 + extra · 0 − missing".
@@ -454,14 +470,14 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 
 **Editing and input**
 - **QW-18 [Logic]** GIVEN two puzzles, WHEN the player switches away and back in the session, THEN the draft, last result and last verdict are restored.
-- **QW-19 [Integration]** THEN Ctrl+Enter runs, Ctrl+Shift+Enter submits, F6 / Shift+F6 cycle the five panes in order, Esc leaves the editor, Ctrl+H / M / B open Hint / Manual / Back Room, and Tab indents while the editor has focus.
+- **QW-19 [Integration]** THEN Ctrl+Enter runs, Ctrl+Shift+Enter submits, F6 / Shift+F6 cycle the five panes in order, Esc leaves the editor, Ctrl+H / M open Hint / Manual, Ctrl+B opens the Back Room on a Chapter 2 puzzle and does nothing on a Chapter 1 puzzle, and Tab indents while the editor has focus (except accepting onboarding ghost text in an empty editor).
 - **QW-20 [UI]** GIVEN keyboard focus on each pane, WHEN captured, THEN a focus ring is visible, distinct from hover, ≥ 3:1.
 - **QW-21 [Integration]** GIVEN an in-progress Korean or Japanese IME composition, WHEN Run is pressed, THEN the composition is committed and the committed text is executed. *(May be manual-only until Open Question 4 is resolved.)*
 - **QW-22 [Integration]** GIVEN a schema table or column clicked (or selected + Enter), THEN its name is inserted at the caret, with a brief flash unless reduced motion is on.
 
 **Scale and limits**
 - **QW-23 [Logic]** GIVEN a 576-row cross join, THEN 200 rows render, the count reads "576 rows — showing the first 200", and marks cover all 576; GIVEN a truncated sandbox result, THEN "5,000+ rows — too many to compare" and no marks.
-- **QW-24 [Logic]** GIVEN default settings, THEN `editor_font_px = 18`, `table_font_px = 16`, `row_px = 24`, `rows_visible = 7`; at `ui_scale = 2.0`, `rows_visible = 3`; fonts outside 14–32 and scale outside 1.0–2.0 (step 0.25) are clamped.
+- **QW-24 [Logic]** GIVEN default settings, THEN `editor_font_px = 18`, `table_font_px = 16`, `row_px = 24`, `rows_visible = 7`; at `ui_scale` 1.25 / 1.5 / 1.75 / 2.0, `rows_visible` = 5 / 4 / 3 / 2 and the counter scene stays 120 px; fonts outside 14–32 and scale outside 1.0–2.0 (step 0.25) are clamped.
 
 **Back Room tab**
 - **QW-25 [UI]** GIVEN the Back Room tab active, THEN "Back Room — practice data" is always visible, the Target table and marks are hidden, and the Run note is absent.

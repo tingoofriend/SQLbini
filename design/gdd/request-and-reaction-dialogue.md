@@ -189,8 +189,8 @@ drag. Reveal never blocks input; any key or click completes it.
 The **bubble_chars_max** formula is defined as:
 
 `bubble_chars_max = max(40, floor(lines × chars_per_line × wrap_eff))`, with
-`chars_per_line = floor((bubble_w − 2 × pad_x) / (glyph_w × font_px))` and
-`lines = floor((bubble_h − 2 × pad_y) / (1.25 × font_px))`
+`chars_per_line = floor((bubble_w − 2 × pad_x) / (glyph_w × font_px × ui_scale))` and
+`lines = floor((bubble_h − 2 × pad_y) / (1.25 × font_px × ui_scale))`
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
@@ -200,10 +200,14 @@ The **bubble_chars_max** formula is defined as:
 | font_px | int | 18 (range 16–20) | data file | Bubble font size — the workbench body family |
 | glyph_w | float (em) | 0.55 | constant | Average glyph advance — verify against the chosen font |
 | wrap_eff | float | 0.8–0.9 (default 0.85) | constant | Word-wrap waste |
+| ui_scale | float | 1.0–2.0, step 0.25 (default 1.0) | data file | Text scale (Accessibility Options); the strip and bubble do not scale |
 
 **Output Range:** at defaults `chars_per_line = 86`, `lines = 2`,
-**`bubble_chars_max = 146`**. The strip scales with `ui_scale`, so the logical
-capacity is unchanged from 1.0 to 2.0. Pages split greedily at the last space
+**`bubble_chars_max = 146`**. The strip stays 120 px (pixel art ×4) at every
+`ui_scale` (2026-10-14 review — a scaled ×6/×8 strip would exceed the 1280 px
+width and cost the result tables rows); only the bubble text grows, so capacity
+falls: `ui_scale` 1.5 → 1 line × 57 chars → **48**; 2.0 → 1 line × 43 chars →
+**40** (the floor). Larger text therefore means more pages, never a taller strip. Pages split greedily at the last space
 before the limit (a single over-long word is hard-split);
 `pages ≥ ceil(len / bubble_chars_max)`.
 **Example:** the 38-char 1-5 request is one page; a 260-char boss briefing is
@@ -271,7 +275,8 @@ hybrid presentation and "aesthetic, cozy" mood (`design/ideas-backlog.md` #1,
 #2). No art bible yet; confirm in `/art-bible`.*
 
 **Counter scene (pixel art)**
-- Native strip **320 × 30 px**, integer-scaled **×4** to 1280 × 120; nearest-
+- Native strip **320 × 30 px**, integer-scaled **×4** to 1280 × 120 at every
+  `ui_scale` (the strip never rescales; only bubble text does); nearest-
   neighbour filtering, whole-pixel positions, no sub-pixel camera motion.
 - Palette: one shared **16-colour warm ramp** (cream, tan, terracotta, olive,
   dusk blue, dark ink-brown). The editor and tables keep their own neutral
@@ -282,7 +287,7 @@ hybrid presentation and "aesthetic, cozy" mood (`design/ideas-backlog.md` #1,
   lamp, dusk-blue window, longer shadows.
 - Contents: counter in front; shelves of tins and ledgers behind; a window at one
   edge showing the time of day; a hanging lamp; speaker centre-left, right side
-  clear for the message-log button. Calm and low-detail — at most three value
+  clear for the message-log button and the Hint / Manual / Back Room tabs. Calm and low-detail — at most three value
   steps near the bubble.
 
 **Characters**
@@ -341,8 +346,10 @@ blocked.
 
 ## UI Requirements
 
-1. Counter scene strip (~120 px) across the top of the workbench; speaker, bubble,
-   message-log button; never overlaps the editor or result tables.
+1. Counter scene strip (120 px at every `ui_scale`) across the top of the
+   workbench; speaker, bubble, message-log button, and the workbench's Hint /
+   Manual / Back Room tabs at its right edge; never overlaps the editor or
+   result tables.
 2. The current request is readable with at most one action (rule 3).
 3. Message log: Ctrl+L / button; scrollable; speaker name + kind label per line;
    Esc closes; keyboard reachable.
@@ -394,11 +401,11 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 - **RD-10 [Logic]** `did_you_mean`: prise, pirce, PRISE and `p.prise` → price; catagory → category; nam → name; stok → stock; shelfs → shelf; table `product` → products; expiry → null (no "Did you mean"); "p" → null; with names [cat, cut], cot → cat, and reversed → cut.
 
 **Text**
-- **RD-11 [Logic]** A 300-char line → 3 pages, each ≤ 146 chars, split at spaces; a 160-char word is hard-split; marker "1/3 ▸"; `bubble_chars_max` = 146 at defaults and unchanged across `ui_scale` 1.0–2.0.
+- **RD-11 [Logic]** A 300-char line → 3 pages, each ≤ 146 chars, split at spaces; a 160-char word is hard-split; marker "1/3 ▸"; `bubble_chars_max` = 146 at defaults, 48 at `ui_scale` 1.5 and 40 at 2.0.
 - **RD-12 [Logic / CI scan]** No player-facing string literal in dialogue code paths; every line resolves through a string-table id or puzzle id; a missing id shows `[id]` in dev builds and the generic line in release, and is logged.
 
 **Presentation and audio**
-- **RD-13 [UI]** Retained screenshots at `ui_scale` 1.0 and 1.5: scene at ×4 / ×6 with nearest filtering (no blurred pixels); a non-pixel body font in the bubble; bubble contrast ≥ 4.5:1 (blocking; 7:1 target reported); in greyscale, request (ticket, REQUEST tab) and reaction (rounded, name tag) are distinguishable, and the three expressions differ by silhouette.
+- **RD-13 [UI]** Retained screenshots at `ui_scale` 1.0 and 1.5: scene at ×4 and 120 px in both (only the bubble text larger at 1.5) with nearest filtering (no blurred pixels); a non-pixel body font in the bubble; bubble contrast ≥ 4.5:1 (blocking; 7:1 target reported); in greyscale, request (ticket, REQUEST tab) and reaction (rounded, name tag) are distinguishable, and the three expressions differ by silhouette.
 - **RD-14 [UI]** Morning, Afternoon and Closing screenshots use the same sprite assets with a palette swap; editor colours are identical in all three.
 - **RD-15 [Audio]** Each revealed line plays its speaker's blip (HQ: printer tick) at the blip-volume setting; no blip at volume 0, muted, `reveal_cps` 0 or reduced motion; blips stop the moment a reveal is completed early.
 - **RD-16 [Integration]** The Playtest Log records `line_shown {line_id, kind, speaker, puzzle_id}`, `log_opened` and `line_skipped` (a reveal completed early), each with a timestamp.

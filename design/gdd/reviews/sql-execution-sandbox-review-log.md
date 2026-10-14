@@ -17,3 +17,4 @@ Findings:
 - [RECOMMENDED] Tuning Knobs absent (advisory at standard) — `exec_time_limit_ms`, `R_cap`, `exec_cost_target_ms` live only in Formulas
 Reviewed-Content-Hash: design/gdd/sql-execution-sandbox.md 1aa504ee8d92087f897ac8221df068b8e7b000d5
 Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
+Revised in-session (2026-10-14, after the review): BLOCKING rule 15 fixed (off-frame execution and TIMEOUT-within-limit+50 ms required from the first implementation; residual widened to aggregate/GROUP BY/DISTINCT/ORDER BY over many-way joins; SB-19 adds a 6-way self-join, not ADR-gated). Also fixed: rule 14 order (query_only off, then DROP VIEW, every exit path), `changes()`, RETURNING ignored; unterminated `/* …` (rule 5, SB-01); BLOB (rule 3, SB-09); rule 4a no extensions (SB-09); stale dependency statuses; scratch growth edge case. Not done: Tuning Knobs section (advisory). Re-review pending in a fresh session.
