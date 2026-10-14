@@ -18,3 +18,17 @@ Findings:
 Reviewed-Content-Hash: design/gdd/sql-execution-sandbox.md 1aa504ee8d92087f897ac8221df068b8e7b000d5
 Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
 Revised in-session (2026-10-14, after the review): BLOCKING rule 15 fixed (off-frame execution and TIMEOUT-within-limit+50 ms required from the first implementation; residual widened to aggregate/GROUP BY/DISTINCT/ORDER BY over many-way joins; SB-19 adds a 6-way self-join, not ADR-gated). Also fixed: rule 14 order (query_only off, then DROP VIEW, every exit path), `changes()`, RETURNING ignored; unterminated `/* …` (rule 5, SB-01); BLOB (rule 3, SB-09); rule 4a no extensions (SB-09); stale dependency statuses; scratch growth edge case. Not done: Tuning Knobs section (advisory). Re-review pending in a fresh session.
+
+## Review — 2026-10-14 (re-review, fresh session after cross-GDD review 6b244c0) — Verdict: APPROVED
+Scope signal: L (timeout-enforcement ADR still required)
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 0 | Recommended: 4
+Summary: The prior blocker stays resolved (off-frame execution and TIMEOUT within limit + 50 ms from the first implementation; SB-19 6-way join), as do six of seven prior recommendations. Cross-GDD resolutions are in: fixed `error_text` "content error" with `build_message` log-only (B1), `tokenize` lexer contract with Constraint Challenges downstream (W4), `grader_row_cap`-formatted strings (W18), TIMEOUT Runs exempt from the Run budget (W19), 16.6 ms frame budget (W23).
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Core Rule 5a `tokenize`: behaviour on unterminated strings / quoted identifiers / comments undefined, yet Constraint Challenges' live check tokenizes text mid-typing; no AC tests `tokenize` directly
+- [RECOMMENDED] Edge Cases (SQLite error) / Interactions (Dialogue row): still say Dialogue shows SQLite's text beneath its voiced line — per W5 it is the workbench strip
+- [RECOMMENDED] Formulas submit_time worst case: 175 ms omits the + 50 ms TIMEOUT delivery slack (≈ 225 ms, still ≤ 300)
+- [RECOMMENDED] Tuning Knobs section absent (advisory at standard)
+Reviewed-Content-Hash: design/gdd/sql-execution-sandbox.md eaa523509589f89e04e299fb41510f3dd697dc00
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084

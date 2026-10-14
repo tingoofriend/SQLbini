@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-14
-> **Last Updated**: 2026-10-14 (cross-GDD review 2026-10-14 (FAIL → fixes applied): Depends-On column, dependency map, runtime couplings, counts and one-liners updated; earlier: design review: Request & Reaction Dialogue, Store Manual, Onboarding, Playtest Log NEEDS REVISION → revised, In Review; earlier: design review: Hint System, Constraint Challenges, Shift & Chapter Progression NEEDS REVISION → revised, In Review; earlier: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
+> **Last Updated**: 2026-10-14 (re-review 6a: Puzzle Definition + Sandbox APPROVED; Grader NEEDS REVISION → revised, In Review; earlier: cross-GDD review 2026-10-14 (FAIL → fixes applied): Depends-On column, dependency map, runtime couplings, counts and one-liners updated; earlier: design review: Request & Reaction Dialogue, Store Manual, Onboarding, Playtest Log NEEDS REVISION → revised, In Review; earlier: design review: Hint System, Constraint Challenges, Shift & Chapter Progression NEEDS REVISION → revised, In Review; earlier: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -43,8 +43,8 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Hidden-Data Grader | Gameplay | MVP | In Review | design/gdd/hidden-data-grader.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
-| 2 | Puzzle Definition & Datasets | Core | MVP | In Review | design/gdd/puzzle-definition-and-datasets.md | — |
-| 3 | SQL Execution Sandbox (inferred) | Core | MVP | In Review | design/gdd/sql-execution-sandbox.md | Puzzle Definition & Datasets |
+| 2 | Puzzle Definition & Datasets | Core | MVP | Approved | design/gdd/puzzle-definition-and-datasets.md | — |
+| 3 | SQL Execution Sandbox (inferred) | Core | MVP | Approved | design/gdd/sql-execution-sandbox.md | Puzzle Definition & Datasets |
 | 4 | Query Workbench | Gameplay | MVP | In Review | design/gdd/query-workbench.md | SQL Execution Sandbox, Puzzle Definition & Datasets, Hidden-Data Grader |
 | 5 | Back Room | Gameplay | Alpha | Not Started | — | SQL Execution Sandbox, Puzzle Definition & Datasets, Query Workbench |
 | 6 | Hint System | Gameplay | MVP | In Review | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader, Query Workbench |
@@ -232,8 +232,8 @@ accepted risks call for.
 |--------|-------|
 | Total systems identified | 19 |
 | Design docs started | 11 |
-| Design docs reviewed | 11 (grader, puzzle-def, sandbox, workbench, hints, constraint challenges, progression: revised, In Review; dialogue, store manual, onboarding, playtest log: revised, In Review) |
-| Design docs approved | 0 |
+| Design docs reviewed | 11 (re-review 2026-10-14: puzzle-def, sandbox Approved; grader revised, In Review; earlier: grader, puzzle-def, sandbox, workbench, hints, constraint challenges, progression: revised, In Review; dialogue, store manual, onboarding, playtest log: revised, In Review) |
+| Design docs approved | 2 (Puzzle Definition & Datasets, SQL Execution Sandbox) |
 | MVP systems designed | 11/11 |
 | Vertical Slice systems designed | 0/6 |
 

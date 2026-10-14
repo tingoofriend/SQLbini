@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-14 (re-review fixes: rule 7a, neutral statements; earlier: cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 1 — The Condition, Not the Screen; Pillar 2 — Your Query, Your Way
 
@@ -80,11 +80,20 @@ shaped) are not specified here → they become ADRs.
    result over the cap — the grader-level kind `TOO_MANY_ROWS` (Request &
    Reaction Dialogue voices it; the workbench strip shows the `error_text`), and
    **does not count as a failed attempt**: a typo is not a misunderstanding
-   (Pillar 3).
+   (Pillar 3). A `CONTENT_ERROR` is not a pre-check rejection: it leads to
+   UNAVAILABLE (rule 9a).
 7. **Determinism check.** The player's query is run twice on the visible
    dataset — the pre-check run (rule 6) counts as the first. If the two results differ, the verdict is **FAIL** with cause
    `nondeterministic` (e.g. `RANDOM()`). The same check runs on the reference at
    puzzle load (Edge Cases).
+7a. **Visible re-runs end like the pre-check.** If any later run of the
+   player's query on the **visible** dataset — the determinism run (rule 7) or
+   the visible grading run (rule 8) — returns a sandbox error (incl. `TIMEOUT`)
+   or a `truncated` result, the verdict is **SUBMIT_ERROR** with that run's
+   `error_kind` / `error_text` (or `TOO_MANY_ROWS`), not counted, exactly as if
+   the pre-check had failed. Visible data is the player's own, so its error
+   text leaks nothing, and a query timing out near the limit on one of three
+   identical runs is not a misunderstanding (Pillar 3).
 8. **Grading.** For each dataset in order, the player's query runs in a fresh
    database built from that dataset (the sandbox owns isolation) and is compared
    with the reference result for that dataset using the result-match rule
@@ -92,8 +101,8 @@ shaped) are not specified here → they become ADRs.
    session — references are deterministic and verified at load — so a submit
    costs `2 + D` sandbox executions (`sql-execution-sandbox.md`). All datasets
    are evaluated — no early exit — so the cause classification sees every
-   failure, **except a `TIMEOUT`**, which stops grading at once with FAIL
-   (`generic`), counted.
+   failure, **except a `TIMEOUT` on a hidden dataset**, which stops grading at
+   once with FAIL (`generic`), counted (a visible-run `TIMEOUT` is rule 7a).
 9. **Verdict.** **PASS** if the results match on every dataset, visible
    included; otherwise **FAIL**. A hidden-dataset result the sandbox marks
    `truncated` (over `R_cap`) is a mismatch: `m_i = false`, cause `generic`,
@@ -158,10 +167,15 @@ shaped) are not specified here → they become ADRs.
     | `columns` | "The columns don't match what was asked." |
     | `order` | "The right rows, but not in the order asked." |
     | `nondeterministic` | "The result isn't the same every time it runs." |
-    | any trap tag | "Some rows are wrong on other shelves." |
-    | `generic` | "The result doesn't match on other shelves." |
+    | any trap tag | "Some rows are wrong on at least one day's data." |
+    | `generic` | "The result doesn't hold on every day's data — check what each column holds, and their order." |
 
-    Puzzle-specific detail lives only in the voiced line.
+    Puzzle-specific detail lives only in the voiced line. Statements never say
+    "other shelves" or "other days" alone: a FAIL can come from the visible
+    dataset too (rule 9; trap tags sit on visible rows). The column-content
+    and column-order advice for `generic` appears **only** on this note,
+    never in the voiced `fail.generic` line (Request & Reaction Dialogue
+    rule 2, built-in `fail` lines).
 13. Each FAIL increments the counter for its cause in the counter set the
     caller supplied (rule 5) — the puzzle's set for a main puzzle, the
     per-challenge set in challenge mode. The
@@ -208,7 +222,7 @@ by Constraint Challenges.
 
 | System | Direction | Data | Owner of the interface |
 |---|---|---|---|
-| SQL Execution Sandbox | Grader → Sandbox → Grader | In: SQL text, dataset id, mode (read-only). Out: ok/error, **column count (also for zero rows)**, rows as positional value lists, error text, timed-out flag | Grader states the contract; Sandbox GDD implements it |
+| SQL Execution Sandbox | Grader → Sandbox → Grader | In: SQL text, dataset id, mode (`query`). Out (`sql-execution-sandbox.md` rule 16): `status`, `error_kind` (incl. `TIMEOUT`, `CONTENT_ERROR`), `error_text`, `build_message` (CONTENT_ERROR only, log-bound), **`column_count` (also for zero rows)**, `columns`, rows as positional value lists, `truncated` | Grader states the contract; Sandbox GDD implements it |
 | Puzzle Definition & Datasets | Puzzle → Grader | Reference SQL, key column (key position = the reference output column of that name), ordered flag, datasets (visible + ≥2 hidden, ≥1 hardcode-proof), row trap tags per dataset (visible included), trap priority list, per-trap feedback texts (levels 1–3), puzzle kind (query / modify) | Grader states required fields; Puzzle Definition GDD implements them |
 | Query Workbench | Workbench → Grader | Submit (SQL text); Run match bit (visible only) | Workbench |
 | Hint System | Grader → Hints | The verdict only, carrying the submitted query text (hint rule 4a counts a FAIL only if its normalized text differs from the previous counted FAIL) — not cause, level or counters; Hints returns `hint_counted` for the `submit` log event | Grader |
@@ -282,7 +296,7 @@ The **submit_verdict** formula is defined as:
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | c | bool | true / false | calculated | A dataset (visible or hidden) reported `CONTENT_ERROR` during this submit (rule 9a) |
-| e | bool | true / false | calculated | Pre-check on visible failed: sandbox error, timeout, more than one statement, not read-only, or rows over `R_cap` (kind `TOO_MANY_ROWS`) |
+| e | bool | true / false | calculated | Any run of the player's query on visible (pre-check, determinism run, visible grading run — rules 6, 7a) failed: sandbox error, timeout, more than one statement, not read-only, or rows over `R_cap` (kind `TOO_MANY_ROWS`) |
 | det | bool | true / false | calculated | `result_match(P_run1, P_run2)` on visible, under the puzzle's `ordered` flag |
 | D | list | 3–6 datasets | data file | Visible plus ≥ 2 hidden (≥ 1 hardcode-proof) |
 | m_i | bool | true / false | calculated | `result_match` on dataset i; an error, timeout or `truncated` result of the player's query on a hidden dataset gives `m_i = false` (cause `generic`) |
@@ -347,6 +361,9 @@ the 2026-10-14 design review.*
   visible pre-check (not counted); on a hidden dataset only, grading stops at once
   (remaining datasets are not run) with FAIL `generic` (counted) — the query does
   not hold on that data.
+- **If the pre-check succeeds but the determinism run or the visible grading
+  run errors, times out or is `truncated`** (e.g. a query close to
+  `exec_time_limit`): SUBMIT_ERROR with that run's kind, not counted (rule 7a).
 - **If the player's query errors only on a hidden dataset** (e.g. a cast that
   fails on a hidden value): `m_i = false`, cause `generic`, counted. The error
   text is **not** shown (it could describe hidden data).
@@ -367,10 +384,10 @@ the 2026-10-14 design review.*
   Dependencies).
 - **If the player returns the right values in a different column order**: no
   match (column order is significant, rule 16). The column count is equal, so the
-  cause is not `columns`; it falls to trap tags or `generic`. The built-in
-  `generic` level-1 feedback (both the grader's neutral symptom statement on the
-  note and Dialogue's voiced line, rule 12) must therefore include "check what
-  each column holds and in which order".
+  cause is not `columns`; it falls to trap tags or `generic`. The grader's
+  neutral `generic` statement on the note therefore includes "check what each
+  column holds, and their order" (rule 12 table); Dialogue's voiced
+  `fail.generic` line does not repeat it.
 - **If the player's column count is right but the result is identical to the
   reference on visible and wrong on hidden data with no tagged rows involved**:
   cause `generic`.
@@ -602,7 +619,8 @@ Logic tests use a stub sandbox where noted. Config: `R_cap = 5000`, `k = 2`,
 
 **No hidden-row leakage**
 - **AC-18 [Integration]** GIVEN AC-06, WHEN the verdict reaches Request & Reaction Dialogue, THEN the payload keys are exactly `{verdict, cause, level}` — no rows, names, counts or per-dataset flags.
-- **AC-19 [Integration]** GIVEN AC-06, WHEN the Playtest Log records it, THEN the entry holds per-dataset results `[match, mismatch, mismatch]` and missing/extra counts.
+- **AC-19 [Integration]** GIVEN AC-06, WHEN the Playtest Log records it, THEN the entry holds per-dataset results `[match, mismatch, mismatch]`, missing/extra counts, and `hint_counted` equal to the value the Hint System's rule 4a returned for that submit (true for a first FAIL; false when the same query is resubmitted, and for every SUBMIT_ERROR and UNAVAILABLE).
+- **AC-29 [Logic]** GIVEN 1-5 and a stub whose visible pre-check succeeds but whose determinism run (and, separately, the visible grading run) returns `TIMEOUT`, WHEN submitted, THEN the verdict is SUBMIT_ERROR `TIMEOUT`, every per-cause counter stays 0, and no hidden dataset is run; the same with a `truncated` determinism run gives SUBMIT_ERROR `TOO_MANY_ROWS`.
 - **AC-20 [UI]** GIVEN AC-06 and AC-08, WHEN the outcome is rendered, THEN a retained screenshot in `production/qa/evidence/` shows only the neutral symptom statement on the note (and the voiced line in the bubble, not repeated on the note) — no hidden row, count, per-dataset result or hidden-data error text. GIVEN AC-28, THEN the screenshot shows "Content error — reported" with no raw or build text.
 - **AC-28 [Logic]** GIVEN a stub that reports `CONTENT_ERROR` on `hidden_b` (and, separately, on `visible`), WHEN the player submits, THEN the verdict is UNAVAILABLE, the payload is exactly `{verdict: UNAVAILABLE}` (no `error_text`), puzzle state and every per-cause counter are unchanged, and a content-bug report is logged.
 

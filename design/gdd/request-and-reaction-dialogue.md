@@ -74,9 +74,11 @@ is set in `/art-bible`.
    `fail.nondeterministic`, `fail.generic`) are owned here. Required content:
    `columns` says the list has the wrong number of columns; `order` says the
    rows are right but in the wrong order; `nondeterministic` says the answer
-   changes each time it is run; `generic` says some rows are wrong and must
-   include "check what each column holds and in which order" (Hidden-Data
-   Grader Edge Cases, "Result shape"). None names a row, value or count.
+   changes each time it is run; `generic` says some rows aren't what was
+   asked for. The column-content-and-order advice lives only on the grader's
+   neutral note (Hidden-Data Grader rule 12, Edge Cases "Result shape"), never
+   in the voiced line, so the two never repeat each other. None names a row,
+   value or count.
 
    Built-in challenge lines (string ids `challenge.clear`,
    `challenge.rule_broken`) are owned here too; Constraint Challenges reports
