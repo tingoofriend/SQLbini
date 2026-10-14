@@ -1,8 +1,8 @@
 # 다음 세션 프롬프트 모음
 
 > 작성: 2026-10-14 · 프로젝트: SQLbini (Godot 4.7.2 / GDScript)
-> 현재 단계: **Systems Design** — MVP GDD 11개 작성 완료(모두 "Designed", 독립 검토 대기)
-> 마지막 커밋: `693b34f` (origin/main에 푸시됨)
+> 현재 단계: **Systems Design** — MVP GDD 11개 검토·수정 완료(모두 "In Review"), 세션 5 교차 검토 완료 → 세션 6(아트 바이블) → 6a~6d 재검토 → 세션 7
+> 마지막 커밋: `6b244c0` (세션 5 교차 검토 수정)
 
 > 세션별 문서(공통 프롬프트 포함, 블록 하나만 복사): `production/session-prompts/session-N-*.md`
 
@@ -93,12 +93,83 @@ MVP GDD 11개와 game-concept.md, design/registry/entities.yaml 사이의
 끝나면 백로그 #1 상태를 applied로 바꿔줘.
 ```
 
+## 세션 6a — 기반 GDD 재검토 (채점기, 퍼즐 정의, 샌드박스)
+
+```
+이번 세션 작업: 기반 GDD 세 개를 독립 재검토해줘.
+1. /design-review design/gdd/hidden-data-grader.md
+2. /design-review design/gdd/puzzle-definition-and-datasets.md
+3. /design-review design/gdd/sql-execution-sandbox.md
+세 문서는 계약(UNAVAILABLE·build_message, TOO_MANY_ROWS, grader_row_cap, tokenize,
+manual_pages·prefill_sql 필드)으로 묶여 있으니 한쪽을 고치면 다른 쪽도 맞는지 확인해줘.
+이번 검토는 세션 5 교차 검토(design/gdd/gdd-cross-review-2026-10-14.md, 커밋 6b244c0)
+이후의 재검토야. 각 review-log의 이전 차단 항목이 해결됐는지, 교차 검토의
+"Resolution" 결정(UNAVAILABLE, manual_pages, hint_counted, Day One, 말풍선/노트 분리 등)이
+문서에 맞게 들어갔는지 확인해줘. /ux-design·플레이테스트로 미룬 항목은 차단 항목이 아니야.
+결과는 각 review-log에 남기고, APPROVED면 systems-index 상태를 Approved로 바꿔줘.
+NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 뒤 고치고, 상태는 In Review로
+두고 다음 새 세션에서 다시 검토하도록 active.md에 적어줘.
+끝나면 결과를 표로 요약하고 커밋할지 물어봐줘.
+```
+
+## 세션 6b — 기능 GDD 재검토 (워크벤치, 힌트, 제약 도전)
+
+```
+이번 세션 작업: 다음 GDD 세 개를 독립 재검토해줘.
+1. /design-review design/gdd/query-workbench.md
+2. /design-review design/gdd/hint-system.md
+3. /design-review design/gdd/constraint-challenges.md
+힌트의 '직전과 다른 쿼리만 카운트'(rule 4a)와 챌린지 모드 규칙(힌트 숨김, 메인 요청 시계 정지,
+rule 6a/6b)이 세 문서에서 같은지 확인해줘.
+이번 검토는 세션 5 교차 검토(design/gdd/gdd-cross-review-2026-10-14.md, 커밋 6b244c0)
+이후의 재검토야. 각 review-log의 이전 차단 항목이 해결됐는지, 교차 검토의
+"Resolution" 결정(UNAVAILABLE, manual_pages, hint_counted, Day One, 말풍선/노트 분리 등)이
+문서에 맞게 들어갔는지 확인해줘. /ux-design·플레이테스트로 미룬 항목은 차단 항목이 아니야.
+결과는 각 review-log에 남기고, APPROVED면 systems-index 상태를 Approved로 바꿔줘.
+NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 뒤 고치고, 상태는 In Review로
+두고 다음 새 세션에서 다시 검토하도록 active.md에 적어줘.
+끝나면 결과를 표로 요약하고 커밋할지 물어봐줘.
+```
+
+## 세션 6c — 진행·표현·메타 GDD 재검토 (진행, 대화, 매뉴얼, 온보딩, 기록)
+
+```
+이번 세션 작업: 다음 GDD 다섯 개를 독립 재검토해줘.
+1. /design-review design/gdd/shift-and-chapter-progression.md
+2. /design-review design/gdd/request-and-reaction-dialogue.md
+3. /design-review design/gdd/store-manual.md
+4. /design-review design/gdd/onboarding-first-shift.md
+5. /design-review design/gdd/playtest-log.md
+문맥이 70%를 넘으면 남은 문서는 다음 세션으로 넘겨줘(active.md에 기록).
+이번 검토는 세션 5 교차 검토(design/gdd/gdd-cross-review-2026-10-14.md, 커밋 6b244c0)
+이후의 재검토야. 각 review-log의 이전 차단 항목이 해결됐는지, 교차 검토의
+"Resolution" 결정(UNAVAILABLE, manual_pages, hint_counted, Day One, 말풍선/노트 분리 등)이
+문서에 맞게 들어갔는지 확인해줘. /ux-design·플레이테스트로 미룬 항목은 차단 항목이 아니야.
+결과는 각 review-log에 남기고, APPROVED면 systems-index 상태를 Approved로 바꿔줘.
+NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 뒤 고치고, 상태는 In Review로
+두고 다음 새 세션에서 다시 검토하도록 active.md에 적어줘.
+끝나면 결과를 표로 요약하고 커밋할지 물어봐줘.
+```
+
+## 세션 6d — 재검토 후 교차 일관성 확인
+
+```
+이번 세션 작업: /review-all-gdds since-last-review 를 실행해줘.
+기준은 세션 5 보고서(design/gdd/gdd-cross-review-2026-10-14.md)야. 6a~6c 재검토에서
+고친 문서들이 서로, 그리고 game-concept.md·design/registry/entities.yaml과 여전히 맞는지
+확인하고, 충돌이 있으면 어느 문서를 고칠지 나에게 물어봐줘.
+GDD 11개가 모두 Approved인지도 확인해서, 아니면 어떤 문서가 남았는지 알려줘.
+끝나면 결과를 표로 요약하고 커밋할지 물어봐줘.
+```
+
 ## 세션 7 — Technical Setup 게이트
 
 ```
 이번 세션 작업: /gate-check technical-setup 을 실행해줘.
 Concept 게이트에서 받아들인 위험(production/gate-checks/2026-10-14-concept-to-systems-design-rerun.md)이
 해결됐는지도 함께 확인해줘.
+시작 전에 6a~6d 재검토가 끝나 MVP GDD 11개가 모두 Approved인지 먼저 확인하고,
+아니면 게이트를 돌리지 말고 남은 문서를 알려줘.
 ```
 
 ---
