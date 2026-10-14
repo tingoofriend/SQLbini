@@ -1,8 +1,8 @@
 # 다음 세션 프롬프트 모음
 
 > 작성: 2026-10-14 · 프로젝트: SQLbini (Godot 4.7.2 / GDScript)
-> 현재 단계: **Systems Design** — MVP GDD 11개 검토·수정 완료(모두 "In Review"), 세션 5 교차 검토 완료 → 세션 6(아트 바이블) → 6a~6d 재검토 → 세션 7
-> 마지막 커밋: `6b244c0` (세션 5 교차 검토 수정)
+> 현재 단계: **Systems Design** — 세션 6(아트 바이블)·6a 완료: 채점기·퍼즐 정의·샌드박스 **Approved**, 나머지 8개 In Review → 6b~6d 재검토 → 세션 7
+> 마지막 커밋: `1fe20f0` (채점기 재검토 APPROVED)
 
 > 세션별 문서(공통 프롬프트 포함, 블록 하나만 복사): `production/session-prompts/session-N-*.md`
 
@@ -93,7 +93,7 @@ MVP GDD 11개와 game-concept.md, design/registry/entities.yaml 사이의
 끝나면 백로그 #1 상태를 applied로 바꿔줘.
 ```
 
-## 세션 6a — 기반 GDD 재검토 (채점기, 퍼즐 정의, 샌드박스)
+## 세션 6a — 기반 GDD 재검토 (채점기, 퍼즐 정의, 샌드박스) — ✅ 완료 2026-10-14 (세 문서 모두 Approved)
 
 ```
 이번 세션 작업: 기반 GDD 세 개를 독립 재검토해줘.
@@ -121,6 +121,10 @@ NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 �
 3. /design-review design/gdd/constraint-challenges.md
 힌트의 '직전과 다른 쿼리만 카운트'(rule 4a)와 챌린지 모드 규칙(힌트 숨김, 메인 요청 시계 정지,
 rule 6a/6b)이 세 문서에서 같은지 확인해줘.
+6a에서 채점기의 중립 메모 문구(rule 12 표)와 rule 7a(visible 재실행 오류 → SUBMIT_ERROR, 미카운트)가
+바뀌었으니 워크벤치의 노트·스트립 설명이 그와 맞는지 확인해줘. 채점기 리뷰 권고대로, TOO_MANY_ROWS
+스트립 고정 문구를 워크벤치의 "{grader_row_cap}+ rows — too many to compare"와 맞출지도 봐줘
+(design/gdd/reviews/hidden-data-grader-review-log.md 마지막 항목).
 이번 검토는 세션 5 교차 검토(design/gdd/gdd-cross-review-2026-10-14.md, 커밋 6b244c0)
 이후의 재검토야. 각 review-log의 이전 차단 항목이 해결됐는지, 교차 검토의
 "Resolution" 결정(UNAVAILABLE, manual_pages, hint_counted, Day One, 말풍선/노트 분리 등)이
@@ -140,6 +144,10 @@ NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 �
 3. /design-review design/gdd/store-manual.md
 4. /design-review design/gdd/onboarding-first-shift.md
 5. /design-review design/gdd/playtest-log.md
+대화 문서는 6a에서 rule 2가 바뀌었어(fail.generic 음성 대사에는 컬럼 내용·순서 조언을 넣지 않고,
+채점기 중립 메모에만 둠). 그게 맞게 들어갔는지 보고, 오류 표의 TOO_MANY_ROWS 행이 "visible pre-check에서만"
+이라고 적혀 있는데 채점기 rule 7a 이후 determinism 실행의 truncated에서도 나니 함께 고쳐줘
+(design/gdd/reviews/hidden-data-grader-review-log.md 마지막 항목).
 문맥이 70%를 넘으면 남은 문서는 다음 세션으로 넘겨줘(active.md에 기록).
 이번 검토는 세션 5 교차 검토(design/gdd/gdd-cross-review-2026-10-14.md, 커밋 6b244c0)
 이후의 재검토야. 각 review-log의 이전 차단 항목이 해결됐는지, 교차 검토의

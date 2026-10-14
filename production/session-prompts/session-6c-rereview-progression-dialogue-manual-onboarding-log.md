@@ -20,6 +20,10 @@ design/ideas-backlog.md를 읽고 현재 상태를 한국어로 짧게 요약해
 3. /design-review design/gdd/store-manual.md
 4. /design-review design/gdd/onboarding-first-shift.md
 5. /design-review design/gdd/playtest-log.md
+대화 문서는 6a에서 rule 2가 바뀌었어(fail.generic 음성 대사에는 컬럼 내용·순서 조언을 넣지 않고,
+채점기 중립 메모에만 둠). 그게 맞게 들어갔는지 보고, 오류 표의 TOO_MANY_ROWS 행이 "visible pre-check에서만"
+이라고 적혀 있는데 채점기 rule 7a 이후 determinism 실행의 truncated에서도 나니 함께 고쳐줘
+(design/gdd/reviews/hidden-data-grader-review-log.md 마지막 항목).
 문맥이 70%를 넘으면 남은 문서는 다음 세션으로 넘겨줘(active.md에 기록).
 이번 검토는 세션 5 교차 검토(design/gdd/gdd-cross-review-2026-10-14.md, 커밋 6b244c0)
 이후의 재검토야. 각 review-log의 이전 차단 항목이 해결됐는지, 교차 검토의

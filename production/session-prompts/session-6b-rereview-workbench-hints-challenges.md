@@ -20,6 +20,10 @@ design/ideas-backlog.md를 읽고 현재 상태를 한국어로 짧게 요약해
 3. /design-review design/gdd/constraint-challenges.md
 힌트의 '직전과 다른 쿼리만 카운트'(rule 4a)와 챌린지 모드 규칙(힌트 숨김, 메인 요청 시계 정지,
 rule 6a/6b)이 세 문서에서 같은지 확인해줘.
+6a에서 채점기의 중립 메모 문구(rule 12 표)와 rule 7a(visible 재실행 오류 → SUBMIT_ERROR, 미카운트)가
+바뀌었으니 워크벤치의 노트·스트립 설명이 그와 맞는지 확인해줘. 채점기 리뷰 권고대로, TOO_MANY_ROWS
+스트립 고정 문구를 워크벤치의 "{grader_row_cap}+ rows — too many to compare"와 맞출지도 봐줘
+(design/gdd/reviews/hidden-data-grader-review-log.md 마지막 항목).
 이번 검토는 세션 5 교차 검토(design/gdd/gdd-cross-review-2026-10-14.md, 커밋 6b244c0)
 이후의 재검토야. 각 review-log의 이전 차단 항목이 해결됐는지, 교차 검토의
 "Resolution" 결정(UNAVAILABLE, manual_pages, hint_counted, Day One, 말풍선/노트 분리 등)이
