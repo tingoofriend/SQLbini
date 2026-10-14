@@ -33,3 +33,19 @@ Findings:
 Reviewed-Content-Hash: design/gdd/hidden-data-grader.md 99356d3f25de253287cd49d94d48cef48792c02f
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
 Revised in-session (2026-10-14, after the review): both blockers and three recommended items fixed from user decisions; also edited `request-and-reaction-dialogue.md` rule 2 (`fail.generic`). Status stays In Review; re-review in a fresh session.
+
+## Review — 2026-10-14 (re-review of 6a fixes, fresh session) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 0 | Recommended: 6
+Summary: Both 6a blockers are resolved: the column-order advice lives only on the neutral `generic` note (Dialogue `fail.generic` no longer carries it; statements no longer say "other shelves"), and rule 7a gives visible re-run errors/timeouts/truncation a SUBMIT_ERROR verdict, reflected in rule 8, `e`, Edge Cases and AC-29. Remaining items are wording and test-coverage polish.
+Prior verdict resolved: Yes (6a blockers 1–2)
+Findings:
+- [RECOMMENDED] UI Requirements 3: "Doesn't hold on other days' data" contradicts rule 12 wording ("every day's data")
+- [RECOMMENDED] Core Rules 8: "no early exit" exception list omits rule 7a visible-run SUBMIT_ERROR
+- [RECOMMENDED] Core Rules 6 / UI 4: `TOO_MANY_ROWS` has no sandbox `error_text`; fixed strip text undefined (align with Workbench "{grader_row_cap}+ rows — too many to compare")
+- [RECOMMENDED] Cross-doc: Dialogue error table says `TOO_MANY_ROWS` only on visible pre-check; rule 7a adds the determinism run (fix in Dialogue re-review)
+- [RECOMMENDED] Acceptance Criteria: no Logic AC for the per-cause neutral statement table / note-vs-voiced non-repetition (only UI AC-20)
+- [RECOMMENDED] Player Fantasy absent (advisory at standard)
+Reviewed-Content-Hash: design/gdd/hidden-data-grader.md 29f59abed8eea14a3f3bfb9298a6e31af89074c1
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
