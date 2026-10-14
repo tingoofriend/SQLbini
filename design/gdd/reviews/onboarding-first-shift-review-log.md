@@ -52,3 +52,16 @@ Findings:
 Reviewed-Content-Hash: design/gdd/onboarding-first-shift.md 44915518f83ceed2d5dc1142c445ad0c1b9dd73a
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
 Revised in-session (2026-10-15, after the review; user decision "scope to the puzzle"): rule 7a — Done conditions count only while the mark's own puzzle is open; acting on a later mark's target on an earlier puzzle completes nothing; the only early completion is a Submit on 1-1 before any Run (`1-1.run` Done); `1-2.schema` reads "1-2's editor". Rule 8 and States restricted to the same puzzle; manual edge case split (on 1-1/1-2: nothing Done, 1-3 mark still shows; on 1-3 before the mark: Done, never shown); OB-11, OB-13 updated. Status stays In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (re-review, session 6c-3, fresh session) — Verdict: APPROVED
+Scope signal: S
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 0 | Recommended: 2 new (earlier recommendations carried, not escalated)
+Summary: The 6c-2 blocker is resolved: rule 7a's scope paragraph, rule 8 ("marks never complete across puzzles") and States ("same puzzle") agree that Done conditions count only while the mark's own puzzle is open; the single early completion is a Submit on 1-1 before any Run (`1-1.run` Done), consistent across the table, Edge Cases, OB-06 and OB-13. The manual edge case is split correctly (1-1/1-2: nothing Done, 1-3 mark still shows; 1-3 before the mark: Done, never shown) and OB-11/OB-13 test it. Mark ids match the Playtest Log's `mark_shown/done/dismissed {mark}`.
+Prior verdict resolved: Yes (6c-2 blocker: puzzle scope of Done conditions)
+Findings:
+- [RECOMMENDED] Edge Cases (submit before run): "1-1.run is marked Done too, without being shown" — `1-1.run` shows when 1-1 opens; it is `1-1.submit` that is never shown; fix so `mark_shown` for `1-1.run` is not dropped
+- [RECOMMENDED] Core Rule 7a (`1-3.manual`): the manual stays open across a request change (store manual Edge Cases); if it is already Open when 1-3 opens, the mark points at the button of an open panel — decide whether "already Open on 1-3" counts as Done
+- [RECOMMENDED] Carried: Dependencies / Cross-References stale statuses and bidirectionality note; rule 7 "workbench rule 15"; 6c recommendations (start-over line queue, OB-07 trigger, 1-3 Tab result, Interactions directions, OB-19 wording) — for 6d
+Reviewed-Content-Hash: design/gdd/onboarding-first-shift.md bc88a71f8ee063db020bd858af6034430b8d24c6
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
