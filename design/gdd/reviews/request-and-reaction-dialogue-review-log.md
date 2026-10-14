@@ -36,3 +36,16 @@ Findings:
 Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md fd1c405fd5510bccd9a8911dc1494f53b79f7f3b
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
 Revised in-session (2026-10-15, after the review; user decision "ids + log delivery"): rule 2 kinds — `offer` gains built-in `skip.offer` / `skip.accept` (Kenji), new `side` kind; new rule 3b (skip.accept holds like a pass line, then next request or clock-out; side-request messages = message log + strip message ticket, never the bubble); PassReaction state, Progression row, RD-21. TOO_MANY_ROWS row now "any visible run — pre-check, determinism or visible grading run (grader rules 6, 7a)". Status stays In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (re-review, session 6c-2, fresh session) — Verdict: APPROVED
+Scope signal: M
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 0 | Recommended: 3
+Summary: The 6c blocker is resolved: `skip.offer` / `skip.accept` are built-in Kenji lines under the `offer` kind with required content, the new `side` kind delivers side requests to the message log plus a strip ticket (never the bubble), and rule 3b, the PassReaction state, the Progression row and RD-21 match Progression rules 5, 7, 11 and PR-21 (accept holds for `reaction_hold`; edits/Run do not end it; then next request or clock-out). The TOO_MANY_ROWS row ("any visible run") now agrees with grader rules 6/7a, Formulas `e` and its Edge Case, sandbox rule 13 and workbench rule 13. The 6a rule 2 change (column advice only on the grader's neutral note) still holds.
+Prior verdict resolved: Yes (6c blocker: skip lines and side messages)
+Findings:
+- [RECOMMENDED] Dependencies / Cross-References: statuses stale — Puzzle Definition, Grader, Sandbox, Workbench, Constraint Challenges Approved (Progression Approved this session)
+- [RECOMMENDED] Core Rule 6 / UI Req 5: "SQLite's original message always shown" exception still omits TOO_MANY_ROWS (fixed workbench text, no SQLite text) — already queued for 6d
+- [RECOMMENDED] UI Req 1 / rule 3b: offer ticket and side-message ticket can both sit at the strip's right edge — placement for /ux-design (not blocking)
+Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md 4522ef4468cfdfb8d608f5cdb21e3a62e2fcb9f4
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084

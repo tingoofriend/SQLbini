@@ -1,6 +1,6 @@
 # Request & Reaction Dialogue
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-15 (re-review 6c fixes: `skip.offer` / `skip.accept` lines, side-request messages, `TOO_MANY_ROWS` on any visible run; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14

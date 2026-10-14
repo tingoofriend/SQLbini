@@ -1,6 +1,6 @@
 # Store Manual
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-15 (re-review 6c fix: `watch_out` carries a `rule_tag`, no conditional `watch_out`, `trap_rules` CI check; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14

@@ -1,6 +1,6 @@
 # Hint System
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-14 (re-review 6b fixes: rule 4b `hint_counted`, tokenize normalization, `shown(p)`; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14

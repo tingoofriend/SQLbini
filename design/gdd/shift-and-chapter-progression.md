@@ -1,6 +1,6 @@
 # Shift & Chapter Progression
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-15 (re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14

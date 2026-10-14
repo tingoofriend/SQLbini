@@ -37,3 +37,18 @@ Findings:
 Reviewed-Content-Hash: design/gdd/onboarding-first-shift.md 924fc9d35924c9799db8a01a6760ee4780c4bb96
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
 Revised in-session (2026-10-15, after the review; user decision "table + 1-2 schema only"): rule 7a table of the four Guided marks (`1-1.run`, `1-1.submit`, `1-2.schema`, `1-3.manual`) with target, label and Done condition — the mark id is the Playtest Log `{mark}` value; 1-2 has only the schema mark; unopened puzzle's mark stays Pending; States, the submit-before-run edge case and OB-13 updated. Status stays In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (re-review, session 6c-2, fresh session) — Verdict: NEEDS REVISION
+Scope signal: S
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 1 | Recommended: 3
+Summary: The 6c blocker is resolved as asked: rule 7a enumerates the four Guided marks (`1-1.run`, `1-1.submit`, `1-2.schema`, `1-3.manual`) with target, label and Done condition, the ids match the Playtest Log's `mark_shown/done/dismissed {mark}`, and 1-2 has only the schema mark (rule 3, OB-13). One new blocker came from the table: the mark Done conditions had no puzzle scope, so the Edge Case "opens the manual before the 1-3 mark appears" plus rule 8 / States "doing a later target early marks the earlier ones Done" let a player who opens the Manual on 1-1 lose `1-1.run`, `1-1.submit` and `1-2.schema` at once — contradicting the table's "opened on 1-3".
+Prior verdict resolved: Yes (6c blocker: mark list and 1-2 condition)
+Findings:
+- [BLOCKING] Core Rules 7a, 8 / States / Edge Cases / OB-11, OB-13: Done conditions not scoped to their puzzle; the manual edge case and cross-puzzle "later target early" chain contradict the table and can wipe all guidance on 1-1
+- [RECOMMENDED] Dependencies / Cross-References: statuses stale — Workbench, Dialogue, Store Manual, Hint System, Puzzle Definition Approved; bidirectionality note says Puzzle Definition "must list" Onboarding
+- [RECOMMENDED] Core Rule 7: cites "workbench rule 15" for Esc precedence (carried over from 6c)
+- [RECOMMENDED] Earlier 6c recommendations (start-over line queue, OB-07 trigger, 1-3 Tab result, Interactions directions, OB-19 wording) still open; not escalated
+Reviewed-Content-Hash: design/gdd/onboarding-first-shift.md 44915518f83ceed2d5dc1142c445ad0c1b9dd73a
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+Revised in-session (2026-10-15, after the review; user decision "scope to the puzzle"): rule 7a — Done conditions count only while the mark's own puzzle is open; acting on a later mark's target on an earlier puzzle completes nothing; the only early completion is a Submit on 1-1 before any Run (`1-1.run` Done); `1-2.schema` reads "1-2's editor". Rule 8 and States restricted to the same puzzle; manual edge case split (on 1-1/1-2: nothing Done, 1-3 mark still shows; on 1-3 before the mark: Done, never shown); OB-11, OB-13 updated. Status stays In Review; re-review in a fresh session.

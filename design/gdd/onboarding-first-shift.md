@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6c-2 fix: coach-mark Done conditions scoped to their own puzzle; earlier: re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -113,15 +113,21 @@ balancing rules in this system.
 
 | Mark id | Puzzle | Target | Tanaka's label | Done when |
 |---|---|---|---|---|
-| `1-1.run` | 1-1 | Run button | "Press Run (Ctrl+Enter) to see what's on the shelves." | Any Run on 1-1, or a later mark's target done first (rule 8) |
+| `1-1.run` | 1-1 | Run button | "Press Run (Ctrl+Enter) to see what's on the shelves." | Any Run on 1-1, or a Submit on 1-1 first (rule 8) |
 | `1-1.submit` | 1-1 | Submit button | "Now hand it to me — Submit (Ctrl+Shift+Enter)." | Any Submit on 1-1 |
-| `1-2.schema` | 1-2 | Schema browser | "Click a column to put it in your query." | A column name appears in the editor by any means (Edge Cases) |
+| `1-2.schema` | 1-2 | Schema browser | "Click a column to put it in your query." | A column name appears in 1-2's editor by any means (Edge Cases) |
 | `1-3.manual` | 1-3 | Manual button | "New page in the binder — have a look if you need it." | The Manual panel is opened on 1-3 |
 
+   **Done conditions are scoped to the mark's own puzzle**: they count only
+   while that puzzle is open. Doing a later mark's target on an earlier puzzle
+   (opening the Manual on 1-1, typing a column name on 1-1) completes nothing,
+   and the later mark still shows on its own puzzle. The only early completion
+   is within a puzzle: a Submit on 1-1 before any Run marks `1-1.run` Done.
    A mark whose puzzle is never opened in this game (e.g. 1-3 skipped) stays
    `Pending` and is never shown later.
 8. Nothing in onboarding is timed; the player may type, run and experiment freely
-   at any step, and doing a later step early simply skips the earlier marks.
+   at any step, and doing a later step of the same puzzle early simply skips
+   that puzzle's earlier marks (rule 7a; marks never complete across puzzles).
 
 **What onboarding never does**
 
@@ -136,7 +142,8 @@ changeable later in settings.
 
 Per coach mark (Guided only): `Pending → Shown → Done` (target action performed)
 or `→ Dismissed` ("Got it", or Esc with the mark focused). Marks run in the fixed order of the rule 7a table; doing a
-later target early marks the earlier ones `Done`.
+later target of the **same puzzle** early marks that puzzle's earlier ones `Done`
+(Done conditions count only while the mark's puzzle is open — rule 7a).
 
 ### Interactions with Other Systems
 
@@ -163,7 +170,8 @@ later target early marks the earlier ones `Done`.
 - **If the player presses Esc while a coach mark shows and focus is in the editor**: focus leaves the editor; the mark stays (workbench Esc precedence).
 - **If a manual page or hint unlocks while a coach mark shows** (e.g. "Reading the ledger" on 1-1): its "new" indicator waits until no mark is showing.
 - **If the player restarts 1-1 from the chapter list**: the prefill (`prefill_sql`) returns; coach marks do not replay (they are per game, not per puzzle).
-- **If the player opens the manual before the 1-3 mark appears**: the mark is marked Done.
+- **If the player opens the manual on 1-1 or 1-2**: nothing is marked Done (rule 7a scope); the 1-1 / 1-2 marks continue and the 1-3 mark still shows when 1-3 opens.
+- **If the player opens the manual on 1-3 before its mark is shown** (e.g. Ctrl+M as the request arrives): `1-3.manual` is Done and never shown.
 - **If text scale or window size changes while a mark is shown**: the ring follows its target; it never moves over the editor text.
 
 ## Dependencies
@@ -256,11 +264,11 @@ retained screenshot in `production/qa/evidence/`.*
 - **OB-08 [Logic]** GIVEN 1-2 opens, THEN the editor is empty, ghost text shows `SELECT … FROM products`, and the schema mark is active.
 - **OB-09 [Logic]** GIVEN the empty 1-2 editor, WHEN Tab is pressed (or the ghost text clicked), THEN the editor contains `SELECT  FROM products` with the caret in the blank.
 - **OB-10 [Logic]** GIVEN the schema mark, WHEN a column name appears in the editor by click, typing or paste, THEN the mark is Done.
-- **OB-11 [Integration]** GIVEN 1-3 opens, THEN "Filtering rows" unlocks, the Manual-button mark shows, and ghost text shows `SELECT … FROM products WHERE …`; GIVEN the manual was opened first, THEN the mark is Done.
+- **OB-11 [Integration]** GIVEN 1-3 opens, THEN "Filtering rows" unlocks, the Manual-button mark shows, and ghost text shows `SELECT … FROM products WHERE …`; GIVEN the manual was opened on 1-3 before the mark showed, THEN the mark is Done and never shown; GIVEN it was opened only on 1-1 or 1-2, THEN the mark still shows on 1-3.
 - **OB-12 [Logic]** GIVEN 1-3 passed, THEN no further marks appear anywhere in the game.
 
 **Mark behaviour**
-- **OB-13 [Logic]** Guided mode defines exactly the four marks of rule 7a (`1-1.run`, `1-1.submit`, `1-2.schema`, `1-3.manual`), each logged with that id; at most one is shown at a time, in table order; doing a later target early marks earlier ones Done; on 1-2 no Run or Submit mark is ever shown.
+- **OB-13 [Logic]** Guided mode defines exactly the four marks of rule 7a (`1-1.run`, `1-1.submit`, `1-2.schema`, `1-3.manual`), each logged with that id; at most one is shown at a time, in table order; a Submit on 1-1 before any Run marks `1-1.run` Done; on 1-2 no Run or Submit mark is ever shown. GIVEN Guided at 1-1 with `1-1.run` shown, WHEN the Manual is opened and a column name is typed, THEN `1-1.run` stays shown, no mark becomes Done, and later `1-2.schema` and `1-3.manual` each show when their puzzle opens.
 - **OB-14 [Logic]** A shown mark becomes Done on its target action and Dismissed on "Got it" or Esc with the mark focused; Esc with focus in the editor leaves the editor and the mark stays; a dismissed mark never reappears.
 - **OB-24 [Integration]** GIVEN a coach mark shown and a manual page or hint unlocking (1-1 "Reading the ledger"), THEN no "new" indicator is visible until no mark is showing, then it appears.
 - **OB-15 [UI]** GIVEN a mark shown, THEN typing, Run and clicks still work, the ring never overlaps editor text or result tables, and it follows its target on resize or text scaling.

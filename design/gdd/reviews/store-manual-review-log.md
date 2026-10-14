@@ -35,3 +35,16 @@ Findings:
 Reviewed-Content-Hash: design/gdd/store-manual.md b1d4fc095da347bda4d29433752387a98a32365b
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
 Revised in-session (2026-10-15, after the review; user decision "drop conditional + rule_tag"): rule 3a — trap-rule watch_outs are omitted in Chapter 1 (no conditional watch_out at MVP; A range / Empty values named); each watch_out carries a required `rule_tag`; manual content data holds `trap_rules` (Chapter 1 trap id → rule_tag); CI fails on a matching tag or an unmapped trap id; SM-01, SM-22 rewritten; rule 1/3 examples marked as later-chapter. Status stays In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (re-review, session 6c-2, fresh session) — Verdict: APPROVED
+Scope signal: S
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 0 | Recommended: 3
+Summary: The 6c blocker is resolved: rule 3a drops the conditional `watch_out` (trap-rule lines are simply omitted in Chapter 1, with the AND/OR, A range and Empty values pages named), every `watch_out` carries a required `rule_tag` (rule 1, SM-01), and the manual's `trap_rules` map (Chapter 1 trap id → rule_tag) makes the check mechanical — SM-22 covers all 15 Chapter 1 traps (the count Puzzle Definition OQ 5 settled) and both failure modes (matching tag, unmapped trap id). Rule 1/3 examples are now marked as later-chapter. Rule 4's `prefill_sql` exemption still matches Onboarding rule 2 and SM-15.
+Prior verdict resolved: Yes (6c blocker: conditional watch_out contract)
+Findings:
+- [RECOMMENDED] Open Questions 1: still says rule 3a bars a trap's rule "before its puzzle is passed" — the conditional wording rule 3a dropped; restate as "omitted in Chapter 1"
+- [RECOMMENDED] Dependencies / Cross-References: statuses stale — Puzzle Definition, Workbench, Hint System, Progression Approved
+- [RECOMMENDED] Earlier 6c recommendations (manual_open granularity, "1 new page" count, SM-02 coverage, Onboarding signal naming, hard/soft Puzzle Def mismatch, button vs tab) still open; not escalated
+Reviewed-Content-Hash: design/gdd/store-manual.md 80a82661dec723e9c95f58f7a1647941af8a6ad8
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084

@@ -38,3 +38,15 @@ Findings:
 Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md 4f000605792334e14db84b598e743753353ec3f8
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
 Revised in-session (2026-10-15, after the review; user decisions): rule 12a + Workbench row — the Query Workbench subscribes to Restart (resets draft to prefill/empty, clears last result and verdict, reports draft-empty for the confirmation; workbench rule 14, edge case, QW-30); rules 5, 7 + Dialogue row — side-request messages = `side` line in the message log + strip ticket, Kenji's `skip.offer` / `skip.accept` defined in Dialogue rule 3b (accept holds like a pass line, then next request or clock-out); PR-18, PR-21 updated. Status stays In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (re-review, session 6c-2, fresh session) — Verdict: APPROVED
+Scope signal: M
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 0 | Recommended: 2
+Summary: Both 6c blockers are resolved and agree with the partner docs. Restart (rule 12a) is now a broadcast the Query Workbench subscribes to — workbench rule 14, its Interactions row, the "If Progression restarts a puzzle" edge case and QW-30 reset the draft to empty/`prefill_sql`, clear the last result and verdict, and report draft-empty for the confirmation, matching PR-18. Kenji's `skip.offer` / `skip.accept` and the `side` kind are defined in Dialogue rule 3b (kind table, PassReaction state, Interactions row, RD-21) and match rules 5 and 7 and PR-21 (accept holds for `reaction_hold`, edits/Run do not end it, then next request or clock-out).
+Prior verdict resolved: Yes (6c blockers 1–2)
+Findings:
+- [RECOMMENDED] Dependencies / Cross-References: statuses stale — Puzzle Definition, Grader, Hint System and Constraint Challenges are Approved
+- [RECOMMENDED] Earlier 6c recommendations still open (repeated UNAVAILABLE, "Try it" on a shift's last main, empty-chapter star, Restart not logged — queued for 6d); not escalated
+Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md 9558b1a078e366f42f6a4c097e4f64070fec5cdd
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084

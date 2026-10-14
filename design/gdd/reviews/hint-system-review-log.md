@@ -35,3 +35,16 @@ Findings:
 Reviewed-Content-Hash: design/gdd/hint-system.md 394a085cd717f2725d70f437ec75e408a349ce90
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
 Revised in-session (2026-10-14, after the review; user decisions: define `hint_counted` in the Hint doc, apply the recommended items too): BLOCKING fixed — new rule 4b (`hint_counted` true only for a counted FAIL outside challenge mode; false for uncounted FAILs, PASS, SUBMIT_ERROR, UNAVAILABLE, challenge submits), Grader row now Grader ↔ Hints, Playtest Log row names the events, HS-19 checks the returned values. Also fixed: rule 4a normalization on `tokenize` tokens (comments dropped, WORD case-insensitive, others verbatim; HS-19 comment case), `active_time(p)` gains `shown(p)`, rule 3 / UI Req 1 challenge exception, statuses → Approved, Sandbox listed as soft lexer dependency. Grader and Playtest Log unchanged. Not done: Player Fantasy (advisory); sandbox doc does not yet list the Hint System as a `tokenize` consumer (add at 6d). Status stays In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (re-review, session 6c-2, fresh session) — Verdict: APPROVED
+Scope signal: M
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 0 | Recommended: 3
+Summary: The 6b blocker is resolved: rule 4b defines `hint_counted` (true only for a counted FAIL outside challenge mode; false for uncounted FAILs, PASS, SUBMIT_ERROR, UNAVAILABLE and challenge submits), the Grader row is now Grader ↔ Hints, and HS-19 checks the returned values — matching grader Interactions/AC-19 and `playtest-log.md` rule 4a/PL-17. Rule 4a normalization on `tokenize` tokens matches the sandbox lexer contract (rule 5a kinds), `shown(p)` puts the per-puzzle accrual and challenge pause into the formula, and the challenge-mode exception to rule 3 / UI Req 1 matches `constraint-challenges.md` rule 11.
+Prior verdict resolved: Yes (6b blocker: `hint_counted` contract)
+Findings:
+- [RECOMMENDED] Cross-doc (grader): `hidden-data-grader.md` Interactions (Playtest Log row) cites "hint rule 4a" for `hint_counted` — the owning rule is now 4b (same fix already queued for Playtest Log rule 4 at 6d)
+- [RECOMMENDED] Cross-References: Constraint Challenges status "In Review" is stale — Approved
+- [RECOMMENDED] Player Fantasy absent (advisory at `standard`; Game Feel partly covers it)
+Reviewed-Content-Hash: design/gdd/hint-system.md b6af973a2ceac733bb69ddf176fcadab0aeddf1b
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
