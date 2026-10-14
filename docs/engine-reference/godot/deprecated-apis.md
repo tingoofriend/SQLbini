@@ -1,6 +1,6 @@
 # Godot — Deprecated APIs
 
-Last verified: 2026-02-12
+Last verified: 2026-02-12 · 4.7 checked 2026-10-14
 
 If an agent suggests any API in the "Deprecated" column, it MUST be replaced
 with the "Use Instead" column.
@@ -41,3 +41,12 @@ with the "Use Instead" column.
 | `Texture2D` in `Shader.set_default_texture_parameter()` / `get_default_texture_parameter()` | `Texture` base type | Changed in 4.4; the shading language's `sampler2D` / `texture()` did not change |
 | Manual post-process viewport chains | `Compositor` + `CompositorEffect` | Structured post-processing (4.3+) |
 | GodotPhysics3D for new projects | Jolt Physics 3D | Default since 4.6; better stability |
+
+## 4.6 → 4.7
+
+The official migration guide (https://docs.godotengine.org/en/4.7/tutorials/migrating/upgrading_to_godot_4.7.html) lists **no deprecations** for 4.7.
+Renamed/removed members from that span are in `breaking-changes.md`:
+`RichTextLabel.UPDATE_WIDTH_IN_PERCENT` → `UPDATE_WIDTH_UNIT`;
+`width_in_percent`/`height_in_percent` → `width_unit`/`height_unit`;
+`DisplayServer.AccessibilityLiveMode` → `AccessibilityServer.AccessibilityLiveMode`;
+`AudioEffectSpectrumAnalyzer.tap_back_pos` removed; blend-space `sync` → `sync_mode`.

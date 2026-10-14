@@ -1,8 +1,38 @@
 # Godot — Breaking Changes
 
-Last verified: 2026-02-12
+Last verified: 2026-10-14 (4.6 → 4.7 span); earlier spans 2026-02-12
 
 Changes between Godot versions, focused on post-LLM-cutoff changes (4.4+).
+
+## 4.6 → 4.7 (2026-06-18 — POST-CUTOFF, HIGH RISK)
+
+Source: https://docs.godotengine.org/en/4.7/tutorials/migrating/upgrading_to_godot_4.7.html (verified 2026-10-14). GDS = GDScript-compatible.
+
+| Subsystem | Change | Details |
+|-----------|--------|---------|
+| Project defaults | New projects: `display/window/stretch/mode` = `canvas_items` (was `disabled`), `display/window/stretch/aspect` = `expand` (was `keep`) | Applies to newly created projects; set explicitly in `project.godot` to be certain |
+| Input | Mouse/keyboard device IDs | Were `0`; now `InputEvent.DEVICE_ID_MOUSE` / `InputEvent.DEVICE_ID_KEYBOARD`. Check by event type or compare against these constants |
+| GDScript | Typed-return overrides | Overrides of methods with a typed return inherit that type and need an explicit return (e.g. `return null`) |
+| GDScript | Packed array element assignment | Setting one element no longer calls the setter for the whole packed-array property |
+| GUI | `Control.accessibility_live` | Type `DisplayServer.AccessibilityLiveMode` → `AccessibilityServer.AccessibilityLiveMode` (GDS ✔, C# ❌) |
+| GUI | `RichTextLabel.ImageUpdateMask.UPDATE_WIDTH_IN_PERCENT` | Renamed `UPDATE_WIDTH_UNIT` (GDS ❌) |
+| GUI | `RichTextLabel.add_image` / `update_image` | `width`/`height` int → float; `width_in_percent`/`height_in_percent` → `width_unit`/`height_unit` of type `RichTextLabel.ImageUnit` (default `false` → `0`) |
+| Core | `Object.is_class` | `class` param String → StringName (GDS ✔) |
+| Core | `OptimizedTranslation.generate` | Returns `bool` (was void) |
+| Rendering | `CanvasItem` line drawing | No antialiasing feather added — lines look thinner; may need thicker widths |
+| Rendering | `LinearToSRGB` visual shader | No longer clamps to [0,1] on Mobile/Forward+ |
+| Rendering | `RenderingServer.particles_request_process_time` | `time` → `process_time`, optional `process_time_residual` |
+| Audio | `AudioEffectSpectrumAnalyzer.tap_back_pos` | Removed |
+| Physics | `AudioStreamPlayer.area_mask` default | Layer 1 → 0; projects using `audio_bus_override` on areas must set it back |
+| Physics | Jolt behavior | `WorldBoundaryShape3D.plane.d` sign flipped; `SoftBody3D` mass/stiffness semantics changed; `Area3D` reports `SoftBody3D` overlaps |
+| Physics | `PhysicsServer2DExtension._body_set_shape_as_one_way_collision` | GDExtension virtual gained `direction` param (breaks native implementations) |
+| Animation | `AnimationNodeBlendSpace1D/2D` | Bool `sync` replaced by `sync_mode` (`SyncMode` enum); `Animation.length` metadata float → double |
+| Editor | `EditorSceneFormatImporter` `IMPORT_*` constants | Moved into enum `ImportFlags` |
+| Editor | `EditorVCSInterface._commit` | Gained `amend` param |
+| Platform | Minimum macOS | 10.13 → 11 (Big Sur) |
+
+The migration guide has **no CodeEdit / TextEdit entries** — read as "no
+breaking change listed", not as verified-unchanged.
 
 ## 4.5 → 4.6 (Jan 2026 — POST-CUTOFF, HIGH RISK)
 

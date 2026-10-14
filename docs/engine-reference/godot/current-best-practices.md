@@ -1,9 +1,29 @@
 # Godot — Current Best Practices
 
-Last verified: 2026-02-12 | Engine: Godot 4.6
+Last verified: 2026-10-14 | Engine: Godot 4.7.2 (4.7 entries from the migration guide only)
 
 Practices that are **new or changed** since the model's training data (~4.3).
 This supplements (not replaces) the agent's built-in knowledge.
+
+## Godot 4.7 (from the 4.6 → 4.7 migration guide)
+
+Source: https://docs.godotengine.org/en/4.7/tutorials/migrating/upgrading_to_godot_4.7.html
+
+- **Set stretch explicitly in `project.godot`**: `display/window/stretch/mode="canvas_items"`
+  and `display/window/stretch/aspect="expand"` are the 4.7 new-project defaults.
+  A hand-written `project.godot` should state them rather than rely on defaults.
+- **Input device checks**: compare `event.device` against
+  `InputEvent.DEVICE_ID_MOUSE` / `InputEvent.DEVICE_ID_KEYBOARD`, never `0`;
+  better, branch on the event type (`InputEventKey`, `InputEventMouseButton`).
+- **Typed-return overrides need an explicit return**: an override of a
+  method with a typed return inherits that type, so every path must return
+  (e.g. `return null`).
+- **Accessibility API lives on `AccessibilityServer`** (e.g.
+  `AccessibilityServer.AccessibilityLiveMode` for `Control.accessibility_live`).
+- **Line drawing is thinner**: `CanvasItem` lines no longer get an antialiasing
+  feather — pick widths by looking at the result in 4.7.
+- **4.7 new features**: NOT SOURCEABLE this run — the 4.7 release-notes page
+  timed out; nothing here describes 4.7 additions, only changes.
 
 ## GDScript (4.5+)
 
