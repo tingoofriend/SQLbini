@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 2 — Your Query, Your Way
 
@@ -65,6 +65,9 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
    Grader Visual/Audio). The entry points live in the counter scene (rule 1):
    **Hint** (Hint System), **Manual** (Store Manual), **Back Room** (Back Room —
    shown from Chapter 2 only; in Chapter 1 the tab and its shortcut are absent).
+   While an Onboarding coach mark is showing (Guided mode), the hint and manual
+   "new" indicators on these tabs are suppressed; they appear as soon as no
+   coach mark is showing (each system still owns its indicator's state).
 
 **Run**
 
@@ -102,13 +105,21 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
     (`onboarding-first-shift.md` rule 2).
 12. The verdict (PASS stamp, FAIL note, SUBMIT_ERROR strip) is rendered as the
     grader's Visual/Audio section specifies and stays until the editor text
-    changes.
+    changes. On FAIL the note holds only the grader's neutral level-1 symptom
+    statement; the voiced line is in the bubble (Dialogue rule 2), never both.
+    A verdict of **`UNAVAILABLE`** (a dataset reported `CONTENT_ERROR` during
+    the submit) returns to `Editing`, changes nothing else, and shows the strip
+    "Content error — reported" with **no raw text**; the bubble carries
+    Dialogue's `error.CONTENT_ERROR` line.
 
 **Errors**
 
-13. A sandbox error (on Run or Submit) shows a strip at the editor: the voiced
-    line from Request & Reaction Dialogue, and beneath it SQLite's original
-    message in monospace (`no such column: prise`). If the message names a token
+13. A sandbox error (on Run or Submit) shows a strip at the editor holding only
+    the error **label** and SQLite's original `error_text` in monospace
+    (`no such column: prise`), or the sandbox's fixed message. The voiced line
+    from Request & Reaction Dialogue is in the bubble only (Run → Kenji,
+    Submit → the requester), never repeated in the strip. `CONTENT_ERROR` shows
+    "Content error — reported" and no raw text (rule 12). If the message names a token
     (`near "FORM"`, `no such column: prise`) and that token appears in the
     editor, its first occurrence is underlined.
 
@@ -131,6 +142,13 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
     Inside the editor, Tab indents — except that in an empty editor showing
     onboarding ghost text, Tab accepts it (`onboarding-first-shift.md`). All
     shortcuts are remappable (Accessibility Options, Vertical Slice).
+
+    **Esc precedence** (first match wins): (1) focus in an open overlay — the
+    message log, or the manual panel — closes it; (2) focus on a shown coach
+    mark dismisses the mark; (3) focus in the editor leaves the editor — this
+    holds **even while a coach mark is shown**, which then stays until "Got it",
+    Esc with the mark focused, or its target action (`onboarding-first-shift.md`
+    rule 7).
 16. The editor accepts text from an active IME (Korean and Japanese layouts),
     including composition; SQL keywords are ASCII but string literals may hold
     any Unicode.
@@ -155,7 +173,8 @@ Per open puzzle:
 | `Running` | | Error | `ShowingError` |
 | `ShowingRun` | Result, marks, Run note visible | Edit | `Editing` (results stale) |
 | `ShowingError` | Error strip visible | Edit | `Editing` (strip cleared) |
-| `Submitting` | Grader request in flight; Submit disabled to avoid double submit | Verdict | `ShowingVerdict` |
+| `Submitting` | Grader request in flight; Submit disabled to avoid double submit | Verdict (PASS / FAIL / SUBMIT_ERROR) | `ShowingVerdict` |
+| `Submitting` | | Verdict `UNAVAILABLE` | `Editing` (strip "Content error — reported", no raw text; nothing else changes) |
 | `ShowingVerdict` | Stamp / note / strip visible | Edit | `Editing` (verdict cleared) |
 | any | | Run or Submit | `Running` / `Submitting` |
 
@@ -166,17 +185,17 @@ it (the older result is discarded).
 
 | System | Direction | Data | Owner |
 |---|---|---|---|
-| Puzzle Definition & Datasets | Puzzle → Workbench | Title, request, schema, visible dataset, `reference_sql` (to compute the target) | Puzzle Definition |
+| Puzzle Definition & Datasets | Puzzle → Workbench | Title, request, schema, visible dataset, `reference_sql` (to compute the target), optional `prefill_sql` (the editor's starting text when a draft is first created; 1-1: `SELECT * FROM products;`) | Puzzle Definition |
 | SQL Execution Sandbox | Workbench → Sandbox → Workbench | Run requests (`query`/`scratch`); result or error (`columns`, `rows`, `error_kind`, `error_text`) | Sandbox |
-| Hidden-Data Grader | Workbench → Grader → Workbench | Submit (SQL text) → verdict, cause, level; Run match bit | Grader |
-| Request & Reaction Dialogue | Dialogue → Workbench | Request line, voiced feedback and error lines, the one-time Submit line | Dialogue |
+| Hidden-Data Grader | Workbench → Grader → Workbench | Submit (SQL text) → verdict (PASS / FAIL / SUBMIT_ERROR / `UNAVAILABLE`), cause, level, neutral symptom statement; Run match bit | Grader |
+| Request & Reaction Dialogue | Dialogue → Workbench | Request line, voiced feedback and error lines (in the bubble, by template id, e.g. `error.EMPTY`), the one-time Submit line | Dialogue |
 | Back Room | Workbench hosts | A tab that switches Run to `scratch` mode and shows the Back Room's controls | Back Room |
 | Hint System | Workbench hosts | Hint button; hint text panel | Hint System |
 | Store Manual | Workbench hosts | Manual button; manual overlay | Store Manual |
 | Constraint Challenges | Workbench hosts | Shows the active constraint (e.g. "No OR") and its live check — canonical character count or keyword presence (`constraint-challenges.md` rule 8) | Constraint Challenges |
 | Shift & Chapter Progression | Progression → Workbench | Which puzzle is open; PASS moves the shift on | Progression |
-| Playtest Log | Workbench → Log | Every Run and Submit with timestamps, edits between them | Workbench |
-| Onboarding: First Shift | Onboarding → Workbench | Prefilled text, highlighted elements in 1-1 to 1-3 | Onboarding |
+| Playtest Log | Workbench → Log | The `run` event (with timestamps and edits between Runs). The `submit` event is emitted by the Hidden-Data Grader, not the workbench | Workbench |
+| Onboarding: First Shift | Onboarding → Workbench | Ghost text, highlighted elements in 1-1 to 1-3; coach-mark visibility (suppresses tab indicators, rule 6). The 1-1 prefill is the puzzle's `prefill_sql` field (Puzzle Definition row) | Onboarding |
 | Accessibility Options (VS) | Options → Workbench | Text scale, contrast theme, shortcut remapping, reduced motion | Accessibility Options |
 
 ## Formulas
@@ -194,9 +213,9 @@ with key k are paired, the rest **− missing**. No marks if `cols(P) ≠ cols(T
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| P, T | row lists | P: 0–`R_cap`; T: 0–`visible_rows_max` | calculated | Player result and target, both on the visible dataset |
+| P, T | row lists | P: 0–`grader_row_cap`; T: 0–`visible_rows_max` | calculated | Player result and target, both on the visible dataset |
 | canon | function | — | constant | The grader's `canon` (`hidden-data-grader.md`) |
-| cnt_P(k), cnt_T(k) | int | 0–5000 | calculated | How many rows have key k |
+| cnt_P(k), cnt_T(k) | int | 0–`grader_row_cap` | calculated | How many rows have key k |
 | m_k | int | 0–min(cnt_P, cnt_T) | calculated | Pairs for key k |
 
 **Output Range:** one mark per row; `|P| = ✓ + extra`, `|T| = ✓ + missing`.
@@ -247,7 +266,9 @@ By `ui_scale`: 1.25 → 5 rows; 1.5 → `row_px = 36`, `H_table ≈ 155`, 4 rows
 1.75 → 3 rows; 2.0 → `row_px = 48`, `H_table ≈ 131`, **2 rows** (accepted: large
 text trades rows for legibility; the tables scroll). The 14 px floor keeps CJK text in string
 literals legible; 18/16 keeps the editor one step above the tables. Chapter 1's
-24 visible rows need scrolling in a full `SELECT *`; that is accepted.
+24 visible rows need scrolling in a full `SELECT *`; whether that is acceptable
+(and the value of `visible_rows_max`) is **pending `/ux-design`**, together with
+the question of a dedicated visible-data view (Open Question 7).
 **Example:** 1-5 at defaults: target 3 rows and the 5-row drinks result both fit
 without scrolling.
 
@@ -259,12 +280,14 @@ The **display_rows_max** formula is defined as:
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | display_rows_max | int | 50–500 (default 200) | data file | Rows built as visible table rows |
-| \|P\| | int | 0–5000 | calculated | Rows returned by the sandbox |
+| \|P\| | int | 0–`grader_row_cap` | calculated | Rows returned by the sandbox (fetch limit `grader_row_cap + 1`) |
+| grader_row_cap | int | 1,000–50,000 (default 5,000) | data file (grader knob) | Row cap owned by `hidden-data-grader.md`; every string below is formatted from it, never hardcoded |
 
 **Output Range:** 0–200 rendered rows; the count line always gives the true count
 ("1,000 rows — showing the first 200"); marks and the summary are computed over
-all rows. The target (≤ 30 rows) is never cut. A sandbox `truncated` result
-shows "5,000+ rows — too many to compare" and no marks.
+all rows. The target (≤ `visible_rows_max` rows) is never cut. A sandbox
+`truncated` result shows "{grader_row_cap}+ rows — too many to compare" (at the
+default, "5,000+ rows — …") and no marks.
 **Example:** `SELECT * FROM products` on visible → 24 rendered. A cross join of
 576 rows → 200 rendered, summary over all 576.
 
@@ -276,14 +299,14 @@ discarded by request order.
 *Drafted without specialists — Lean mode.*
 
 **Run and results**
-- **If the player presses Run with an empty editor**: the sandbox returns `EMPTY`; the strip says "Nothing to run yet" with the manager's line; nothing else changes.
+- **If the player presses Run with an empty editor**: the sandbox returns `EMPTY`; the strip shows the `EMPTY` label and the bubble Kenji's `error.EMPTY` line (Dialogue rule 6); nothing else changes.
 - **If Run returns zero rows**: the table shows "0 rows" and every target row is marked "− missing" (when column counts match).
 - **If the column count differs from the target**: no row marks; one line states both counts ("You returned 3 columns; the request needs 2").
 - **If the player's columns are in a different order from the target** (same count): row marks compare by position, so rows show "+ extra" / "− missing"; the column headers of both tables stay visible so the swap can be seen.
-- **If the result has more rows than `display_rows_max`**: only the first `display_rows_max` rows are built (no paging at MVP); the count line stays exact ("1,000 rows — showing the first 200", up to 5,000, then "5,000+ rows — too many") and marks cover all rows (Formulas).
-- **If Run returns a sandbox rejection or limit** (`MULTI_STATEMENT`, `NOT_A_QUERY`, `UNSUPPORTED`, `TIMEOUT`): the error strip (rule 13) shows the voiced line and the sandbox's fixed message; no underline; the previous result, if any, stays and is marked stale. `MULTI_STATEMENT` is the likely beginner case (two queries in the editor) — its voiced line says to run one at a time.
-- **If the target cannot be computed** (sandbox `CONTENT_ERROR` on the reference): the Target table shows "Target unavailable — content error", no marks or Run note, and the error is logged for content; Run and Submit stay available (the grader treats the submit as an internal error, not counted).
-- **If the result is truncated by the sandbox (over 5,000 rows)**: shown as "5,000+ rows — too many to compare"; no row marks; Submit would be a SUBMIT_ERROR.
+- **If the result has more rows than `display_rows_max`**: only the first `display_rows_max` rows are built (no paging at MVP); the count line stays exact ("1,000 rows — showing the first 200", up to `grader_row_cap`, then "{grader_row_cap}+ rows — too many") and marks cover all rows (Formulas).
+- **If Run returns a sandbox rejection or limit** (`MULTI_STATEMENT`, `NOT_A_QUERY`, `UNSUPPORTED`, `TIMEOUT`): the error strip (rule 13) shows the label and the sandbox's fixed message, and the bubble Kenji's voiced line; no underline; the previous result, if any, stays and is marked stale. `MULTI_STATEMENT` is the likely beginner case (two queries in the editor) — its voiced line says to run one at a time.
+- **If the target cannot be computed** (sandbox `CONTENT_ERROR` on the reference): the Target table shows "Target unavailable — content error", no marks or Run note, no raw text, and the build message goes to the content-bug report only; Run and Submit stay available. A Submit then returns verdict `UNAVAILABLE`: `Submitting` → `Editing`, strip "Content error — reported", Kenji's `error.CONTENT_ERROR` line in the bubble, nothing counted or changed (rule 12).
+- **If the result is truncated by the sandbox (over `grader_row_cap` rows)**: shown as "{grader_row_cap}+ rows — too many to compare"; no row marks; Submit would be the grader's SUBMIT_ERROR `TOO_MANY_ROWS`.
 - **If the player runs again while a Run is in flight**: the older result is discarded; only the newest is shown.
 - **If the puzzle is ordered** (Chapter 2+): row marks ignore order; when every row matches but the order differs, one line says "Rows match; order differs" and the Run note is hidden (it requires order too).
 - **If both the player's result and the target have zero rows** (same column count): "0 rows", no marks, and the Run note appears — correct, but content should avoid zero-row targets on the visible dataset (Puzzle Definition reports them).
@@ -293,7 +316,7 @@ discarded by request order.
 - **If the player submits text they have never run**: allowed (Pillar 3); the verdict is shown as usual.
 - **If the player double-presses Submit**: the second press is ignored while `Submitting`.
 - **If the player edits while `Submitting`**: the verdict, when it arrives, is still shown but marked as "for the previous text" and cleared on the next edit.
-- **If a SUBMIT_ERROR occurs**: the strip appears at the editor (never in the result area), with SQLite's original message beneath the voiced line.
+- **If a SUBMIT_ERROR occurs**: the strip appears at the editor (never in the result area) with the label and SQLite's original message; the requester's voiced line is in the bubble only.
 
 **Editing**
 - **If an error message names a token that appears several times**: only the first occurrence is underlined.
@@ -399,6 +422,8 @@ The workbench should feel like a fast terminal behind a calm counter (Pillar 3).
 - **Instant Run**: result, row marks and note within **200 ms at p95** of the key
   press (grader Game Feel); measured sandbox cost is ~0.37 ms, so the budget is
   almost entirely UI. No spinner below 200 ms; above it, a quiet "checking…" label.
+  The budget applies to Runs that complete; a Run that ends in sandbox
+  `TIMEOUT` is exempt (it shows "checking…" until the error arrives).
 - **Never blocked**: typing, scrolling and pane switching stay live during Run
   and Submit; no modal dialogs on errors.
 - **Cheap mistakes**: errors appear beside the editor in one beat, with the exact
@@ -436,10 +461,10 @@ This system *is* the main gameplay screen; its full screen-level spec belongs to
 | This document references | Where | What | Status |
 |---|---|---|---|
 | `design/gdd/hidden-data-grader.md` | Core Rules 8–12, Visual/Audio | `canon`, match bit, verdict visuals, "Run never passes" | In Review |
-| `design/gdd/sql-execution-sandbox.md` | Core Rules 7, 13, Edge Cases | Modes, result shape, `error_kind`/`error_text`, `R_cap` truncation | In Review |
+| `design/gdd/sql-execution-sandbox.md` | Core Rules 7, 13, Edge Cases | Modes, result shape, `error_kind`/`error_text`, `grader_row_cap` truncation | In Review |
 | `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–5 | Puzzle fields; target computed from `reference_sql`; `visible_rows_max` (Open Question 6) | In Review |
-| `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1, Formulas, Visual/Audio | Counter scene (fixed 120 px, ×4), message log | Designed |
-| `design/gdd/onboarding-first-shift.md` | Core Rules 2, 3, 6 | Guided 1-1 Submit; auto-separator for 1-2; Tab accepts ghost text | In Review |
+| `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1, Formulas, Visual/Audio | Counter scene (fixed 120 px, ×4), message log; voiced lines and `error.*` template ids; bubble vs. strip split | In Review |
+| `design/gdd/onboarding-first-shift.md` | Core Rules 1, 2, 3, 6, 15 | Guided 1-1 Submit; auto-separator for 1-2; Tab accepts ghost text; Esc precedence; indicator suppression | In Review |
 | `design/gdd/game-concept.md` | Overview, Rules 8, 11 | Pillars 2–3; concept review findings (Run vs Submit, row-diff marking, onboarding) | Source of intent |
 | `docs/engine-reference/godot/modules/ui.md` | UI Requirements 4, 7 | Dual focus (4.6), AccessKit (4.5), FoldableContainer (4.5) | Verified for 4.6, not re-verified for 4.7 |
 | `prototypes/sqlbini-spike-2026-10-14/` | Overview | `CodeEdit` with SQL highlighting proven | Evidence |
@@ -453,7 +478,7 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 [UI] = a retained screenshot in `production/qa/evidence/`.*
 
 **Screen and Run**
-- **QW-01 [UI]** GIVEN a Chapter 1 puzzle and a Chapter 2 puzzle open at 1280×720 with default settings, WHEN each screen is captured, THEN the counter scene (with message-log button and Hint / Manual tabs, plus the Back Room tab on the Chapter 2 capture only), editor, schema browser, Your result, Target and feedback area are all visible without overlap; the schema browser collapses; the two tables scroll independently.
+- **QW-01 [UI] [Alpha]** *(MVP part: the Chapter 1 capture; the Chapter 2 capture needs Chapter 2 / Back Room)* GIVEN a Chapter 1 puzzle and a Chapter 2 puzzle open at 1280×720 with default settings, WHEN each screen is captured, THEN the counter scene (with message-log button and Hint / Manual tabs, plus the Back Room tab on the Chapter 2 capture only), editor, schema browser, Your result, Target and feedback area are all visible without overlap; the schema browser collapses; the two tables scroll independently.
 - **QW-02 [Logic]** GIVEN any editor text, WHEN Run is pressed, THEN the sandbox is called in `query` mode (`scratch` with the Back Room tab active), no grader verdict is produced, and a row count is shown ("3 rows").
 - **QW-03 [Logic]** GIVEN 1-5, WHEN `… price < 200` is run, THEN 3 ✓, 0 + extra, 0 − missing.
 - **QW-04 [Logic]** GIVEN 1-5, WHEN `SELECT name, price FROM products WHERE category = 'Drinks'` is run, THEN 3 ✓ plus + extra Cola 500ml 216 and Energy Drink 248, and the summary reads "3 ✓ · 2 + extra · 0 − missing".
@@ -465,28 +490,31 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 - **QW-10 [Integration]** GIVEN a shown Run, WHEN the text is edited, THEN marks and the Run note hide, the "Stale — run again" tag shows, and the tables are de-emphasised.
 - **QW-11 [UI]** GIVEN the stale screen, WHEN captured, THEN all text is ≥ 4.5:1, glyphs and borders ≥ 3:1, and the tag is glyph + word.
 - **QW-12 [Integration]** GIVEN a Run already in flight (stub sandbox with a delay), WHEN Run is pressed again, THEN only the newer result is shown and the older is discarded.
-- **QW-13 [Performance]** GIVEN ≥ 100 Runs of 1-5 queries, THEN key press → result, marks and note ≤ 200 ms at p95; typing, scrolling and pane switching stay live during Run and Submit; GIVEN a stub delay of 300 ms, THEN a "checking…" label appears after 200 ms.
+- **QW-13 [Performance]** GIVEN ≥ 100 Runs of 1-5 queries, THEN key press → result, marks and note ≤ 200 ms at p95 (Runs ending in `TIMEOUT` excluded); typing, scrolling and pane switching stay live during Run and Submit; GIVEN a stub delay of 300 ms, THEN a "checking…" label appears after 200 ms.
 
 **Submit and errors**
 - **QW-14 [Integration]** GIVEN the editor text, WHEN Submit is pressed, THEN the grader is called (separately from Run); a second press while `Submitting` is ignored; never-run text is accepted; Submit and Run are not adjacent such that one mis-click hits the other.
-- **QW-15 [Integration]** GIVEN a fresh profile, WHEN the player submits for the first time, THEN the manager's Run-vs-Submit line appears once and is skippable; it does not appear on later submits.
+- **QW-15 [Integration]** GIVEN a fresh profile with onboarding **Guided**, THEN the manager's Run-vs-Submit line does not appear on 1-1 and appears once, skippable, on the first submit of 1-2; GIVEN onboarding **Off**, THEN it appears once on the first submit (1-1). It never appears on later submits.
 - **QW-16 [Integration]** GIVEN the player edits while `Submitting`, WHEN the verdict arrives, THEN it is shown labelled "for the previous text" and clears on the next edit.
-- **QW-17 [Integration]** GIVEN `SELECT prise FROM products`, WHEN Run is pressed, THEN a strip beside the editor shows the voiced line and `no such column: prise` in monospace, and the first `prise` is underlined; GIVEN an error naming no token, THEN no underline; a SUBMIT_ERROR uses the same strip, never the result area.
+- **QW-17 [Integration]** GIVEN `SELECT prise FROM products`, WHEN Run is pressed, THEN a strip beside the editor shows the error label and `no such column: prise` in monospace (the voiced line only in the bubble, not the strip), and the first `prise` is underlined; GIVEN an error naming no token, THEN no underline; a SUBMIT_ERROR uses the same strip, never the result area.
+- **QW-27 [Integration]** GIVEN a stub grader returning `UNAVAILABLE`, WHEN Submit is pressed, THEN the state returns to `Editing`, the strip shows "Content error — reported" with no raw or build text, and no verdict, counter or puzzle state changes.
+- **QW-28 [Integration]** GIVEN a coach mark shown and focus in the editor, WHEN Esc is pressed, THEN focus leaves the editor and the mark stays; GIVEN focus on the mark, Esc dismisses it; GIVEN a coach mark shown and a new manual page or hint unlocked, THEN no "new" indicator shows until the mark is gone.
+- **QW-29 [Logic]** GIVEN `grader_row_cap` set to 1,000 and a truncated result, THEN the strings read "1,000+ rows — too many to compare"; no workbench string contains a hardcoded 5000 / 5,000.
 
 **Editing and input**
 - **QW-18 [Logic]** GIVEN two puzzles, WHEN the player switches away and back in the session, THEN the draft, last result and last verdict are restored.
-- **QW-19 [Integration]** THEN Ctrl+Enter runs, Ctrl+Shift+Enter submits, F6 / Shift+F6 cycle the five panes in order, Esc leaves the editor, Ctrl+H / M open Hint / Manual, Ctrl+B opens the Back Room on a Chapter 2 puzzle and does nothing on a Chapter 1 puzzle, and Tab indents while the editor has focus (except accepting onboarding ghost text in an empty editor).
+- **QW-19 [Integration] [Alpha]** *(MVP part: everything except the Chapter 2 Ctrl+B check)* THEN Ctrl+Enter runs, Ctrl+Shift+Enter submits, F6 / Shift+F6 cycle the five panes in order, Esc leaves the editor, Ctrl+H / M open Hint / Manual, Ctrl+B opens the Back Room on a Chapter 2 puzzle and does nothing on a Chapter 1 puzzle, and Tab indents while the editor has focus (except accepting onboarding ghost text in an empty editor).
 - **QW-20 [UI]** GIVEN keyboard focus on each pane, WHEN captured, THEN a focus ring is visible, distinct from hover, ≥ 3:1.
 - **QW-21 [Integration]** GIVEN an in-progress Korean or Japanese IME composition, WHEN Run is pressed, THEN the composition is committed and the committed text is executed. *(May be manual-only until Open Question 4 is resolved.)*
 - **QW-22 [Integration]** GIVEN a schema table or column clicked (or selected + Enter), THEN its name is inserted at the caret, with a brief flash unless reduced motion is on. GIVEN `SELECT ▮ FROM products`, WHEN `name` then `price` are clicked, THEN the text is `SELECT name, price FROM products`; GIVEN the caret after `WHERE ` or after `SELECT name, `, THEN no separator is added.
 
 **Scale and limits**
-- **QW-23 [Logic]** GIVEN a 576-row cross join, THEN 200 rows render, the count reads "576 rows — showing the first 200", and marks cover all 576; GIVEN a truncated sandbox result, THEN "5,000+ rows — too many to compare" and no marks.
+- **QW-23 [Logic]** GIVEN a 576-row cross join, THEN 200 rows render, the count reads "576 rows — showing the first 200", and marks cover all 576; GIVEN a truncated sandbox result at the default `grader_row_cap`, THEN "5,000+ rows — too many to compare" (formatted from the knob) and no marks.
 - **QW-24 [Logic]** GIVEN default settings, THEN `editor_font_px = 18`, `table_font_px = 16`, `row_px = 24`, `rows_visible = 7`; at `ui_scale` 1.25 / 1.5 / 1.75 / 2.0, `rows_visible` = 5 / 4 / 3 / 2 and the counter scene stays 120 px; fonts outside 14–32 and scale outside 1.0–2.0 (step 0.25) are clamped.
 
 **Back Room tab**
-- **QW-25 [UI]** GIVEN the Back Room tab active, THEN "Back Room — practice data" is always visible, the Target table and marks are hidden, and the Run note is absent.
-- **QW-26 [Integration]** GIVEN the Back Room tab active, WHEN Submit is pressed, THEN the grader grades the editor text against visible + hidden data, identically to the main view.
+- **QW-25 [UI] [Alpha]** GIVEN the Back Room tab active, THEN "Back Room — practice data" is always visible, the Target table and marks are hidden, and the Run note is absent.
+- **QW-26 [Integration] [Alpha]** GIVEN the Back Room tab active, WHEN Submit is pressed, THEN the grader grades the editor text against visible + hidden data, identically to the main view.
 
 *Not covered here:* screen-reader labels (UI Requirement 7) until Open Question 3
 is resolved; the Hint panel and constraint character count belong to their own
@@ -501,3 +529,5 @@ GDDs.
 | 3 | Does `CodeEdit` expose its text and caret to screen readers via AccessKit in Godot 4.7? | ui-programmer / accessibility-specialist | Before the accessibility requirements doc |
 | 4 | Korean/Japanese IME composition inside `CodeEdit` on Windows and Linux — verify early (the developer types Korean). | ui-programmer | First workbench prototype |
 | 5 | Should the Target table be hideable (an "expert" mode where the player works only from the request)? | game-designer | After Chapter 1 playtest |
+| 6 | Hint panel layout slot: where the Hint System's panel sits (the manual panel already covers the results column), and one rule for manual vs. hint overlays. Deferred, not designed here (cross-review W8). | ux-designer | `/ux-design` |
+| 7 | Dedicated visible-data view vs. "read the shelf by Run": does the player need a view of the visible dataset, and what is `visible_rows_max` (registry 30, pending)? Scope decision for the user (cross-review W30). | ux-designer + user | `/ux-design` |

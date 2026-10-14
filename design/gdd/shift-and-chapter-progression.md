@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -44,7 +44,8 @@ amounts are content values.
    **shifts**; a shift has 3–5 **main** requests, in a fixed order, and may offer
    **side** requests. The last main request of the last shift is the chapter's
    **boss**.
-2. Chapter 1 ("First Shift", 2026-03-02) is laid out as:
+2. Chapter 1 ("Day One", 2026-03-02) is laid out as (the Onboarding: First
+   Shift system covers its Morning shift, 1-1 to 1-3):
 
 | Shift | Main requests | Side requests offered | Notes |
 |---|---|---|---|
@@ -84,7 +85,11 @@ amounts are content values.
    `exhausted` has a time path, this holds for a player who only produces
    syntax errors or never submits: at hint defaults the offer can appear after
    11 active minutes. The offer still requires both hints to have been opened —
-   the skip comes after asking for help, never instead of it.
+   the skip comes after asking for help, never instead of it. Accepting the
+   skip on the boss (or on any shift's last main request): Kenji's accept line
+   plays for its `reaction_hold`, then the shift clocks out and the payslip is
+   shown (rule 6). The location of the persistent "Leave it for Kenji" button
+   is deferred to `/ux-design`.
 8. A skipped request stays in the chapter list and can be reopened at any time;
    passing it later turns it into **passed**. Skipping costs nothing beyond the
    chapter star (rule 9).
@@ -103,7 +108,9 @@ amounts are content values.
 **The payslip**
 
 10. At clock-out the payslip lists the shift's requests with their marks
-    (passed / left for later), constraint challenges cleared, and a fixed
+    (passed / left for later), constraint challenges cleared during that shift
+    (a clear after the final clock-out shows on the End of day screen only —
+    `constraint-challenges.md` rule 6b), and a fixed
     **wage** in yen for the shift (a content value per shift — Chapter 1: ¥3,000
     per shift). The wage is **flavour only**: it is never spent, saved up, or
     used to unlock anything (anti-pillar: not a management sim).
@@ -117,8 +124,10 @@ amounts are content values.
     no menus between puzzles. A constraint challenge offer is not a menu: it is
     shown inline with the PASS reaction, never waits for an answer, and moves to
     an offer ticket on the counter strip if unanswered
-    (`constraint-challenges.md` rules 6–6a). While challenge mode is
-    open the shift does not advance; leaving it returns to the open main
+    (`constraint-challenges.md` rules 6–6b). While challenge mode is
+    open the shift does not advance; the open main request (already `Open`,
+    its `request_open` fired) stays `Open`, and its hint clock is paused
+    (`hint-system.md` rule 12). Leaving challenge mode returns to the open main
     request.
 12. The **chapter list** (opened from the shift screen; the "chapter menu" in
     the grader and hint GDDs) shows every request of the chapter with its
@@ -128,8 +137,10 @@ amounts are content values.
 12a. **Restart** — also on the chapter list, for any request that is `Open`,
     `Skipped` or `Passed`. It resets that request's working state: grader
     per-cause counters to 0, Hint System to `Locked` (counters, snapshots and
-    `exhausted` cleared), the editor draft to empty (1-1's prefill returns —
-    Onboarding), the result panel cleared. It never changes progress: a
+    `exhausted` cleared), the editor draft to empty (or to the puzzle's
+    `prefill_sql` when it has one — 1-1's `SELECT * FROM products;`, Puzzle
+    Definition), the result panel cleared. Restart is broadcast as an event;
+    the Hint System and the grader subscribe to it to reset their state. It never changes progress: a
     `Passed` request stays `Passed`, a `Skipped` one stays `Skipped`, and the
     challenge state, manual pages and Playtest Log history are kept. When the
     draft is non-empty, Restart asks once ("Start this request over? Your
@@ -171,11 +182,12 @@ independently, `Starred` (all main passed).
 |---|---|---|---|
 | Puzzle Definition & Datasets | Puzzle → Progression | `chapter`, `shift`, `order`, `flags` (tutorial, side, boss), chapter "today", shift wage | Puzzle Definition |
 | Hidden-Data Grader | Grader → Progression | PASS events | Grader |
-| Hint System | Hints → Progression | `exhausted` per request | Hint System |
-| Constraint Challenges | both | Base PASS triggers the offer; challenge marks on the chapter list and payslip | Constraint Challenges |
+| Hint System | Hints ↔ Progression | `exhausted` per request (Hints → Progression); Restart event broadcast by Progression, subscribed to by the Hint System (Progression → Hints) — a runtime cycle | Hint System (`exhausted`); Progression (Restart) |
+| Constraint Challenges | both | Base PASS triggers the offer; challenge marks on the chapter list; a clear shows on the payslip of the shift in which it is cleared (after the final clock-out: End of day screen only — `constraint-challenges.md` rule 6b) | Constraint Challenges |
 | Query Workbench | Progression → Workbench | Which request is open | Progression |
 | Request & Reaction Dialogue | Progression → Dialogue | Shift briefing, Kenji's skip offer, side-request messages | Dialogue |
-| Store Manual | Progression → Manual | Request opened (manual pages unlock by the request's keywords) | Store Manual |
+| Store Manual | Progression → Manual | Request opened (manual pages unlock by the request's `manual_pages`) | Store Manual |
+| Onboarding: First Shift | Progression → Onboarding | Request opened for 1-1 to 1-3 (Morning shift of Day One); Restart returns 1-1's `prefill_sql` (coach marks do not replay) | Onboarding |
 | Save/Load & Settings (VS) | Progression → Save | Request, shift, chapter states | Save/Load |
 | Game Shell & Screen Flow (VS) | Shell → Progression | Start / continue chapter | Game Shell |
 | Achievements (VS) | Progression → Achievements | Chapter complete / starred events | Achievements |
@@ -214,14 +226,17 @@ independently, `Starred` (all main passed).
 
 **Soft / hosted:** Constraint Challenges (offer after PASS; marks), Request &
 Reaction Dialogue (briefings, Kenji's offer, side messages), Query Workbench
-(open request), Store Manual (unlock by keywords), Playtest Log.
+(open request), Store Manual (unlock by `manual_pages`), Onboarding: First
+Shift (Morning shift requests; Restart prefill), Playtest Log.
 
 **Downstream (VS):** Save/Load & Settings, Game Shell & Screen Flow, Achievements.
 
 **Bidirectionality:** the grader, puzzle definition, hint system, constraint
 challenges, dialogue, store manual, onboarding and playtest log list Shift &
 Chapter Progression ✓. Restart (rule 12a) is the action the grader (counter
-reset), Hint System (rule 8) and Onboarding (OB-16) refer to.
+reset), Hint System (rule 8; subscribes to the Restart event) and Onboarding
+(OB-16) refer to. Hint↔Progression is a runtime cycle (`exhausted` one way,
+Restart the other), carried by events.
 
 ## Tuning Knobs
 
@@ -261,7 +276,7 @@ judgement. Mastery is visible (the star) but never required to keep going.
 ## UI Requirements
 
 1. Shift screen: current shift name, requests done / total, access to the chapter list.
-2. Kenji's offer: **Leave it for Kenji** / **Keep trying**, keyboard reachable; the "Leave it for Kenji" button stays on an exhausted request.
+2. Kenji's offer: **Leave it for Kenji** / **Keep trying**, keyboard reachable; the "Leave it for Kenji" button stays on an exhausted request (its location is deferred to `/ux-design`).
 3. Payslip after each shift with **Next shift** / **Stop for today**.
 4. Chapter list: every request with state (locked / open / passed / left for later / unavailable), challenge mark, replay/reopen and restart actions.
 5. All states glyph + word; ≥ 4.5:1 contrast.
@@ -277,8 +292,8 @@ judgement. Mastery is visible (the star) but never required to keep going.
 |---|---|---|---|
 | `design/gdd/hint-system.md` | Core Rule 7 | `exhausted` event (fails or time path, hint rule 11); Open Question 3 answered here (skip any main request incl. boss) | In Review |
 | `design/gdd/constraint-challenges.md` | Rules 2, 9–10 | Chapter 1 challenge puzzles; challenges never affect completion | In Review |
-| `design/gdd/puzzle-definition-and-datasets.md` | Rules 1, 3 | Ordering fields, flags, chapter definition | In Review |
-| `design/gdd/onboarding-first-shift.md` | Rule 12a | Restart returns 1-1's prefill (OB-16) | Designed |
+| `design/gdd/puzzle-definition-and-datasets.md` | Rules 1, 3, 12a | Ordering fields, flags, chapter definition; `prefill_sql` | In Review |
+| `design/gdd/onboarding-first-shift.md` | Rule 12a, Interactions | Restart returns 1-1's `prefill_sql` (OB-16); Morning shift of Day One | In Review |
 | `design/gdd/game-concept.md` | Overview, Rules 9–10 | Session loop, "skippable puzzles prevent hard stops", anti-pillar (no economy) | Source of intent |
 | `design/levels/chapter-1-puzzles.md` | Rule 2 | Chapter 1 request list | Level design |
 
@@ -313,13 +328,14 @@ GDDs. [UI] = retained screenshot in `production/qa/evidence/`.*
 - **PR-16 [UI]** GIVEN the chapter list, THEN each request shows glyph + word for locked / open / passed / left for later / unavailable, plus a challenge mark and a replay/reopen action, at ≥ 4.5:1, never colour alone.
 - **PR-18 [Integration]** GIVEN 1-5 `Open` with 2 FAILs, step 1 read and a draft, WHEN Restart is chosen and confirmed, THEN grader counters are 0, hints `Locked`, the draft empty and the request still `Open`; GIVEN a `Passed` or `Skipped` request, WHEN restarted, THEN its progress state is unchanged; GIVEN 1-1, WHEN restarted, THEN the prefill returns; GIVEN an empty draft, THEN no confirmation is asked; **Cancel** changes nothing.
 - **PR-19 [Logic]** GIVEN the Morning shift `ClockedOut`, THEN 1-4 is `Locked` until *Next shift* (or continue after *Stop for today*), then `Open`; GIVEN *Stop for today* at MVP, THEN the shift screen shows the "Progress is kept until you close the game" note and progress is intact.
-- **PR-20 [Integration]** GIVEN 1-6's challenge in challenge mode while 1-7 is `Open`, THEN 1-7 stays `Open` and no shift advances until challenge mode is left, after which 1-7 is shown.
+- **PR-20 [Integration]** GIVEN 1-6's challenge in challenge mode while 1-7 is `Open`, THEN 1-7 stays `Open` (its `request_open` logged once, before challenge mode), its hint `active_time` does not grow, and no shift advances until challenge mode is left, after which 1-7 is shown.
+- **PR-21 [Integration]** GIVEN boss 1-11 exhausted, WHEN the player accepts Kenji's offer, THEN Kenji's accept line is shown for its `reaction_hold`, then the Closing shift clocks out, the payslip lists 1-11 as left for later, and End of day follows.
 - **PR-17 [Integration]** GIVEN opens, passes, skips, unavailable requests, clock-outs and chapter completion, THEN each is written to the Playtest Log with a timestamp as `request_open`, `request_pass`, `request_skip`, `request_unavailable`, `shift_clockout`, `chapter_complete` (`playtest-log.md` rule 4).
 
 ## Open Questions
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | Does allowing a boss skip undermine the chapter's climax? Watch skip rates on 1-11 in the zero-SQL playtest; fallback: boss skip only after a longer exhaust threshold. | game-designer | Zero-SQL playtest |
-| 2 | Is the payslip's wage meaningful as flavour, or confusing without a use? (Game-designer review flagged "wage has no use".) Alternative: replace the yen amount with a manager's comment. | game-designer + narrative-director | Request & Reaction Dialogue GDD |
-| 3 | Shift split for Chapter 1 (3 / 4 / 4) — confirm with playtest timings (target 30–60 min per shift is long for 3–4 puzzles of ~5 min). | level design | Zero-SQL playtest |
+| 1 | Does allowing a boss skip undermine the chapter's climax? Watch skip rates on 1-11 in the zero-SQL playtest; fallback: boss skip only after a longer exhaust threshold — the planned per-puzzle hint override for 1-11 (`hint-system.md` Tuning Knobs, OQ 6). | game-designer | Zero-SQL playtest |
+| 2 | Is the payslip's wage meaningful as flavour, or confusing without a use? (Game-designer review flagged "wage has no use".) Alternative: replace the yen amount with a manager's comment. **Progression owns this question** (Request & Reaction Dialogue defers to it). | game-designer + narrative-director | Zero-SQL playtest |
+| 3 | Shift split for Chapter 1 (3 / 4 / 4) — confirm with playtest timings (target 30–60 min per shift is long for 3–4 puzzles of ~5 min). Stays open; the game concept points here for shift length. | level design | Zero-SQL playtest |

@@ -1,7 +1,7 @@
 # Game Concept: SQLbini
 
 *Created: 2026-10-14*
-*Status: Draft — revised 2026-10-14 after `/design-review` (NEEDS REVISION) and the concept playtest*
+*Status: Draft — revised 2026-10-14 after `/design-review` (NEEDS REVISION) and the concept playtest; 2026-10-14 cross-GDD review fixes*
 *Source draft: `prototypes/sqlbini-web/original-design-draft.md`; Chapter 1 puzzles: `design/levels/chapter-1-puzzles.md` (verified by `prototypes/sqlbini-web/ch1.py`)*
 
 ---
@@ -23,7 +23,7 @@
 | **Platform** | PC (Steam) |
 | **Target Audience** | Mastery-driven puzzle players and practical SQL learners (see Target Player Profile) |
 | **Player Count** | Single-player |
-| **Session Length** | 30–60 min (one shift = 3–5 puzzles) |
+| **Session Length** | 30–60 min (one shift = 3–5 puzzles) — *pending playtest: Chapter 1's 3 / 4 / 4 split at ~4.6 min/puzzle gives ≈ 15–18 min per shift; see `shift-and-chapter-progression.md` Open Question 3* |
 | **Monetization** | Premium; Chapter 1 as a free demo (Steam Next Fest) |
 | **Estimated Scope** | Medium (6–9 months, solo, first game) — see Scope Tiers |
 | **Comparable Titles** | Human Resource Machine, TIS-100, SQL Murder Mystery (web) |
@@ -33,7 +33,7 @@
 ## Core Fantasy
 
 You are the part-timer who **actually understands the condition**. On your
-first shift you fall for every trap — a customer asked for drinks "under 200",
+first day (Chapter 1, "Day One") you fall for every trap — a customer asked for drinks "under 200",
 and you had to decide whether the ¥200 lemon soda counts; the snack list let a
 ¥40 corn stick sneak in; the "no expiry date" list missed the umbrella filed
 under Misc. By closing time you check the boundaries before the manager has to
@@ -102,7 +102,8 @@ hardcoded or boundary-careless ones (mastery).
 - Players **iterate rapidly** — run, look, tweak — treating the visible data
   as a free scratchpad.
 - Experienced SQL users **compete with themselves** on query length and clause
-  count.
+  count. *(Depends on Efficiency Stats — Vertical Slice — and length challenges
+  (`max_chars`) — Alpha; not available in the MVP.)*
 
 ### Core Mechanics (Systems we build)
 
@@ -139,7 +140,8 @@ hardcoded or boundary-careless ones (mastery).
    characters; pass/fail and error messages are voiced by them (e.g. "There's no
    column called 'prise'. Did you mean 'price'?").
 4. **Constraint challenges** — optional re-runs of cleared puzzles with a rule
-   ("no `OR`", "under 60 characters") that force a different valid solution.
+   that forces a different valid solution. Chapter 1 ships "use `BETWEEN`" and
+   "no `IN`"; length challenges ("under N characters") are Alpha.
 5. **Shift progression** — puzzles grouped into shifts and chapters; each
    chapter introduces SQL concepts and ends with a boss puzzle combining them.
 
@@ -185,13 +187,15 @@ like a fast terminal, not a test: write, run, see, fix.
 One puzzle. When confident, the player **submits**: the query is graded on
 hidden datasets A and B. Failure shows escalating feedback (never the hidden
 rows) and the requester's reaction ("Give me an answer that's always right, not just right
-today"). Passing shows efficiency stats and unlocks the puzzle's **constraint
-challenge**. "One more puzzle" lives in the short gap between requests.
+today"). Passing unlocks the puzzle's **constraint challenge**, if it has one;
+efficiency stats arrive from the Vertical Slice. "One more puzzle" lives in the
+short gap between requests.
 
 ### Session-Level (30-60 minutes)
 
-One shift: 3–5 puzzles, ending with clocking out and receiving the day's
-wage. The end of a shift is the natural stopping point. The reason to return
+One shift: 3–5 puzzles, ending with clocking out and receiving the shift's
+wage. *(Shift length pending playtest — ≈ 15–18 min at Chapter 1's 3 / 4 / 4
+split; `shift-and-chapter-progression.md` Open Question 3.)* The end of a shift is the natural stopping point. The reason to return
 is the next concept unlock and the constraint challenge left unbeaten.
 
 ### Long-Term Progression
@@ -207,7 +211,7 @@ cleared.
 - **Curiosity**: The next concept and the next request; the store's story through chat messages
 - **Investment**: Chapter progress; the characters' growing trust in you
 - **Social**: None in scope (shareable solutions are a post-launch idea)
-- **Mastery**: Unbeaten constraint challenges; personal-best query length and clause count
+- **Mastery**: Unbeaten constraint challenges; personal-best query length and clause count (from Efficiency Stats, Vertical Slice, and `max_chars` challenges, Alpha)
 
 ---
 
@@ -315,7 +319,7 @@ SQL on the job, where "it worked on my data" is the classic mistake.
 | ---- | ---- |
 | **Age range** | 18–40 |
 | **Gaming experience** | Mid-core puzzle players; some non-gamers motivated by the skill |
-| **Time availability** | 30–60 minute sessions; one shift fits an evening |
+| **Time availability** | 30–60 minute sessions; one shift fits an evening (shift length pending playtest — Progression Open Question 3) |
 | **Platform preference** | PC (Steam) |
 | **Current games they play** | Puzzle games (programming puzzles, logic puzzles), cozy narrative games |
 | **What they're looking for** | A puzzle game where the skill is real and transfers to work or study |
@@ -328,12 +332,12 @@ SQL on the job, where "it worked on my data" is the classic mistake.
 | Consideration | Assessment |
 | ---- | ---- |
 | **Recommended Engine** | **Godot 4.7.2 (GDScript)** — decided in `/setup-engine`. `CodeEdit` provides the SQL editor and godot-sqlite v4.9 embeds SQLite; the spike confirmed both work (`prototypes/sqlbini-spike-2026-10-14/SPIKE-NOTE.md`). |
-| **Key Technical Challenges** | SQLite integration is proven in the spike, but godot-sqlite returns rows as dictionaries, so a zero-row result has no column count and duplicate column names collapse (the grader must work around this); a responsive SQL editor (highlighting works; autocomplete untried); multi-dataset grading for both query and modify (`UPDATE`/`DELETE`) puzzles; translating SQLite errors into character-voiced messages; enforcing constraint challenges (e.g. detecting `OR` in a query) |
+| **Key Technical Challenges** | SQLite integration is proven in the spike, but godot-sqlite returns rows as dictionaries, so a zero-row result has no column count and duplicate column names collapse (**resolved** — `sql-execution-sandbox.md` rules 10–11 read the column list from a temp view, so the count survives zero rows and duplicates are kept); a responsive SQL editor (highlighting works; autocomplete untried); multi-dataset grading for both query and modify (`UPDATE`/`DELETE`) puzzles; translating SQLite errors into character-voiced messages; enforcing constraint challenges (e.g. detecting `OR` in a query) |
 | **Art Style** | 2D, UI-centric, illustrated konbini backdrop |
 | **Art Pipeline Complexity** | Low–Medium (custom 2D UI and a few character portraits) |
 | **Audio Needs** | Moderate (store ambience, UI feedback sounds, light music) |
 | **Networking** | None |
-| **Content Volume** | Full vision: ~50 puzzles across 4 chapters, ~6–10 hours; demo: Chapter 1 (13 puzzles, ~1 hour) |
+| **Content Volume** | Full vision: ~50 puzzles across 4 chapters, ~6–10 hours; demo: Chapter 1 (13 puzzles, ~1 hour; three shifts — see Progression Open Question 3) |
 | **Procedural Systems** | None — hand-authored datasets; hidden datasets are hand-designed edge cases |
 
 ---
@@ -343,11 +347,11 @@ SQL on the job, where "it worked on my data" is the classic mistake.
 ### Design Risks
 - The game may feel like edu-software despite the puzzle framing — mitigated by Pillar 4's "store request" rule and the no-textbook anti-pillar.
 - Typing SQL may exclude players who don't want to type code; a beginner who doesn't know `SELECT` may bounce in the first minute.
-- Hidden-data failures may feel unfair if feedback doesn't show *why*; with hidden rows deliberately not shown, the authored cause hints and character reactions must carry the whole lesson.
+- Hidden-data failures may feel unfair if feedback doesn't show *why*; with hidden rows deliberately not shown, the authored cause feedback (level 1) and character reactions must carry the whole lesson.
 - Traps may not bite players who already know some SQL (first playtest: zero hidden-data failures) — the core "aha" is unproven; see Core Fantasy.
 
 ### Technical Risks
-- SQLite integration and the in-game code editor are proven on Godot 4.7.2 by the spike (`prototypes/sqlbini-spike-2026-10-14/SPIKE-NOTE.md`). Still open: godot-sqlite returns rows as dictionaries, so a zero-row result has no column count and duplicate column names collapse; editor autocomplete is untried; only the Linux binary is verified (the Windows `.dll` is untested).
+- SQLite integration and the in-game code editor are proven on Godot 4.7.2 by the spike (`prototypes/sqlbini-spike-2026-10-14/SPIKE-NOTE.md`). Resolved: godot-sqlite's dictionary rows (zero-row column count, duplicate column names) — `sql-execution-sandbox.md` rules 10–11. Still open: editor autocomplete is untried; only the Linux binary is verified (the Windows `.dll` is untested).
 - Constraint challenges require analyzing query text reliably (tokenizing, not naive string search).
 - Modify puzzles need DB-state comparison and a "rewind" mechanism, a different grading path from query puzzles.
 
@@ -362,10 +366,10 @@ SQL on the job, where "it worked on my data" is the classic mistake.
 ### Open Questions
 - **Efficiency metric**: character count vs. token count vs. `EXPLAIN QUERY PLAN` cost — answer by prototyping and playtesting Chapter 1.
 - **Dates**: keep string comparison in Chapter 1 or introduce date functions early? — decide during Chapter 2 design.
-- **Column names**: keep ignoring aliases, or require them where teaching (e.g. S-2 `AS margin`)? — decide in the grader GDD.
+- **Column names**: keep ignoring aliases, or require them where teaching (e.g. S-2 `AS margin`)? — **Resolved:** names and aliases are ignored, column order is significant (`hidden-data-grader.md` rule 16).
 - **Is the core loop fun for a non-SQL player?** — **Partly answered.** Players with some SQL finished Chapter 1 and wanted more; zero-SQL players are untested (needed before the demo).
 - **Do the traps bite?** — no hidden-data failure occurred in the first playtest; trap difficulty is an input to the puzzle GDD.
-- **Real timings** — Core Identity says 3–5 puzzles per 30–60 min shift and the demo is "13 puzzles, ~1 hour" (~4.6 min each), while a puzzle is described as 5–15 min. Record timings in the next playtest and reconcile.
+- **Real timings** — Core Identity says 3–5 puzzles per 30–60 min shift and the demo is "13 puzzles, ~1 hour" (~4.6 min each), while a puzzle is described as 5–15 min. Record timings in the next playtest and reconcile (tracked as `shift-and-chapter-progression.md` Open Question 3: 3 / 4 / 4 split ≈ 15–18 min per shift).
 
 ---
 
@@ -381,7 +385,7 @@ per-puzzle timings). These guide decisions; they are not statistics.
 
 | Claim | Pass if | If missed |
 |---|---|---|
-| Satisfying enough to finish | ≥ 2 of 3 in *each* group finish Chapter 1 without outside help | Find the puzzle where they stopped; fix onboarding or that puzzle, re-test |
+| Satisfying enough to finish | ≥ 2 of 3 in *each* group finish Chapter 1 without outside help (in-game skips count toward "Finish"; each tester's skip count and whether the boss was skipped are reported beside the claim — `playtest-log.md`) | Find the puzzle where they stopped; fix onboarding or that puzzle, re-test |
 | Wants more | ≥ 4 of 6 start a constraint challenge or the next chapter unprompted when offered | Revisit reward and pacing before the demo |
 | Traps bite (condition 1) | ≥ 2 of 3 some-SQL testers fail 1-6 or 1-11 on their first submit | Rewrite those traps to the trap philosophy, or move the first real trap to Chapter 2 |
 | Zero-SQL can start (condition 2) | ≥ 2 of 3 zero-SQL testers clear 1-1 to 1-3 without outside help | Redesign 1-1 onboarding (prefilled query, click-to-insert schema) before the demo |
@@ -392,7 +396,7 @@ and zero-SQL players remain untested (`prototypes/sqlbini-web/REPORT.md`).
 
 **Required for MVP**:
 1. Query workbench: editor, instant run, result vs. target, schema browser (embedded SQLite)
-2. Hidden-data grader with cause-hint feedback (no hidden rows shown)
+2. Hidden-data grader with cause feedback (level 1; no hidden rows shown)
 3. Chapter 1 content: 11 main + 2 side puzzles (designed and verified; requests 1-4, 1-5, 1-7, 1-8 to be rewritten to the trap philosophy)
 4. Character-voiced requests, reactions, and rewritten error messages
 5. Constraint challenges on a few puzzles
@@ -415,7 +419,7 @@ and zero-SQL players remain untested (`prototypes/sqlbini-web/REPORT.md`).
 | **Alpha** | Chapters 1–3 (~35 puzzles), placeholder where needed | + modify puzzles (`UPDATE`/`DELETE`) with rewind, back room, aggregates | +2–3 months |
 | **Full Vision** | Chapters 1–4 (~50 puzzles, through `JOIN`), polished | All of the above + full constraint-challenge set | +1–2 months (6–9 months total) |
 
-*Scope has not had an independent producer review (PR-SCOPE was skipped in lean mode). The Alpha and Full Vision tiers — ~37 more puzzles, each with hand-built hidden edge cases, authored cause hints and verification, plus modify/rewind grading — are the least certain estimates. MVP now also includes the back room and the store manual. Run a producer scope review (`/scope-check`) once `/map-systems` has sized the systems.*
+*Scope has not had an independent producer review (PR-SCOPE was skipped in lean mode). The Alpha and Full Vision tiers — ~37 more puzzles, each with hand-built hidden edge cases, authored cause feedback and verification, plus modify/rewind grading — are the least certain estimates. MVP now also includes the store manual; the back room moved to Alpha (2026-10-14). Run a producer scope review (`/scope-check`) once `/map-systems` has sized the systems.*
 
 *Post-launch / sequel candidates*: Chapters 5–7, the night-shift mystery,
 leaderboards, Workshop, localization.
@@ -429,8 +433,8 @@ leaderboards, Workshop, localization.
 - [x] Technical spike — godot-sqlite + CodeEdit on 4.7.2: YES
 - [ ] `/gate-check` — confirm readiness to advance from Concept
 - [ ] `/art-bible` — confirm or replace the draft Visual Identity Anchor
-- [ ] `/map-systems` — decompose the concept into systems
-- [ ] `/design-system` for each system — the grader GDD must cover: cause-hint feedback, zero-row column count, duplicate column names, trap difficulty for players with some SQL
+- [x] `/map-systems` — decompose the concept into systems (`design/gdd/systems-index.md`)
+- [x] `/design-system` for each MVP system — 11 GDDs written; cause feedback (level 1), zero-row column count and duplicate column names are covered (grader, sandbox rules 10–11); trap difficulty for players with some SQL remains a playtest question
 - [ ] Zero-SQL playtest with an observation log, recording per-puzzle timings (before the demo)
 - [ ] Build vertical slice in Pre-Production (`/vertical-slice`)
 - [ ] Plan first milestone (`/sprint-plan new`)

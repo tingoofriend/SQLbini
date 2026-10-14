@@ -1,9 +1,10 @@
-# Chapter 1 "First Shift" — Puzzle Design
+# Chapter 1 "Day One" — Puzzle Design
 
-_Last updated: 2026-10-14 · All answers and trap queries verified against SQLite (`ch1.py`)_
+_Last updated: 2026-10-14 (cross-GDD review fixes) · All answers and trap queries verified against SQLite (`ch1.py`)_
 
 ## Overview
-- **In-game date**: 2026-03-02 (Mon), the player's first shift at SQLbini Ekimae
+- **In-game date**: 2026-03-02 (Mon), the player's first day at SQLbini Ekimae — three shifts: Morning (1-1 to 1-3), Afternoon, Closing (`design/gdd/shift-and-chapter-progression.md`)
+- **Pending**: requests 1-4, 1-5, 1-7 and 1-8 still state their boundaries explicitly and must be rewritten to the trap philosophy (boundary-value rewrite, `design/gdd/game-concept.md` Core Fantasy) — not yet done; the request texts below are unchanged
 - **Learning goals**: `SELECT`, choosing columns, `WHERE`, comparison operators (`=`, `<`, `<=`), `AND` / `OR` / `IN`, `BETWEEN`, `LIKE`, `IS NULL`, (side) `DISTINCT`, computed columns with `AS`
 - **Structure**: 11 main puzzles (the last is a boss) + 2 side puzzles
 - **Tables**: just `products` (a messy ledger left by the previous part-timer; normalized in Chapter 7)
@@ -30,7 +31,7 @@ CREATE TABLE products (
 | Hidden A | Visible + 10 edge-case rows | No |
 | Hidden B | Hidden A reversed, new ids, a few values changed (Shoyu Cup Ramen stock 3, Potato Chips ¥140, Cola ¥200) | No |
 
-**Design principle**: most trap answers **pass on the visible data and fail on hidden data**. The game teaches the difference between "matching what you see" and "understanding the condition". On failure the requester reacts with a cause hint naming the kind of mistake — hidden rows are never shown, since a displayed row could be special-cased in the query (see `design/gdd/game-concept.md`, Core Mechanics #2). The prototype currently displays rows; that is a known prototype shortcut.
+**Design principle**: most trap answers **pass on the visible data and fail on hidden data**. The game teaches the difference between "matching what you see" and "understanding the condition". On failure the requester reacts with cause feedback (level 1) naming the kind of mistake — hidden rows are never shown, since a displayed row could be special-cased in the query (see `design/gdd/game-concept.md`, Core Mechanics #2). The prototype currently displays rows; that is a known prototype shortcut.
 
 ### Hidden A edge rows
 | Product | Trap it targets |
@@ -156,7 +157,7 @@ WHERE stock > 0
 ```
 - Trap missing parentheses → passes visible, includes the zero-stock Fried Rice Bento in hidden data
 - Trap no `stock > 0` → fails on visible data too (Strawberry Yogurt)
-- Combines everything from Chapter 1. Clearing it pays the first wage and unlocks Chapter 2
+- Combines everything from Chapter 1. The first wage is paid earlier, at the Morning shift's clock-out; Chapter 2 unlocks on chapter completion (every main request passed or skipped — the boss passed or skipped), not on clearing this puzzle alone
 
 ### S-1 [Side] Category List
 > **HQ**: Please reply with the list of product categories your store carries.
@@ -172,7 +173,7 @@ SELECT name, price - cost AS margin FROM products;
 - Foreshadows Chapter 3 aggregation (margin × units sold = profit)
 
 ## Verification
-`python3 ch1.py`: all 13 reference answers pass all 3 datasets; all 16 trap answers are caught exactly where designed.
+`python3 ch1.py`: all 13 reference answers pass all 3 datasets; all 15 trap answers are caught exactly where designed (corrected from 16 by the 2026-10-14 cross-GDD review; closes Puzzle Definition OQ 5).
 
 ## Open questions
 - Is string comparison for dates fine in Chapter 1, or introduce `date('now')`-style functions early?

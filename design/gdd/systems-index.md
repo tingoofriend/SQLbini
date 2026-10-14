@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-14
-> **Last Updated**: 2026-10-14 (design review: Request & Reaction Dialogue, Store Manual, Onboarding, Playtest Log NEEDS REVISION → revised, In Review; earlier: design review: Hint System, Constraint Challenges, Shift & Chapter Progression NEEDS REVISION → revised, In Review; earlier: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
+> **Last Updated**: 2026-10-14 (cross-GDD review 2026-10-14 (FAIL → fixes applied): Depends-On column, dependency map, runtime couplings, counts and one-liners updated; earlier: design review: Request & Reaction Dialogue, Store Manual, Onboarding, Playtest Log NEEDS REVISION → revised, In Review; earlier: design review: Hint System, Constraint Challenges, Shift & Chapter Progression NEEDS REVISION → revised, In Review; earlier: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -26,12 +26,12 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 - **SQL Execution Sandbox** *(inferred)* — runs any SQL safely: fresh in-memory database per run, one statement, read-only for query puzzles, timeout, captured SQLite errors, and a result shape that keeps column count for zero-row results (the spike's open limitation).
 - **Query Workbench** — the screen the player lives in: editor (`CodeEdit`), instant run, result vs. target, schema browser; Run never shows a pass state.
 - **Back Room** — a per-puzzle scratch copy of the visible data where the player inserts test rows; never graded, reset per puzzle. **Alpha (Chapter 2+)** — Chapter 1 players cannot yet write `INSERT` (decision 2026-10-14).
-- **Hint System** — two-step hints, offered on request after failed submits; consumes the grader's failure state.
-- **Constraint Challenges** — optional re-runs of a cleared puzzle with a rule ("no `OR`", "under 60 characters"); needs a tokenizer that ignores string literals.
-- **Shift & Chapter Progression** — puzzles grouped into shifts and chapters, unlocks, the boss rule, skip rules, the end-of-shift wage.
-- **Request & Reaction Dialogue** — chat messages from Manager Tanaka, Kenji, Mrs. Sato and HQ; voices pass/fail feedback and SQLite errors (with the raw error always available beneath).
+- **Hint System** — two-step hints, offered on request after failed submits or active time; consumes the grader's verdicts.
+- **Constraint Challenges** — optional re-runs of a cleared puzzle with a rule (Chapter 1: "use `BETWEEN`", "no `IN`"; length rules are Alpha); uses the sandbox's lexer tokens, so string literals are ignored.
+- **Shift & Chapter Progression** — puzzles grouped into shifts and chapters (Chapter 1 = "Day One": Morning, Afternoon, Closing), unlocks, the boss rule, skip rules, the end-of-shift wage.
+- **Request & Reaction Dialogue** — chat messages from Manager Tanaka, Kenji, Mrs. Sato, a Customer and HQ; voices pass/fail feedback and errors (the SQLite text appears on the workbench strip, never for content errors).
 - **Store Manual** — the in-world reference binder; a page per keyword, unlocked on first need. The zero-SQL syntax path.
-- **Onboarding: First Shift** *(inferred)* — the 1-1 to 1-3 flow for zero-SQL players: prefilled query, click-to-insert schema, no failure possible in 1-1.
+- **Onboarding: First Shift** *(inferred)* — the 1-1 to 1-3 flow (Day One's Morning shift) for zero-SQL players: prefilled query, click-to-insert schema; the unedited prefill always passes 1-1.
 - **Playtest Log** *(inferred)* — records every run, submit, hint and help request with timestamps; required to measure the MVP thresholds in the concept.
 - **Save/Load & Settings** *(inferred)*, **Game Shell & Screen Flow** *(inferred)*, **Efficiency Stats**, **Audio** *(inferred)*, **Accessibility Options** *(inferred)*, **Achievements** — the demo layer (Vertical Slice).
 - **Modify Puzzle Grading** — `UPDATE`/`DELETE` puzzles graded by final database state, with rewind (Alpha, Chapter 2+).
@@ -44,16 +44,16 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Hidden-Data Grader | Gameplay | MVP | In Review | design/gdd/hidden-data-grader.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
 | 2 | Puzzle Definition & Datasets | Core | MVP | In Review | design/gdd/puzzle-definition-and-datasets.md | — |
-| 3 | SQL Execution Sandbox (inferred) | Core | MVP | In Review | design/gdd/sql-execution-sandbox.md | — |
-| 4 | Query Workbench | Gameplay | MVP | In Review | design/gdd/query-workbench.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
+| 3 | SQL Execution Sandbox (inferred) | Core | MVP | In Review | design/gdd/sql-execution-sandbox.md | Puzzle Definition & Datasets |
+| 4 | Query Workbench | Gameplay | MVP | In Review | design/gdd/query-workbench.md | SQL Execution Sandbox, Puzzle Definition & Datasets, Hidden-Data Grader |
 | 5 | Back Room | Gameplay | Alpha | Not Started | — | SQL Execution Sandbox, Puzzle Definition & Datasets, Query Workbench |
-| 6 | Hint System | Gameplay | MVP | In Review | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader |
-| 7 | Constraint Challenges | Gameplay | MVP | In Review | design/gdd/constraint-challenges.md | Puzzle Definition & Datasets, Hidden-Data Grader |
-| 8 | Shift & Chapter Progression | Progression | MVP | In Review | design/gdd/shift-and-chapter-progression.md | Puzzle Definition & Datasets, Hidden-Data Grader |
-| 9 | Request & Reaction Dialogue | Narrative | MVP | In Review | design/gdd/request-and-reaction-dialogue.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox |
-| 10 | Store Manual | Narrative | MVP | In Review | design/gdd/store-manual.md | Puzzle Definition & Datasets, Shift & Chapter Progression |
+| 6 | Hint System | Gameplay | MVP | In Review | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader, Query Workbench |
+| 7 | Constraint Challenges | Gameplay | MVP | In Review | design/gdd/constraint-challenges.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox, Query Workbench |
+| 8 | Shift & Chapter Progression | Progression | MVP | In Review | design/gdd/shift-and-chapter-progression.md | Puzzle Definition & Datasets, Hidden-Data Grader, Hint System |
+| 9 | Request & Reaction Dialogue | Narrative | MVP | In Review | design/gdd/request-and-reaction-dialogue.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox, Query Workbench |
+| 10 | Store Manual | Narrative | MVP | In Review | design/gdd/store-manual.md | Puzzle Definition & Datasets, Shift & Chapter Progression, Query Workbench |
 | 11 | Onboarding: First Shift (inferred) | Meta | MVP | In Review | design/gdd/onboarding-first-shift.md | Query Workbench, Request & Reaction Dialogue, Store Manual |
-| 12 | Playtest Log (inferred) | Meta | MVP | In Review | design/gdd/playtest-log.md | Hidden-Data Grader, Query Workbench, Hint System |
+| 12 | Playtest Log (inferred) | Meta | MVP | In Review | design/gdd/playtest-log.md | All MVP systems that emit events: Hidden-Data Grader, Query Workbench, Hint System, Shift & Chapter Progression, Constraint Challenges, Store Manual, Onboarding, Request & Reaction Dialogue; plus Puzzle Definition & Datasets (content hash) |
 | 13 | Save/Load & Settings (inferred) | Persistence | Vertical Slice | Not Started | — | Shift & Chapter Progression |
 | 14 | Game Shell & Screen Flow (inferred) | UI | Vertical Slice | Not Started | — | Shift & Chapter Progression, Save/Load & Settings |
 | 15 | Efficiency Stats | Progression | Vertical Slice | Not Started | — | SQL Execution Sandbox, Hidden-Data Grader |
@@ -95,7 +95,9 @@ wage is a narrative beat, not a currency.
 > cannot write `INSERT` yet, so the Back Room opens with Chapter 2. MVP now holds
 > 11 systems. The design order keeps it at position 5 but it is no longer MVP.
 >
-> **Scope note** (map-systems, 2026-10-14): MVP holds 12 of 19 systems, including
+> **Scope note** (map-systems, 2026-10-14 — *historical*: superseded by the Back
+> Room move above, so MVP is now **11** of 19 systems; the concept's MVP
+> estimate is now ~11 weeks, `game-concept.md` Scope Tiers): MVP held 12 of 19 systems, including
 > three added by the 2026-10-14 concept revision (Back Room, Store Manual, and the
 > escalating feedback inside the Grader) plus the inferred Playtest Log the MVP
 > thresholds need. The concept's "4–6 weeks" MVP estimate predates these; run
@@ -112,47 +114,48 @@ wage is a narrative beat, not a currency.
 
 ## Dependency Map
 
-### Foundation Layer (no dependencies)
+### Foundation Layer
 
-1. **Puzzle Definition & Datasets** — every other system reads a puzzle; its format is the contract for content authoring and for the `ch1.py`-style verifier.
-2. **SQL Execution Sandbox** — every query the player writes (Run, Back Room, Submit) goes through it; it owns safety, timeouts and the result shape.
+1. **Puzzle Definition & Datasets** — no dependencies. Every other system reads a puzzle; its format is the contract for content authoring and for the `ch1.py`-style verifier.
+2. **SQL Execution Sandbox** — depends on: Puzzle Definition & Datasets (schema and dataset rows only). Every query the player writes (Run, Back Room, Submit) goes through it; it owns safety, timeouts, the result shape and the lexer (`tokenize`).
 
 ### Core Layer (depends on foundation)
 
 1. **Hidden-Data Grader** — depends on: SQL Execution Sandbox, Puzzle Definition & Datasets
-2. **Query Workbench** — depends on: SQL Execution Sandbox, Puzzle Definition & Datasets
+2. **Query Workbench** — depends on: SQL Execution Sandbox, Puzzle Definition & Datasets, Hidden-Data Grader (submit verdicts, Run match bit)
 
 ### Feature Layer (depends on core)
 
 1. **Back Room** — depends on: SQL Execution Sandbox, Puzzle Definition & Datasets, Query Workbench
-2. **Hint System** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader
-3. **Constraint Challenges** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader
-4. **Shift & Chapter Progression** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader
+2. **Hint System** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader, Query Workbench
+3. **Constraint Challenges** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox (lexer tokens), Query Workbench
+4. **Shift & Chapter Progression** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader, Hint System (`exhausted`)
 5. **Efficiency Stats** — depends on: SQL Execution Sandbox, Hidden-Data Grader
 6. **Save/Load & Settings** — depends on: Shift & Chapter Progression
 7. **Modify Puzzle Grading** — depends on: SQL Execution Sandbox, Puzzle Definition & Datasets, Hidden-Data Grader
 
 ### Presentation Layer (depends on features)
 
-1. **Request & Reaction Dialogue** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox (error text)
-2. **Store Manual** — depends on: Puzzle Definition & Datasets, Shift & Chapter Progression
+1. **Request & Reaction Dialogue** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox (error kind/text), Query Workbench (host)
+2. **Store Manual** — depends on: Puzzle Definition & Datasets, Shift & Chapter Progression, Query Workbench (host)
 3. **Game Shell & Screen Flow** — depends on: Shift & Chapter Progression, Save/Load & Settings
 4. **Audio** — depends on: Query Workbench, Hidden-Data Grader, Request & Reaction Dialogue
 
 ### Polish Layer (depends on everything)
 
 1. **Onboarding: First Shift** — depends on: Query Workbench, Request & Reaction Dialogue, Store Manual
-2. **Playtest Log** — depends on: Hidden-Data Grader, Query Workbench, Hint System
+2. **Playtest Log** — depends on: every MVP system that emits events (Hidden-Data Grader, Query Workbench, Hint System, Shift & Chapter Progression, Constraint Challenges, Store Manual, Onboarding, Request & Reaction Dialogue) and Puzzle Definition & Datasets (content hash)
 3. **Accessibility Options** — depends on: Query Workbench, Game Shell & Screen Flow
 4. **Achievements** — depends on: Shift & Chapter Progression, Efficiency Stats
 
-**Bottlenecks** (most dependents): Puzzle Definition & Datasets (9), Hidden-Data
-Grader (8), SQL Execution Sandbox (6), Query Workbench (5). A design change in any
-of these ripples widely.
+**Bottlenecks** (most dependents, from the Depends-On column): Puzzle Definition &
+Datasets (11), Hidden-Data Grader (9), Query Workbench (9), SQL Execution Sandbox
+(7), Shift & Chapter Progression (5). A design change in any of these ripples widely.
 
 **Leaf systems** (nothing depends on them — lower risk, can be designed late):
-Back Room, Constraint Challenges, Onboarding, Playtest Log, Accessibility Options,
-Achievements, Audio, Modify Puzzle Grading.
+Back Room, Playtest Log, Audio, Accessibility Options, Achievements, Modify Puzzle
+Grading. (Constraint Challenges and Onboarding are no longer leaves: the Playtest
+Log records their events.)
 
 ---
 
@@ -191,7 +194,17 @@ accepted risks call for.
 
 ## Circular Dependencies
 
-- **None at runtime.**
+- **Runtime event coupling: Hint System ↔ Shift & Chapter Progression** — Hint →
+  Progression: the `exhausted` event triggers Kenji's skip offer (owner: Hint
+  System, which defines `exhausted`); Progression → Hint: Restart (rule 12a)
+  resets the request's hint state (owner: Progression, which defines Restart;
+  Hint System rule 8 reacts). One-way events in each direction, no shared state;
+  not a build-order cycle (Progression's hard dependency is on Hint).
+- **Runtime event coupling: Shift & Chapter Progression ↔ Constraint
+  Challenges** — Progression → Challenges: the base PASS triggers the offer
+  (owner: Progression for offer timing); Challenges → Progression: clear marks
+  shown on the chapter list and payslip (owner: Constraint Challenges, which
+  owns the marks). Both are soft dependencies in their GDDs.
 - **Design-time coupling: Hidden-Data Grader ↔ Puzzle Definition & Datasets** —
   the grader needs fields the puzzle format must provide (traps, feedback levels,
   synthetic counter-examples), and the format exists to serve the grader.
@@ -228,7 +241,7 @@ accepted risks call for.
 
 ## Next Steps
 
-- [ ] Run `/scope-check` — re-estimate MVP with the 12 MVP systems (accepted risk)
+- [ ] Run `/scope-check` — re-estimate MVP with the 11 MVP systems (accepted risk)
 - [ ] Design the Hidden-Data Grader first (`/design-system hidden-data-grader`)
 - [ ] Design remaining MVP-tier systems in the order above
 - [ ] Run `/design-review` on each completed GDD

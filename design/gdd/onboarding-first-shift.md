@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -22,7 +22,8 @@ steps out of the way completely for players who say they already know SQL.
 The concept's top design risk is a zero-SQL player bouncing off a blank editor in
 the first minute; the MVP playtest requires two of three such players to clear
 1-1 to 1-3 without outside help. Onboarding is the answer. It is not a separate
-tutorial level: it is the Morning shift itself (1-1 to 1-3), lightly scaffolded.
+tutorial level: it is the Morning shift of Chapter 1, "Day One" (1-1 to 1-3),
+lightly scaffolded.
 Tanaka's lines carry the instructions, one **coach mark** at a time highlights
 the thing to do next (Run, Submit, a column in the schema browser, the Manual
 button), and the scaffolding retreats as soon as the player has done each thing
@@ -41,7 +42,9 @@ balancing rules in this system.
    **"No, show me around"** (default) or **"Yes, I know SQL"**. The question is
    a Dialogue `system` line in the bubble with the two choices as buttons,
    shown **before** 1-1's request arrives (`request-and-reaction-dialogue.md`
-   rule 2), so it never competes with a request. "Yes" turns off coach marks
+   rule 2), so it never competes with a request. 1-1's `request_open` fires
+   only **after** the player answers (so manual / hint unlocks and the Playtest
+   Log's time-to-first-Run clock start then). "Yes" turns off coach marks
    and ghost text for the whole game (also a setting); the puzzles (including
    1-1's prefill), hints and manual are unchanged, and the workbench's
    first-submit explainer then shows on 1-1's first submit as usual. The choice
@@ -49,11 +52,13 @@ balancing rules in this system.
 
 **The scaffolded Morning shift** (coach marks on)
 
-2. **1-1 Open the Ledger** — the editor is **prefilled** with
-   `SELECT * FROM products;` (the reference). Steps, one coach mark at a time:
+2. **1-1 Open the Ledger** — the editor is **prefilled** from the puzzle's
+   `prefill_sql` field (Puzzle Definition owns it; for 1-1,
+   `SELECT * FROM products;`, the reference). The prefill is puzzle data, so it
+   applies in Guided and Off alike. Steps, one coach mark at a time:
    1. Mark on **Run** — Tanaka: "Press Run (Ctrl+Enter) to see what's on the
       shelves." → the player runs; the ledger appears.
-   2. Mark on **Submit** — Tanaka: "Looks right. Hand it to me — Submit
+   2. Mark on **Submit** — Tanaka: "Now hand it to me — Submit
       (Ctrl+Shift+Enter)." → submit; with the prefilled text unchanged it
       **passes**, so the first submit of the game is a success. (This line
       replaces the workbench's one-time first-submit explainer, which then
@@ -82,7 +87,8 @@ balancing rules in this system.
    keystroke or insertion, and returns if the editor is emptied again. It is a
    *shape*, never an answer: it never contains a value, a column chosen for the
    puzzle, or a condition. It is labelled "shape" so it is never mistaken for
-   real text, and Run on an empty editor still says "nothing to run yet".
+   real text, and Run on an empty editor still returns `EMPTY` (Dialogue line
+   `error.EMPTY`).
    Pressing **Tab** in the empty editor, or clicking the ghost text,
    **materialises the shape** as real text with the caret in the first blank
    (`SELECT ▮ FROM products`), so a zero-SQL player can build 1-2 from the shape
@@ -95,8 +101,12 @@ balancing rules in this system.
    put in the speech bubble** — the bubble keeps the current request (Dialogue
    rule 2); they never block input, never cover
    the editor's text or the result tables, and disappear as soon as the target
-   action is done. Esc or a "Got it" button dismisses one early. Ring is static
-   under reduced motion.
+   action is done. "Got it", or Esc **while the mark has focus**, dismisses one
+   early; with focus in the editor, Esc keeps its workbench meaning (leave the
+   editor) and the mark stays (workbench rule 15, Esc precedence). Ring is
+   static under reduced motion. While a coach mark is showing, the hint and
+   manual "new" indicators are suppressed; they appear once no mark is showing
+   (workbench rule 6), so the player meets one new signal at a time.
 8. Nothing in onboarding is timed; the player may type, run and experiment freely
    at any step, and doing a later step early simply skips the earlier marks.
 
@@ -112,32 +122,34 @@ Per game: `Ask` → `Guided` ("No, show me around") or `Off` ("Yes, I know SQL")
 changeable later in settings.
 
 Per coach mark (Guided only): `Pending → Shown → Done` (target action performed)
-or `→ Dismissed` (Esc / Got it). Marks run in the fixed order of rules 2–4; doing a
+or `→ Dismissed` ("Got it", or Esc with the mark focused). Marks run in the fixed order of rules 2–4; doing a
 later target early marks the earlier ones `Done`.
 
 ### Interactions with Other Systems
 
 | System | Direction | Data | Owner |
 |---|---|---|---|
-| Query Workbench | Onboarding → Workbench | 1-1 prefill; ghost text; coach-mark anchors (Run, Submit, schema browser, Manual button) | Workbench renders; Onboarding decides |
-| Request & Reaction Dialogue | Onboarding → Dialogue | The "Ever used SQL?" `system` line and its two choices (before 1-1's request); guidance lines are rendered in coach-mark labels by Onboarding, never in the bubble | Dialogue renders the question |
+| Query Workbench | Onboarding → Workbench | Ghost text; coach-mark anchors (Run, Submit, schema browser, Manual button); coach-mark visibility (the workbench suppresses hint / manual "new" indicators while a mark shows; Esc precedence) | Workbench renders; Onboarding decides |
+| Request & Reaction Dialogue | Onboarding → Dialogue | The "Ever used SQL before?" `system` line and its two choices (before 1-1's request); Tanaka's one-time "start over" `system` line (Guided only); guidance lines are rendered in coach-mark labels by Onboarding, never in the bubble | Dialogue renders the lines |
 | Store Manual | Manual → Onboarding | "Filtering rows" unlocked on 1-3 → coach mark on the Manual button | Store Manual |
 | Hint System | — | `tutorial` puzzles 1-1/1-2 (both steps at once) and the 1-3 override (Hint System Formulas) | Hint System |
 | Shift & Chapter Progression | Progression → Onboarding | Which request is open | Progression |
-| Puzzle Definition & Datasets | Puzzle → Onboarding | `tutorial` flags (1-1, 1-2) | Puzzle Definition |
+| Puzzle Definition & Datasets | Puzzle → Onboarding | `tutorial` flags (1-1, 1-2); `prefill_sql` (1-1: `SELECT * FROM products;`) | Puzzle Definition |
 | Accessibility Options (VS) / Settings | Settings ↔ Onboarding | "Coach marks" on/off; reduced motion | Settings |
-| Playtest Log | Onboarding → Log | Answer to "Ever used SQL?", each mark shown/done/dismissed with timestamps, **time to first Run** and **time to first PASS** | Onboarding |
+| Playtest Log | Onboarding → Log | Answer to "Ever used SQL before?" (`sql_question`), each mark shown/done/dismissed with timestamps. Time to first Run / first PASS are **computed by the Playtest Log's formulas** from `request_open`, `run` and `request_pass` (authoritative); Onboarding emits no `first_run` / `first_pass` events | Onboarding |
 
 ## Edge Cases
 
 *Drafted without specialists — Lean mode.*
 
-- **If the player edits 1-1's prefilled query before running**: allowed; Run and Submit grade whatever is there; a broken edit gets the normal error/feedback and Tanaka adds "You can always start over with the ledger: `SELECT * FROM products`" once.
+- **If the player edits 1-1's prefilled query before running**: allowed; Run and Submit grade whatever is there; a broken edit gets the normal error/feedback and, **in Guided mode only**, Tanaka adds "You can always start over with the ledger: `SELECT * FROM products;`" once per game, as a one-time `system` line in the **bubble** after the error reaction (Dialogue rule 2; it returns to the request like any reaction).
 - **If the player submits 1-1 before running**: allowed; the Submit mark is marked Done and the Run mark is skipped.
 - **If the player types in 1-2 before clicking the schema browser**: the schema mark is marked Done as soon as a column name appears in the editor by any means.
 - **If the player dismisses every coach mark**: onboarding continues silently; no re-prompts.
 - **If the player chose "Yes, I know SQL" and later struggles**: hints and the manual work as usual; coach marks can be re-enabled in settings.
-- **If the player restarts 1-1 from the chapter list**: the prefill returns; coach marks do not replay (they are per game, not per puzzle).
+- **If the player presses Esc while a coach mark shows and focus is in the editor**: focus leaves the editor; the mark stays (workbench Esc precedence).
+- **If a manual page or hint unlocks while a coach mark shows** (e.g. "Reading the ledger" on 1-1): its "new" indicator waits until no mark is showing.
+- **If the player restarts 1-1 from the chapter list**: the prefill (`prefill_sql`) returns; coach marks do not replay (they are per game, not per puzzle).
 - **If the player opens the manual before the 1-3 mark appears**: the mark is marked Done.
 - **If text scale or window size changes while a mark is shown**: the ring follows its target; it never moves over the editor text.
 
@@ -155,7 +167,9 @@ later target early marks the earlier ones `Done`.
 System (early unlocks), Settings (VS), Playtest Log.
 
 **Bidirectionality:** workbench, dialogue, store manual and hint system list
-Onboarding ✓ (workbench Interactions; dialogue Interactions; manual rule 6).
+Onboarding ✓ (workbench Interactions; dialogue Interactions; manual rule 6;
+Hint System Interactions — added 2026-10-14). Puzzle Definition must list
+Onboarding as a consumer of `tutorial` and `prefill_sql`.
 
 ## Visual/Audio Requirements
 
@@ -183,7 +197,7 @@ they no longer need it.
 
 1. Opening question with two keyboard-reachable choices.
 2. Coach marks anchored to Run, Submit, schema browser and Manual button; "Got
-   it" button; Esc dismisses.
+   it" button; Esc dismisses when the mark has focus (workbench Esc precedence).
 3. Ghost text in an empty editor, labelled "shape".
 4. Settings toggle "Coach marks" (MVP: in a minimal options panel owned by
    Onboarding, holding only this toggle; the answer and toggle last for the
@@ -215,10 +229,10 @@ retained screenshot in `production/qa/evidence/`.*
 - **OB-03 [Integration]** GIVEN Off, WHEN coach marks are turned on in settings, THEN marks and ghost text resume from the next unfinished step; turning them off stops them at once.
 
 **1-1**
-- **OB-04 [Logic]** GIVEN 1-1 in Guided, THEN the editor equals `SELECT * FROM products;` (the reference); the Run mark shows first, then the Submit mark after a Run.
+- **OB-04 [Logic]** GIVEN 1-1 in Guided, THEN the editor equals 1-1's `prefill_sql`, `SELECT * FROM products;` (the reference); the Run mark shows first, then the Submit mark after a Run; GIVEN a new game, THEN 1-1's `request_open` is logged only after the "Ever used SQL before?" answer.
 - **OB-05 [Integration]** GIVEN the prefill unchanged, WHEN submitted, THEN PASS; the workbench explainer does not show on 1-1 and shows on 1-2's first submit.
 - **OB-06 [Logic]** GIVEN the player submits 1-1 before running, THEN both the Run and Submit marks are Done.
-- **OB-07 [Integration]** GIVEN the prefill edited into an error, WHEN run, THEN the normal error appears and Tanaka adds the "start over with `SELECT * FROM products`" line exactly once per game.
+- **OB-07 [Integration]** GIVEN the prefill edited into an error, WHEN run, THEN the normal error appears and Tanaka adds the "start over with `SELECT * FROM products;`" line in the bubble exactly once per game; GIVEN Off, THEN the line never appears.
 
 **1-2 and 1-3**
 - **OB-08 [Logic]** GIVEN 1-2 opens, THEN the editor is empty, ghost text shows `SELECT … FROM products`, and the schema mark is active.
@@ -229,20 +243,21 @@ retained screenshot in `production/qa/evidence/`.*
 
 **Mark behaviour**
 - **OB-13 [Logic]** At most one mark is shown at a time, in the order of rules 2–4; doing a later target early marks earlier ones Done.
-- **OB-14 [Logic]** A shown mark becomes Done on its target action and Dismissed on Esc or "Got it"; a dismissed mark never reappears.
+- **OB-14 [Logic]** A shown mark becomes Done on its target action and Dismissed on "Got it" or Esc with the mark focused; Esc with focus in the editor leaves the editor and the mark stays; a dismissed mark never reappears.
+- **OB-24 [Integration]** GIVEN a coach mark shown and a manual page or hint unlocking (1-1 "Reading the ledger"), THEN no "new" indicator is visible until no mark is showing, then it appears.
 - **OB-15 [UI]** GIVEN a mark shown, THEN typing, Run and clicks still work, the ring never overlaps editor text or result tables, and it follows its target on resize or text scaling.
 - **OB-16 [Logic]** GIVEN 1-1 restarted, THEN the prefill returns and no mark replays.
 
 **Ghost text**
 - **OB-17 [Logic]** Ghost text shows only while the editor is empty, disappears on the first keystroke or insert, and returns when the editor is emptied; Run on an empty editor still returns `EMPTY`.
 - **OB-18 [Content-CI]** Every ghost-text string matches only `SELECT … FROM <table> [WHERE …]` — no value, no column name, no condition.
-- **OB-19 [Logic]** Onboarding never auto-runs, auto-submits, opens the manual, or prefills anything but 1-1.
+- **OB-19 [Logic]** Onboarding never auto-runs, auto-submits, opens the manual, or writes editor text itself; in Chapter 1 only 1-1 has a `prefill_sql`.
 
 **Presentation, log, threshold**
 - **OB-20 [UI]** Screenshots of each mark, the ghost text with its "shape" label, and the opening question; ghost text ≥ 4.5:1, ring ≥ 3:1; static ring under reduced motion.
-- **OB-21 [Integration]** The Playtest Log records the answer, each mark shown / done / dismissed with timestamps, time to first Run and time to first PASS.
+- **OB-21 [Integration]** The Playtest Log records the answer and each mark shown / done / dismissed with timestamps; Onboarding emits no `first_run` / `first_pass` events (time to first Run / PASS come from the Playtest Log's formulas).
 - **OB-22 [Integration]** A scripted zero-SQL path clears 1-1 by clicks only (Run, Submit) and 1-2 using Tab, two schema clicks and no typed characters.
-- **OB-23 [UI]** Screenshots of each 1-1 to 1-3 mark show the request in the bubble and Tanaka's guidance only in the coach-mark label; the new-game screenshot shows the "Ever used SQL?" question in the bubble before any request.
+- **OB-23 [UI]** Screenshots of each 1-1 to 1-3 mark show the request in the bubble and Tanaka's guidance only in the coach-mark label; the new-game screenshot shows the "Ever used SQL before?" question in the bubble before any request.
 
 ## Open Questions
 

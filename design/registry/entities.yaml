@@ -58,25 +58,71 @@ last_updated: "2026-10-14"
 # Attribute fields: any key stats that could appear in another GDD
 #   (health, damage, drops, faction, etc.)
 
-entities: []
-
-# Example (remove when first real entry is added):
-#
-# entities:
-#   - name: goblin
-#     status: active              # active | deprecated
-#     source: design/gdd/combat.md
-#     referenced_by:
-#       - design/gdd/combat.md
-#       - design/gdd/inventory.md
-#     health: 40
-#     damage: 8
-#     drops:
-#       - item: goblin_arm        # must match an entry in items section
-#         qty: 1
-#         drop_rate: 0.8          # 0.0–1.0
-#     added: 2026-03-26
-#     revised: ""
+entities:
+  - name: manager_tanaka
+    status: active
+    source: design/gdd/request-and-reaction-dialogue.md
+    referenced_by:
+      - design/gdd/request-and-reaction-dialogue.md
+      - design/gdd/onboarding-first-shift.md
+      - design/gdd/game-concept.md
+      - design/levels/chapter-1-puzzles.md
+    display_name: "Manager Tanaka"
+    role: "Store manager; gives most requests, shift briefings, the first-submit explainer"
+    sprite_set: [neutral, pleased, puzzled]
+    added: 2026-10-14
+    revised: ""
+  - name: kenji
+    status: active
+    source: design/gdd/request-and-reaction-dialogue.md
+    referenced_by:
+      - design/gdd/request-and-reaction-dialogue.md
+      - design/gdd/hint-system.md
+      - design/gdd/shift-and-chapter-progression.md
+      - design/gdd/constraint-challenges.md
+      - design/gdd/playtest-log.md
+      - design/gdd/game-concept.md
+      - design/levels/chapter-1-puzzles.md
+    display_name: "Kenji"
+    role: "Coworker; voice of hints, Run errors, CONTENT_ERROR and the skip offer; also a requester (1-10)"
+    sprite_set: [neutral, pleased, puzzled]
+    added: 2026-10-14
+    revised: ""
+  - name: mrs_sato
+    status: active
+    source: design/gdd/request-and-reaction-dialogue.md
+    referenced_by:
+      - design/gdd/request-and-reaction-dialogue.md
+      - design/gdd/game-concept.md
+      - design/levels/chapter-1-puzzles.md
+    display_name: "Mrs. Sato"
+    role: "Elderly regular; requester (1-9)"
+    sprite_set: [neutral, pleased, puzzled]
+    added: 2026-10-14
+    revised: ""
+  - name: customer
+    status: active
+    source: design/gdd/request-and-reaction-dialogue.md
+    referenced_by:
+      - design/gdd/request-and-reaction-dialogue.md
+      - design/levels/chapter-1-puzzles.md
+    display_name: "Customer"
+    role: "Generic walk-in requester (1-5, 1-6)"
+    sprite_set: [neutral, pleased, puzzled]
+    added: 2026-10-14
+    revised: ""
+  - name: hq
+    status: active
+    source: design/gdd/request-and-reaction-dialogue.md
+    referenced_by:
+      - design/gdd/request-and-reaction-dialogue.md
+      - design/gdd/shift-and-chapter-progression.md
+      - design/levels/chapter-1-puzzles.md
+    display_name: "HQ"
+    role: "Head office emails (S-1); no sprite, a printed email/fax slip in the bubble's place"
+    sprite_set: []
+    added: 2026-10-14
+    revised: ""
 
 
 # ─── ITEMS ───────────────────────────────────────────────────────────────────
@@ -123,6 +169,7 @@ formulas:
     referenced_by:
       - design/gdd/hidden-data-grader.md
       - design/gdd/puzzle-definition-and-datasets.md
+      - design/gdd/query-workbench.md
     variables:
       - cols
       - ordered
@@ -132,19 +179,53 @@ formulas:
     expression: "(cols(P) == cols(R)) and (ordered ? tie_list_eq(P, R) : multiset(canon rows P) == multiset(canon rows R))"
     notes: "Used by Run (visible match bit) and Submit. Column names ignored, column order significant. canon: NULL only equals NULL, 1 == 1.0, TEXT byte-exact, REAL rounded half-even to 6 decimals."
     added: 2026-10-14
-    revised: ""
+    revised: "2026-10-14"  # cross-GDD review: referenced_by completed (query-workbench)
   - name: feedback_level
     status: active
     source: design/gdd/hidden-data-grader.md
     referenced_by:
       - design/gdd/hidden-data-grader.md
+      - design/gdd/puzzle-definition-and-datasets.md
+      - design/gdd/request-and-reaction-dialogue.md
     variables:
       - n_cause_fails
       - feedback_fails_per_level
       - feedback_max_level
     output_range: [1, 3]
     expression: "min(feedback_max_level, 1 + floor((max(n, 1) - 1) / max(k, 1)))"
-    notes: "Hint System and Request & Reaction Dialogue read the level. MVP max level is 1."
+    notes: "Request & Reaction Dialogue reads the level (feedback key). The Hint System reads the verdict only. MVP max level is 1."
+    added: 2026-10-14
+    revised: "2026-10-14"  # cross-GDD review: note trimmed (Hint reads verdict only); referenced_by completed
+  - name: hardcode_proof
+    status: active
+    source: design/gdd/puzzle-definition-and-datasets.md
+    referenced_by:
+      - design/gdd/puzzle-definition-and-datasets.md
+      - design/gdd/hidden-data-grader.md
+    variables:
+      - d
+      - keys(ref(x))
+      - K_d
+    output_range: [false, true]
+    expression: "keys(ref(d)) != (keys(ref(visible)) ∩ K_d)"
+    notes: "true = a query listing the visible answer's keys (WHERE name IN (...)) fails on hidden dataset d. A puzzle with tagged traps needs >= 1 hidden dataset where it holds (puzzle_valid H). Grader rule cites it."
+    added: 2026-10-14
+    revised: ""
+  - name: reaction_hold
+    status: active
+    source: design/gdd/request-and-reaction-dialogue.md
+    referenced_by:
+      - design/gdd/request-and-reaction-dialogue.md
+      - design/gdd/shift-and-chapter-progression.md
+    variables:
+      - len
+      - hold_base
+      - read_cps
+      - hold_min
+      - hold_max
+    output_range: [2.5, 6.0]
+    expression: "clamp(hold_base + len / read_cps, hold_min, hold_max)"
+    notes: "Seconds, at defaults (hold_base 1.0, read_cps 20, hold_min 2.5, hold_max 6.0). Controls only the automatic return of the bubble to the request; Progression's next request arrives when the PASS reaction ends."
     added: 2026-10-14
     revised: ""
 
@@ -187,31 +268,35 @@ constants:
       - design/gdd/hidden-data-grader.md
       - design/gdd/puzzle-definition-and-datasets.md
       - design/gdd/sql-execution-sandbox.md
+      - design/gdd/query-workbench.md
+      - design/gdd/request-and-reaction-dialogue.md
     value: 5000
     unit: rows
-    notes: "Player results over the cap are SUBMIT_ERROR; references over the cap fail puzzle validation. SQL Execution Sandbox must report row counts against it. Safe range 1,000-50,000."
+    notes: "Player results over the cap are SUBMIT_ERROR (kind TOO_MANY_ROWS); references over the cap fail puzzle validation. Sandbox and Workbench express the cap as grader_row_cap (R_cap): fetch limit = grader_row_cap + 1, strings formatted from the value ('{grader_row_cap}+ rows'), never a hardcoded 5000. Safe range 1,000-50,000."
     added: 2026-10-14
-    revised: ""
+    revised: "2026-10-14"  # cross-GDD review (C16): note + referenced_by; value unchanged
   - name: feedback_fails_per_level
     status: active
     source: design/gdd/hidden-data-grader.md
     referenced_by:
       - design/gdd/hidden-data-grader.md
+      - design/gdd/hint-system.md
     value: 2
     unit: failed submits
     notes: "k in feedback_level. Safe range 1-4."
     added: 2026-10-14
-    revised: ""
+    revised: "2026-10-14"  # cross-GDD review: referenced_by completed
   - name: visible_rows_max
     status: active
     source: design/gdd/puzzle-definition-and-datasets.md
     referenced_by:
       - design/gdd/puzzle-definition-and-datasets.md
+      - design/gdd/query-workbench.md
     value: 30
     unit: rows per visible table
-    notes: "Safe range 24-40. Below 24 withholds all of Chapter 1. Query Workbench UX spec must confirm on-screen readability at 1280x720."
+    notes: "Safe range 24-40. Below 24 withholds all of Chapter 1. On-screen readability at 1280x720 is pending /ux-design (dedicated visible-data view vs reading the data by Run; Puzzle Definition OQ 6)."
     added: 2026-10-14
-    revised: ""
+    revised: "2026-10-14"  # cross-GDD review (C26): status -> pending /ux-design
   - name: exec_time_limit_ms
     status: active
     source: design/gdd/sql-execution-sandbox.md
@@ -248,11 +333,18 @@ constants:
     source: design/gdd/query-workbench.md
     referenced_by:
       - design/gdd/query-workbench.md
+      - design/gdd/hint-system.md
+      - design/gdd/constraint-challenges.md
+      - design/gdd/shift-and-chapter-progression.md
+      - design/gdd/request-and-reaction-dialogue.md
+      - design/gdd/store-manual.md
+      - design/gdd/onboarding-first-shift.md
+      - design/gdd/playtest-log.md
     value: 4.5
     unit: contrast ratio (WCAG AA text)
-    notes: "Every theme and state, incl. stale results. Glyphs, borders, focus rings >= 3:1. Art bible and accessibility requirements must adopt it."
+    notes: "Every theme and state, incl. stale results. Glyphs, borders, focus rings >= 3:1. Art bible and accessibility requirements must adopt it. Other GDDs cite it as '4.5:1'."
     added: 2026-10-14
-    revised: ""
+    revised: "2026-10-14"  # cross-GDD review: referenced_by completed
   - name: editor_font_px
     status: active
     source: design/gdd/query-workbench.md
@@ -268,9 +360,91 @@ constants:
     source: design/gdd/hidden-data-grader.md
     referenced_by:
       - design/gdd/hidden-data-grader.md
+      - design/gdd/puzzle-definition-and-datasets.md
+      - design/gdd/request-and-reaction-dialogue.md
     value: 1
     unit: level
     notes: "MVP = 1; Vertical Slice = 3 (levels 2-3 deferred by scope-check 2026-10-14)."
+    added: 2026-10-14
+    revised: "2026-10-14"  # cross-GDD review: referenced_by completed
+  - name: idle_cutoff_s
+    status: active
+    source: design/gdd/hint-system.md
+    referenced_by:
+      - design/gdd/hint-system.md
+      - design/gdd/playtest-log.md
+    value: 90
+    unit: seconds
+    notes: "Safe range 30-300. Global only — not per-puzzle overridable (C19). Hint active_time and Playtest Log puzzle_active_time read the same global config value."
+    added: 2026-10-14
+    revised: ""
+  - name: run_budget_ms
+    status: active
+    source: design/gdd/hidden-data-grader.md
+    referenced_by:
+      - design/gdd/hidden-data-grader.md
+      - design/gdd/sql-execution-sandbox.md
+      - design/gdd/query-workbench.md
+    value: 200
+    unit: ms p95, key press to Run result (target PC)
+    notes: "Fixed target (grader Tuning Knobs, AC-26; workbench QW-13; sandbox SB-20). A Run ending in TIMEOUT is exempt (workbench shows 'checking…'); the budget applies to Runs that complete (C17). Target PC still to be named (grader OQ 7)."
+    added: 2026-10-14
+    revised: ""
+  - name: submit_budget_ms
+    status: active
+    source: design/gdd/hidden-data-grader.md
+    referenced_by:
+      - design/gdd/hidden-data-grader.md
+      - design/gdd/sql-execution-sandbox.md
+    value: 300
+    unit: ms p95 per Submit (target PC)
+    notes: "Fixed target (grader AC-26; sandbox submit_time formula and SB-20). Target PC still to be named (grader OQ 7)."
+    added: 2026-10-14
+    revised: ""
+  - name: frame_budget_ms
+    status: active
+    source: design/gdd/sql-execution-sandbox.md
+    referenced_by:
+      - design/gdd/sql-execution-sandbox.md
+      - design/gdd/playtest-log.md
+    value: 16.6
+    unit: ms per frame (60 fps)
+    notes: "Fixed target used by SB-19 and PL-08 (C18; SB-19 previously said <= 33 ms). Execution is not on the frame thread."
+    added: 2026-10-14
+    revised: ""
+  - name: strip_h
+    status: active
+    source: design/gdd/query-workbench.md
+    referenced_by:
+      - design/gdd/query-workbench.md
+      - design/gdd/request-and-reaction-dialogue.md
+      - design/gdd/puzzle-definition-and-datasets.md
+    value: 120
+    unit: px at 1280x720
+    notes: "Counter-scene strip height; fixed at every ui_scale (320x30 pixel art integer-scaled x4). Input to H_table / rows_visible."
+    added: 2026-10-14
+    revised: ""
+  - name: rows_visible
+    status: active
+    source: design/gdd/query-workbench.md
+    referenced_by:
+      - design/gdd/query-workbench.md
+      - design/gdd/puzzle-definition-and-datasets.md
+    value: 7
+    unit: result-table rows on screen at defaults
+    notes: "Calculated: floor(H_table / row_px) at ui_scale 1.0 (row_px 24, H_table ~179). 5 / 4 / 3 / 2 rows at ui_scale 1.25 / 1.5 / 1.75 / 2.0 (QW-24)."
+    added: 2026-10-14
+    revised: ""
+  - name: ui_scale
+    status: active
+    source: design/gdd/query-workbench.md
+    referenced_by:
+      - design/gdd/query-workbench.md
+      - design/gdd/request-and-reaction-dialogue.md
+      - design/gdd/store-manual.md
+    value: 1.0
+    unit: text scale multiplier (default)
+    notes: "Range 1.0-2.0, step 0.25 (Accessibility Options). Multiplies all fonts; the counter-scene strip and bubble do not scale. Store Manual panel scrolls at 2.0."
     added: 2026-10-14
     revised: ""
 

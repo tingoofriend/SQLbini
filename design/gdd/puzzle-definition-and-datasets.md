@@ -1,8 +1,8 @@
 # Puzzle Definition & Datasets
 
-> **Status**: In Design
+> **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 1 — The Condition, Not the Screen; Pillar 4 — Real Store, Real SQL
 
@@ -57,7 +57,7 @@ are not specified here → they become an ADR.
 |---|---|---|---|
 | `id`, `chapter`, `shift`, `order` | yes | Shift & Chapter Progression | e.g. `1-5`, chapter 1, shift 2, position 1 |
 | `kind` | yes | Grader / Modify Puzzle Grading | `query` (MVP) or `modify` (Alpha) |
-| `flags` | yes | Progression | `tutorial`, `side`, `boss` (any combination) |
+| `flags` | yes | Progression | `tutorial`, `side`, `boss` (any combination). `boss` must agree with Progression's position rule (the last main request of the last shift, `shift-and-chapter-progression.md` rule 1); the verifier rejects a mismatch |
 | `title` | yes | Workbench | Short, store-flavoured |
 | `request` | yes | Request & Reaction Dialogue | `speaker` id + `line`; written to the trap philosophy (rule 9) |
 | `reference_sql` | yes | Grader | The canonical answer; must be deterministic |
@@ -68,7 +68,8 @@ are not specified here → they become an ADR.
 | `alt_valid` | yes (≥ 1 unless `tutorial`) | Content verifier | Other correct queries; must pass every dataset (rule 11) |
 | `hints` | yes | Hint System | Two hint texts, step 1 and step 2; optional per-puzzle unlock overrides (`hint1_fails`, `hint1_minutes`, …) |
 | `pass_reaction` | yes | Request & Reaction Dialogue | The requester's line on PASS |
-| `manual_keywords` | yes | Store Manual | SQL keywords this puzzle first needs (may be empty) |
+| `manual_pages` | yes | Store Manual | List of Store Manual page ids (`manual.<slug>`) this request unlocks when opened (Store Manual rule 5); may be empty |
+| `prefill_sql` | no | this system (read by Onboarding, Store Manual, Progression) | Text placed in the editor when the request opens or is restarted; always written with a trailing `;`. 1-1: `SELECT * FROM products;`. Onboarding uses it for 1-1, the Store Manual exempts it from its CI check, Progression's Restart (rule 12a) restores it |
 | `constraint` | no | Constraint Challenges | `{type: max_chars / forbid / require, value, offer_line, witness_sql, unlock_after?}` — `unlock_after` optional (a later main puzzle id, `constraint-challenges.md` rule 2a); validated by `constraint-challenges.md` rule 12 |
 | `datasets_override` | no | this system | Puzzle-specific dataset changes (rule 5) |
 | `content_status` | yes | this system | `draft` / `verified` / `playtested` / `locked` (States) |
@@ -95,7 +96,7 @@ are not specified here → they become an ADR.
    the hidden datasets expected to fail `trap_sql`; and `feedback` — for a
    tagged trap, level-1 text (required), level-2 and level-3 texts (optional
    until Vertical Slice; level 3 is a synthetic counter-example row the player
-   can add in the Back Room, never a hidden row). An untagged trap carries no
+   can add in the Back Room (Alpha, Chapter 2+), never a hidden row). An untagged trap carries no
    feedback: the grader reports a built-in cause and shows that cause's shared
    feedback.
 5. **Dataset overrides.** A dataset is defined as a base plus operations:
@@ -192,12 +193,13 @@ reaches a tester).
 | Hidden-Data Grader | `reference_sql`, `key_column`, `ordered`/`order_cols`, datasets, `traps` (tagged keys, feedback), `trap_priority`, `kind` | Grader (contract in `hidden-data-grader.md`) |
 | SQL Execution Sandbox | Schema + resolved dataset rows to build a fresh database | Sandbox |
 | Query Workbench | `title`, `request`, schema (for the schema browser), visible dataset, target result (computed) | Workbench |
-| Back Room | Visible dataset (to copy); level-3 synthetic rows (Vertical Slice) | Back Room |
+| Back Room | Visible dataset (to copy); level-3 synthetic rows (Alpha, Chapter 2+) | Back Room |
 | Hint System | `hints` | Hint System |
 | Constraint Challenges | `constraint` | Constraint Challenges |
-| Shift & Chapter Progression | `id`, `chapter`, `shift`, `order`, `flags`, chapter "today" | Progression |
-| Request & Reaction Dialogue | `request`, `pass_reaction`, trap `feedback` texts | Dialogue |
-| Store Manual | `manual_keywords` | Store Manual |
+| Shift & Chapter Progression | `id`, `chapter`, `shift`, `order`, `flags` (`boss` checked against its position rule), chapter "today", shift wage and briefing; `prefill_sql` for Restart | Progression |
+| Request & Reaction Dialogue | `request` (incl. `speaker` ids), `pass_reaction`, trap `feedback` texts, shift briefings | Dialogue |
+| Store Manual | `manual_pages`; `prefill_sql` (exempt from its CI check) | Store Manual |
+| Onboarding: First Shift | `tutorial` flags (1-1, 1-2); `prefill_sql` (1-1) | Onboarding |
 | Playtest Log | `id` and a content version (hash) so logs can be tied to the exact puzzle | Playtest Log |
 | Modify Puzzle Grading (Alpha) | A future `target_state` field for `modify` puzzles | Modify Puzzle Grading |
 
@@ -355,7 +357,7 @@ stated by other systems:
 
 | Contract from | GDD | What this system must provide | Status |
 |---|---|---|---|
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | `reference_sql`, `key_column`, `ordered`/`order_cols`, visible + ≥2 hidden datasets with ≥1 hardcode-proof, trap tags (as `tagged_keys`, per dataset incl. visible), key position, `trap_priority`, feedback levels 1–3, `kind` | Designed — this GDD implements it |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | `reference_sql`, `key_column`, `ordered`/`order_cols`, visible + ≥2 hidden datasets with ≥1 hardcode-proof, trap tags (as `tagged_keys`, per dataset incl. visible), key position, `trap_priority`, feedback levels 1–3, `kind` | In Review — this GDD implements it |
 
 **Downstream — systems that read puzzle data:**
 
@@ -364,18 +366,19 @@ stated by other systems:
 | Hidden-Data Grader | hard | Grading fields (above) |
 | SQL Execution Sandbox | hard | Schema + resolved datasets |
 | Query Workbench | hard | Title, request, schema, visible data, target result |
-| Back Room | hard | Visible dataset; level-3 synthetic rows (VS) |
+| Back Room | hard | Visible dataset; level-3 synthetic rows (Alpha, Chapter 2+) |
 | Hint System | hard | `hints` |
 | Constraint Challenges | hard | `constraint` |
-| Shift & Chapter Progression | hard | ids, ordering, flags, chapter "today" |
-| Request & Reaction Dialogue | hard | `request`, `pass_reaction`, trap feedback |
-| Store Manual | soft | `manual_keywords` |
+| Shift & Chapter Progression | hard | ids, ordering, flags, chapter "today", shift wage and briefing, `prefill_sql` |
+| Request & Reaction Dialogue | hard | `request` (speaker ids), `pass_reaction`, trap feedback, shift briefings |
+| Store Manual | soft | `manual_pages`, `prefill_sql` |
+| Onboarding: First Shift | soft | `tutorial` flags, `prefill_sql` |
 | Playtest Log | soft | id + content version |
 | Modify Puzzle Grading (Alpha) | hard | future `target_state` |
 
 **Bidirectionality:** verified 2026-10-14 (design review) — the grader, sandbox,
-workbench, hint, constraint, progression, dialogue, store manual and playtest
-log GDDs list *Puzzle Definition & Datasets*. Back Room and Modify Puzzle
+workbench, hint, constraint, progression, dialogue, store manual, onboarding and
+playtest log GDDs list *Puzzle Definition & Datasets*. Back Room and Modify Puzzle
 Grading (Alpha) have no GDD yet; each must list it when written.
 
 ## Tuning Knobs
@@ -413,7 +416,7 @@ authored as text data files (format → ADR).
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/hidden-data-grader.md` | Core Rules 2–6, Dependencies, Formulas | Grading contract this format implements; `result_match`, `R_cap`, cause selection | Designed (pending review) |
+| `design/gdd/hidden-data-grader.md` | Core Rules 2–6, Dependencies, Formulas | Grading contract this format implements; `result_match`, `R_cap`, cause selection | In Review |
 | `design/gdd/game-concept.md` | Rules 7, 9, 13 | Trap philosophy, data realism, Pillars 1, 2, 4 | Source of intent |
 | `design/levels/chapter-1-puzzles.md` | Rules 1, 5, 9 | Chapter 1 puzzles, edge rows, the four requests to rewrite | Level design (to be migrated into this format) |
 | `prototypes/sqlbini-web/ch1.py` | Rules 1, 5, 10–12 | The prototype verifier this pipeline succeeds | Prototype — reference only |
@@ -468,7 +471,8 @@ and names the failing check.
 
 **Report and content**
 - **R-01 [Content-CI]** GIVEN 1-5, WHEN CI runs, THEN the report shows each check true/false, 1 trap, 1 trap passing visible, sizes 24 / 34 / 34, and `boundary_200` caught by {A, B}; warnings (hidden set equal to visible, zero-row reference, `ORDER BY` with `ordered: false`) appear without changing validity; no score or rating appears.
-- **R-02 [Content-CI]** GIVEN all 13 migrated Chapter 1 puzzles, WHEN CI runs, THEN every one passes `puzzle_valid`. *(Depends on Open Questions 3 and 5.)*
+- **R-02 [Content-CI]** GIVEN all 13 migrated Chapter 1 puzzles, WHEN CI runs, THEN every one passes `puzzle_valid`. *(Depends on Open Question 3; Open Question 5 is closed — 15 traps.)*
+- **R-04 [Logic]** GIVEN Chapter 1 with `boss` on 1-10 instead of 1-11 (or on both), WHEN loaded, THEN the verifier reports a `boss` flag / position mismatch and the chapter fails verification.
 - **R-03 [Logic]** GIVEN a `constraint` missing `type`, `value`, `offer_line` or `witness_sql`, or with a `type` other than `max_chars` / `forbid` / `require`, WHEN loaded, THEN the puzzle is invalid and the report names the missing or bad field (semantic checks are `constraint-challenges.md` CC-11/12).
 
 ## Open Questions
@@ -479,5 +483,5 @@ and names the failing check.
 | 2 | Does the CI verifier run in Godot (same SQLite as the game, via godot-sqlite) or in Python (`ch1.py` lineage, stdlib `sqlite3`)? Running it in Godot avoids engine/version drift between verifier and game. | technical-director → ADR | Technical Setup |
 | 3 | Chapter 1 migration: author trap tags, key column, `trap_priority`, level-1 feedback, `alt_valid` and the rewritten requests for all 13 puzzles. Who checks the rewritten 1-4/1-5/1-7/1-8 make players fail on first submit? | level design + zero-SQL playtest | Before Chapter 1 content locks |
 | 4 | Should a later chapter's schema (e.g. `sales`, `customers`) be a superset of Chapter 1's `products`, or a fresh store database per chapter? | game-designer | Chapter 2 design |
-| 5 | `ch1.py` has 15 traps while `chapter-1-puzzles.md` says 16 — reconcile during migration. | level design | Chapter 1 migration |
-| 6 | Do 24–30 visible rows read comfortably in the workbench's 7-row result panel, or should `visible_rows_max` drop (or the panel grow)? | ux-designer + playtest | Query Workbench UX spec / first playtest |
+| 5 | ~~`ch1.py` has 15 traps while `chapter-1-puzzles.md` says 16~~ — closed: 15 is correct; `chapter-1-puzzles.md:175` miscounted (cross-GDD review 2026-10-14). | — | Resolved 2026-10-14 |
+| 6 | Do 24–30 visible rows read comfortably in the workbench's 7-row result panel, or should `visible_rows_max` drop (or the panel grow)? Pending `/ux-design` (dedicated visible-data view question, cross-GDD review W30). | ux-designer (`/ux-design`) + playtest | Query Workbench UX spec / first playtest |

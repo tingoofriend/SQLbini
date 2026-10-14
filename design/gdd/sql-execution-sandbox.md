@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -72,6 +72,12 @@ interrupt a query — both shape the rules below. How the time limit is enforced
    (`-- …`, `/* … */`). An unterminated `/* …` runs to the end of the text, as
    in SQLite (probed). Trailing whitespace, comments and **one** trailing `;`
    are allowed.
+5a. **Lexer contract.** The sandbox owns the lexer and exposes it to other
+   systems as `tokenize(sql) -> Array of {kind, text}`, with `kind` one of
+   `WORD`, `NUMBER`, `STRING`, `QUOTED_IDENT`, `COMMENT`, `PUNCT`. Keyword
+   matching — here (rules 6–9) and in Constraint Challenges' rule checks — uses
+   `WORD` tokens only, compared case-insensitively, so a keyword inside a string,
+   quoted identifier or comment never matches.
 6. If anything other than whitespace or comments follows a `;`, the request is
    rejected as `MULTI_STATEMENT` **without executing anything**. (godot-sqlite
    executes every `;`-separated statement — the probe showed `SELECT 1; DROP
@@ -99,8 +105,9 @@ interrupt a query — both shape the rules below. How the time limit is enforced
 12. The database is then switched to read-only (`PRAGMA query_only = 1`) and the
     rows are fetched with `SELECT * FROM temp._q LIMIT fetch_limit`
     (Formulas). Rows are returned as positional lists in column order.
-13. If more than `R_cap` rows exist, the result is marked `truncated`; the grader
-    treats that as "too many rows" (its `rows_ok`).
+13. If more than `grader_row_cap` rows exist, the result is marked `truncated`;
+    the grader treats that as too many rows (its `rows_ok`: `TOO_MANY_ROWS` on
+    the visible pre-check, a `generic` mismatch on a hidden dataset).
 14. Write statements in `scratch` mode run directly (no view), then report the
     number of rows changed (read with `SELECT changes()` — godot-sqlite has no
     changes method; probed). A `RETURNING` clause is ignored: only
@@ -136,11 +143,12 @@ interrupt a query — both shape the rules below. How the time limit is enforced
 |---|---|
 | `status` | `ok` or `error` |
 | `error_kind` | `EMPTY`, `MULTI_STATEMENT`, `NOT_A_QUERY`, `NOT_ALLOWED`, `UNSUPPORTED`, `SQL_ERROR`, `TIMEOUT`, `CONTENT_ERROR` (the dataset itself failed to build — a content bug, never the player's fault) — only when `status = error` |
-| `error_text` | SQLite's original message for `SQL_ERROR` (e.g. `no such column: prise`); a fixed message otherwise |
+| `error_text` | SQLite's original message for `SQL_ERROR` (e.g. `no such column: prise`); a fixed message otherwise — for `CONTENT_ERROR` always the fixed message "content error", never the build message |
+| `build_message` | `CONTENT_ERROR` only: the dataset build's own message. It reaches the Playtest Log only as the optional `build_message` field of the `run` event (`CONTENT_ERROR`) and the `submit` event (UNAVAILABLE); it never reaches the player (it can name hidden keys) |
 | `columns` | Output column names in order (SQLite-uniquified) |
 | `column_count` | Number of output columns — present even for zero rows |
 | `rows` | List of rows; each row a list of values in column order |
-| `truncated` | `true` if more than `R_cap` rows exist |
+| `truncated` | `true` if more than `grader_row_cap` rows exist |
 | `rows_changed` | `scratch` writes only |
 | `elapsed_ms` | Monotonic wall time from receiving the request to returning the result, including the statement check and database build |
 
@@ -173,6 +181,8 @@ The scratch database (Back Room) has a lifecycle:
 | Back Room | Back Room → Sandbox → Back Room | `scratch` requests; scratch DB lifecycle (create, reset, destroy) | Back Room calls; Sandbox owns the DB |
 | Request & Reaction Dialogue | Sandbox → (via Grader/Workbench) → Dialogue | `error_kind` + `error_text` to voice | Dialogue |
 | Content verifier | Verifier → Sandbox | Same `query` mode as the game, so CI and the game agree | Puzzle Definition |
+| Constraint Challenges | Challenges → Sandbox | `tokenize(sql)` (rule 5a) for `forbid`/`require` keyword checks and the live check | Sandbox |
+| Playtest Log | Sandbox → (via Workbench / Grader) → Log | `build_message` on `CONTENT_ERROR`, reaching the log **only** as the optional `build_message` field of the `run` event (Run hit `CONTENT_ERROR`) and of the `submit` event (verdict UNAVAILABLE) | Playtest Log |
 | Efficiency Stats (VS) | Sandbox → Stats | `elapsed_ms` (if the efficiency metric uses execution cost) | Efficiency Stats |
 | Modify Puzzle Grading (Alpha) | extends | `modify` mode and final-state readout | Modify Puzzle Grading |
 
@@ -183,19 +193,22 @@ spike note addendum.*
 
 The **fetch_limit** formula is defined as:
 
-`fetch_limit = R_cap + 1`
+`fetch_limit = grader_row_cap + 1`
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| R_cap | int | 5000 | data file (registry `grader_row_cap`) | Largest result the grader accepts |
-| fetch_limit | int | 5001 | calculated | Outer `LIMIT` in rule 12 |
+| grader_row_cap | int | 1,000–50,000 (default 5000) | data file (registry `grader_row_cap`; the grader's `R_cap`) | Largest result the grader accepts |
+| fetch_limit | int | `grader_row_cap + 1` | calculated | Outer `LIMIT` in rule 12 |
 
-**Output Range:** 5001 while `R_cap = 5000`. Fetching exactly `R_cap` rows could not
-tell "exactly 5000" from "more"; the 5001st row proves overflow. It is discarded,
-`rows` is cut to 5000 and `truncated = true`. The 5001st row is never exposed.
-**Example:** a query yielding 12,000 rows → 5001 fetched, 5000 returned,
-`truncated = true`; exactly 5,000 rows → 5,000 returned, `truncated = false`.
+**Output Range:** `grader_row_cap + 1`. Fetching exactly `grader_row_cap` rows
+could not tell "exactly the cap" from "more"; the extra row proves overflow. It
+is discarded, `rows` is cut to `grader_row_cap` and `truncated = true`. The extra
+row is never exposed. No string or check hardcodes the default; player-facing
+text is formatted from the value ("{grader_row_cap}+ rows").
+**Example (default 5000):** a query yielding 12,000 rows → 5001 fetched, 5000
+returned, `truncated = true`; exactly 5,000 rows → 5,000 returned,
+`truncated = false`.
 
 The **exec_time_limit** formula is defined as:
 
@@ -208,7 +221,9 @@ The **exec_time_limit** formula is defined as:
 
 **Output Range:** 50–150 ms. The floor (2 × `exec_cost_target_ms`) keeps slow
 machines from timing out valid queries; the ceiling leaves ≥ 50 ms of the 200 ms
-Run budget for the UI. It caps a *single* execution; the submit budget is the sum
+Run budget for the UI. A Run that ends in `TIMEOUT` is **exempt** from the 200 ms
+Run budget (delivery may take up to `exec_time_limit` + 50 ms; the workbench
+shows "checking…" meanwhile); the budget applies to Runs that complete. It caps a *single* execution; the submit budget is the sum
 over executions (below). **Unenforced until the enforcement ADR lands** (rule 15,
 Open Question 1) — whatever the mechanism, execution must not run on the frame
 thread, so a hang never freezes the UI.
@@ -274,7 +289,7 @@ observed on Godot 4.7.2 + godot-sqlite v4.9.*
 - **If the result has zero rows**: `column_count` and `columns` still come from the view metadata (probed).
 - **If two output columns share a name** (`SELECT name, name`): returned as `name`, `name:1`; `column_count = 2` (probed).
 - **If an output column name itself looks uniquified** (`SELECT name AS "name:1", name`): SQLite's renaming keeps them distinct; values are read by column position, never by name.
-- **If the result exceeds `R_cap` rows**: the fetch stops at `fetch_limit`; `truncated = true`; the rows returned are not used for grading.
+- **If the result exceeds `grader_row_cap` rows**: the fetch stops at `fetch_limit`; `truncated = true`; the rows returned are not used for grading.
 - **If the query has an `ORDER BY`**: rows are returned in that order through the view — observed in 4 probe cases, not formally guaranteed by SQLite; acceptance criterion SB-08 guards it.
 - **If a value is REAL and integral** (`198.0`): returned as float `198.0`; no conversion (the grader's `canon` equates it with 198).
 - **If a column has no name** (`SELECT price * 2`): SQLite names it from the expression; the name is display-only.
@@ -282,7 +297,7 @@ observed on Godot 4.7.2 + godot-sqlite v4.9.*
 **Errors and limits**
 - **If SQLite reports an error** (`no such column: prise`): `SQL_ERROR` with SQLite's exact text, which Request & Reaction Dialogue can show beneath its voiced line.
 - **If execution exceeds `exec_time_limit`**: `TIMEOUT` within the limit + 50 ms; the frame never blocks (rule 15). The residual case is an aggregate, `GROUP BY`, `DISTINCT` or `ORDER BY` over a many-way join (rule 15); how the limit is enforced is Open Question 1.
-- **If the dataset fails to build** (a schema/data error): `CONTENT_ERROR` with the build message; the grader treats it as an internal error, not a player failure. The content verifier should have caught it first.
+- **If the dataset fails to build** (a schema/data error): `CONTENT_ERROR` with the fixed `error_text` "content error"; the build message goes only in `build_message` (Playtest Log / content-bug report), never to the player, because it can name hidden keys. The grader returns UNAVAILABLE (`hidden-data-grader.md` rule 9a), not a player failure. The content verifier should have caught it first.
 
 **Scratch database**
 - **If the player deletes every row in the Back Room**: allowed; "reset" restores the visible dataset.
@@ -311,11 +326,14 @@ Behaviour this GDD relies on is recorded in the spike note addendum.
 | Back Room | hard | `scratch` mode and scratch DB lifecycle |
 | Request & Reaction Dialogue | soft | `error_kind`, `error_text` (via Grader / Workbench) |
 | Content verifier (Puzzle Definition) | hard | Same `query` mode as the game |
+| Constraint Challenges | hard | `tokenize(sql)` lexer contract (rule 5a) |
+| Playtest Log | soft | `build_message`, only via the optional field on the `run` event (`CONTENT_ERROR`) and the `submit` event (UNAVAILABLE) |
 | Efficiency Stats (VS) | soft | `elapsed_ms` |
 | Modify Puzzle Grading (Alpha) | hard | `modify` mode |
 
 **Bidirectionality:** `hidden-data-grader.md`, `puzzle-definition-and-datasets.md`,
-`query-workbench.md` and `request-and-reaction-dialogue.md` list this system ✓.
+`query-workbench.md`, `request-and-reaction-dialogue.md` and
+`constraint-challenges.md` list this system ✓.
 Back Room, Efficiency Stats and Modify Puzzle Grading have no GDD yet.
 
 ## Visual/Audio Requirements
@@ -364,9 +382,9 @@ visible dataset unless stated (e.g. Cola 500ml, price 216). SB-02, -03 (`UPDATE`
 - **SB-07 [Logic]** GIVEN `SELECT name, price FROM products WHERE 1 = 0` THEN `rows = []`, `column_count = 2`, `columns = ["name", "price"]`; GIVEN `SELECT name, name FROM products` THEN `columns = ["name", "name:1"]` and each row has 2 values read by position; GIVEN `SELECT name AS "name:1", name FROM products` THEN the two columns stay distinct.
 - **SB-08 [Integration]** GIVEN `SELECT name, price FROM products ORDER BY price DESC, name` (and the same with a `WHERE` and with ties) THEN `rows` equal, row for row, a direct non-view SQLite run of the same query. Re-run on every godot-sqlite upgrade.
 - **SB-09 [Logic]** GIVEN `SELECT 198 AS i, 198.0 AS r, NULL AS n, '1' AS s, 7/2 AS d, X'00FF' AS b` THEN the types are int, float, null, string, int (`d = 3`) and byte array (`[0, 255]`); GIVEN `SELECT load_extension('x')` THEN `SQL_ERROR` with `not authorized`.
-- **SB-10 [Logic]** GIVEN a query producing exactly 5,000 rows THEN 5,000 rows and `truncated = false`; GIVEN 5,001 or 12,000 rows THEN `len(rows) = 5000`, `truncated = true`, the 5,001st row is not exposed, and exactly 5,001 rows were requested.
+- **SB-10 [Logic]** GIVEN `grader_row_cap = 5000` (default) and a query producing exactly 5,000 rows THEN 5,000 rows and `truncated = false`; GIVEN 5,001 or 12,000 rows THEN `len(rows) = 5000`, `truncated = true`, the 5,001st row is not exposed, and exactly 5,001 rows were requested.
 - **SB-11 [Logic]** GIVEN `SELECT prise FROM products` THEN `SQL_ERROR` and `error_text` is exactly SQLite's message `no such column: prise`.
-- **SB-12 [Logic]** GIVEN a dataset whose build fails (a type error in a row) THEN `CONTENT_ERROR`, never `SQL_ERROR`.
+- **SB-12 [Logic]** GIVEN a dataset whose build fails (a type error in a row) THEN `CONTENT_ERROR`, never `SQL_ERROR`; `error_text` is exactly "content error" and the build message appears only in `build_message`.
 
 **Scratch mode**
 - **SB-13 [Logic]** GIVEN `scratch` mode THEN `SELECT`, `WITH … SELECT`, `INSERT`, `UPDATE` and `DELETE` succeed; `UPDATE products SET stock = 0` returns `rows_changed = 24`; `DROP TABLE products`, `CREATE …`, `ALTER …`, `ATTACH …` and `PRAGMA …` return `NOT_ALLOWED` with data unchanged; `UPDATE …; DELETE …` returns `MULTI_STATEMENT`.
@@ -376,8 +394,8 @@ visible dataset unless stated (e.g. Cola 500ml, price 216). SB-02, -03 (`UPDATE`
 
 **Time limit**
 - **SB-17 [Logic]** GIVEN `exec_time_limit_ms` = 0, 10, 100, 999 THEN the effective limit is 100, 50, 100, 150.
-- **SB-18 [Integration]** GIVEN a query that runs longer than the limit (an `ORDER BY` over a huge cross join) THEN `TIMEOUT` is returned within limit + 50 ms and the next request succeeds. *Checkable once the enforcement ADR lands (Open Question 1).*
-- **SB-19 [Integration]** GIVEN the SB-18 query, and separately a 6-way self-join `SELECT COUNT(*) FROM products a, products b, products c, products d, products e, products f`, started from the Workbench THEN the frame time stays ≤ 33 ms throughout (execution is not on the frame thread). Checkable from the first implementation — it does not wait for the ADR.
+- **SB-18 [Integration]** GIVEN a query that runs longer than the limit (an `ORDER BY` over a huge cross join) THEN `TIMEOUT` is returned within limit + 50 ms and the next request succeeds; such a Run is exempt from the 200 ms Run budget (the workbench shows "checking…"), which applies only to Runs that complete. *Checkable once the enforcement ADR lands (Open Question 1).*
+- **SB-19 [Integration]** GIVEN the SB-18 query, and separately a 6-way self-join `SELECT COUNT(*) FROM products a, products b, products c, products d, products e, products f`, started from the Workbench THEN the frame time stays ≤ 16.6 ms (60 fps) throughout (execution is not on the frame thread). Checkable from the first implementation — it does not wait for the ADR.
 
 **Performance**
 - **SB-20 [Performance]** GIVEN 200 executions of puzzle 1-11's reference on the target PC THEN p95 ≤ 25 ms (hard ceiling 30 ms); dev-laptop baseline p95 ≈ 0.37 ms. Run end-to-end ≤ 200 ms; Submit (5 executions at D = 3) ≤ 300 ms. *Target PC to be named (grader Open Question 7).*

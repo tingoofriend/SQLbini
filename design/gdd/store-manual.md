@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL (anti-pillar: NOT a textbook)
 
@@ -39,8 +39,9 @@ playtest (clear 1-1 to 1-3 without outside help) has no way to pass.
 **Pages**
 
 1. The manual is a list of **pages**, each defined in data: `id` (`manual.<slug>`,
-   e.g. `manual.between`), `title`, the
-   SQL keyword(s) it covers, `body` (2–4 short sentences), `shape` (the syntax
+   e.g. `manual.between`) — the key puzzles use in their `manual_pages` list
+   (Puzzle Definition) — `title`, the SQL keyword(s) or operators it covers
+   (display only, not an unlock key), `body` (2–4 short sentences), `shape` (the syntax
    pattern, e.g. `SELECT columns FROM table WHERE condition`), one `example`
    query on the chapter's visible data with a one-line note of what it returns,
    and an optional `watch_out` line (the common mistake, stated as a fact —
@@ -61,31 +62,42 @@ playtest (clear 1-1 to 1-3 without outside help) has no way to pass.
 | No duplicates | `DISTINCT` | S-1 |
 | Calculated columns | arithmetic, `AS` | S-2 |
 
-   Which puzzle unlocks which page comes from each puzzle's `manual_keywords`
-   (Puzzle Definition); the table is the Chapter 1 default.
+   Which puzzle unlocks which page comes from each puzzle's `manual_pages` —
+   a list of page ids (`manual.<slug>`), possibly empty (Puzzle Definition);
+   the table is the Chapter 1 default. Page ids are used so pages with no
+   keyword ("Picking columns", comparison operators) can still be unlocked.
 3. Pages tell the truth about SQL (Pillar 4) — `watch_out` lines state real
    rules ("`= NULL` never matches; use `IS NULL`"). Traps still bite because
    requests are written in natural language and the player must apply the rule
    to what the customer *means* (trap philosophy). Pages never mention a
    specific puzzle, its data, or its answer.
+3a. **No `watch_out` pre-solves a Chapter 1 trap.** A page's `watch_out` must
+   not state the rule a Chapter 1 trap tests until that trap's puzzle has been
+   passed. In particular, in Chapter 1 the "More than one condition" (AND/OR)
+   page carries **no precedence `watch_out`** (the 1-6 and 1-11 traps). A
+   `watch_out` that would state a trap's rule is either omitted or made
+   conditional on that puzzle being passed (content data; checked in CI).
 4. **Examples never solve a puzzle.** No page example, run as a player's query,
    may pass any puzzle in the game (content CI check, like the Hint System's).
-   **One exception:** a puzzle whose editor Onboarding prefills with its
-   reference (1-1, `SELECT * FROM products` — `onboarding-first-shift.md`
-   rule 2) is exempt, since its answer is already on screen; this lets
-   "Reading the ledger" show the plain `SELECT * FROM products`. Every other
+   **One exception:** a puzzle whose `prefill_sql` (Puzzle Definition) is its
+   reference is exempt, since its answer is already on screen (1-1,
+   `SELECT * FROM products;` — `onboarding-first-shift.md` rule 2); the CI
+   check keys on that field, not on a puzzle id. This lets "Reading the ledger"
+   show the plain `SELECT * FROM products;`. Every other
    puzzle, including tutorial 1-2, is checked — so "Picking columns" uses a
    list other than 1-2's (e.g. `SELECT name, category FROM products`).
 
 **Unlocking and opening**
 
 5. A page unlocks the first time the player opens a request whose
-   `manual_keywords` include it (Shift & Chapter Progression reports the open).
+   `manual_pages` contains its id (Shift & Chapter Progression reports the open).
    Unlocked pages stay unlocked for the session (and, from Vertical Slice, the
    save).
 6. A newly unlocked page lights a small, silent indicator on the Manual button
-   ("1 new page"). The manual **never opens by itself**; Onboarding may point at
-   the button in 1-1, and a hint may name a page, but opening is always the
+   ("1 new page"). While an Onboarding coach mark is showing (Guided mode) the
+   indicator is suppressed and appears once no mark is showing (workbench
+   rule 6). The manual **never opens by itself**; Onboarding points at the
+   button on 1-3 ("Filtering rows"), and a hint may name a page, but opening is always the
    player's action (button or Ctrl+M).
 7. Locked pages appear in the index as titles marked "later" with no content, so
    the player can see the binder will grow.
@@ -108,7 +120,7 @@ playtest (clear 1-1 to 1-3 without outside help) has no way to pass.
 
 Per page, per session: `Locked → Unlocked (new)` (a request needing it is
 opened) `→ Unlocked (read)` (the page is viewed). The Manual button shows the new-
-page indicator while any page is `Unlocked (new)`.
+page indicator while any page is `Unlocked (new)` and no coach mark is showing.
 
 The panel: `Closed ↔ Open` (button, Ctrl+M; Esc closes). Opening never changes
 the workbench state; the editor keeps its text and caret.
@@ -117,11 +129,11 @@ the workbench state; the editor keeps its text and caret.
 
 | System | Direction | Data | Owner |
 |---|---|---|---|
-| Puzzle Definition & Datasets | Puzzle → Manual | `manual_keywords` per puzzle; chapter schema (for examples) | Puzzle Definition |
+| Puzzle Definition & Datasets | Puzzle → Manual | `manual_pages` (page ids) per puzzle; `prefill_sql` (rule 4 exemption); chapter schema (for examples) | Puzzle Definition |
 | Shift & Chapter Progression | Progression → Manual | "request opened" events | Progression |
 | Query Workbench | Workbench hosts | Manual button, Ctrl+M, side panel over the results column, copy-to-editor | Workbench |
 | Hint System | Hints → Manual | Hint text may name a page; a page link opens it | Hint System |
-| Onboarding: First Shift | Onboarding → Manual | May highlight the Manual button in 1-1 | Onboarding |
+| Onboarding: First Shift | Onboarding → Manual | Highlights the Manual button on 1-3 ("Filtering rows"); coach-mark visibility suppresses the new-page indicator | Onboarding |
 | Request & Reaction Dialogue | Dialogue → Manual | The previous part-timer's voice is a writing guide, not a speaker | Dialogue |
 | Content verifier | Verifier → Manual | Rule 4 check on every example | Puzzle Definition |
 | Playtest Log | Manual → Log | Page unlocked, opened, example copied | Manual |
@@ -131,7 +143,8 @@ the workbench state; the editor keeps its text and caret.
 
 *Drafted without specialists — Lean mode.*
 
-- **If a puzzle lists a keyword with no page**: content validation fails for that puzzle (the manual cannot back it up).
+- **If a puzzle's `manual_pages` lists an id with no page**: content validation fails for that puzzle (the manual cannot back it up). An empty `manual_pages` is valid (the puzzle unlocks nothing).
+- **If a page unlocks while a coach mark is showing** (1-1 "Reading the ledger" in Guided mode): the page is `Unlocked (new)` at once, but the indicator waits until no mark is showing.
 - **If two puzzles unlock the same page**: it unlocks once, on the first.
 - **If the player opens a side request first** (S-1 before 1-6): its pages unlock then; order does not matter.
 - **If the player copies an example while text is selected in the editor**: the example is inserted at the caret, not replacing the selection.
@@ -147,15 +160,16 @@ the workbench state; the editor keeps its text and caret.
 
 | System | GDD | What the Manual needs | Status |
 |---|---|---|---|
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `manual_keywords`; chapter schema | In Review |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `manual_pages`; `prefill_sql`; chapter schema | In Review |
 | Shift & Chapter Progression | `design/gdd/shift-and-chapter-progression.md` | Request-opened events | In Review |
 | Query Workbench | `design/gdd/query-workbench.md` | Host: button, Ctrl+M, side panel, copy to editor | In Review |
 
-**Soft:** Hint System (page links), Onboarding (highlight), Playtest Log,
+**Soft:** Hint System (page links), Onboarding (1-3 highlight; coach-mark
+visibility), Request & Reaction Dialogue (writing voice), Playtest Log,
 Save/Load (VS).
 
-**Bidirectionality:** puzzle definition, progression, workbench and hints list
-the Store Manual ✓.
+**Bidirectionality:** puzzle definition, progression, workbench, hints,
+onboarding and dialogue list the Store Manual ✓.
 
 ## Visual/Audio Requirements
 
@@ -193,7 +207,8 @@ grades, and always gives you something you can try right away.
 | This document references | Where | What | Status |
 |---|---|---|---|
 | `design/gdd/game-concept.md` | Overview, Rule 10 | Core Mechanic #6 store manual; anti-pillar "NOT a textbook" (reference allowed) | Source of intent |
-| `design/gdd/puzzle-definition-and-datasets.md` | Rules 2, 5 | `manual_keywords` field | In Review |
+| `design/gdd/puzzle-definition-and-datasets.md` | Rules 2, 4, 5 | `manual_pages` field (page ids); `prefill_sql` field | In Review |
+| `design/gdd/onboarding-first-shift.md` | Rules 4, 6 | 1-1 prefill; Manual-button coach mark on 1-3; indicator suppression | In Review |
 | `design/gdd/hint-system.md` | Rule 6 | Hints may name a page; same "never solves a puzzle" CI pattern | In Review |
 | `design/gdd/query-workbench.md` | Rules 8–9 | Manual button, Ctrl+M, panel placement | In Review |
 | `design/levels/chapter-1-puzzles.md` | Rule 2 | Learning goals per Chapter 1 puzzle | Level design |
@@ -202,17 +217,17 @@ grades, and always gives you something you can try right away.
 
 *Drafted with `qa-lead` (2026-10-14). Workbench, hint, progression and puzzle-
 definition behaviour is covered in their own GDDs. Datasets: `visible`,
-`hidden_a`, `hidden_b` (`prototypes/sqlbini-web/ch1.py`; `manual_keywords` is
-added during Chapter 1 migration). [UI] = retained screenshot in
+`hidden_a`, `hidden_b` (`prototypes/sqlbini-web/ch1.py`; `manual_pages` and
+`prefill_sql` are added during Chapter 1 migration). [UI] = retained screenshot in
 `production/qa/evidence/`.*
 
 **Pages and unlocking**
 - **SM-01 [Logic]** GIVEN page data, WHEN loaded, THEN each page has `id` (`manual.<slug>`), `title`, keyword(s), `body` (2–4 sentences), `shape`, `example` with a one-line result note, optional `watch_out`; a page missing a required field fails validation.
-- **SM-02 [Content-CI]** GIVEN Chapter 1 data, THEN exactly the 11 pages of Core Rule 2 exist and each puzzle's `manual_keywords` resolve to them (1-1 → Reading the ledger, 1-5 → More than one condition, 1-6 → A list of values, 1-8 → A range, S-1 → No duplicates, S-2 → Calculated columns).
+- **SM-02 [Content-CI]** GIVEN Chapter 1 data, THEN exactly the 11 pages of Core Rule 2 exist and every id in each puzzle's `manual_pages` resolves to one of them (1-1 → `manual.reading-the-ledger`, 1-2 → Picking columns, 1-4 → Comparing numbers and dates, 1-5 → More than one condition, 1-6 → A list of values, 1-8 → A range, S-1 → No duplicates, S-2 → Calculated columns — slugs are content data).
 - **SM-03 [Logic]** GIVEN a fresh session, WHEN 1-1 is first opened, THEN "Reading the ledger" is Unlocked (new) and every other page is Locked.
 - **SM-04 [Logic]** GIVEN S-1 opened before 1-6, THEN "No duplicates" unlocks at once, and opening the remaining requests in any order ends with the same unlocked set; a page shared by two puzzles unlocks once, on the first.
 - **SM-05 [Logic]** GIVEN an unlocked page, WHEN later requests open or change, THEN it stays unlocked for the session; selecting it moves it from new to read.
-- **SM-06 [UI]** GIVEN a page unlocks, THEN the Manual button shows a glyph + "1 new page", silently; the indicator clears only when no page is Unlocked (new).
+- **SM-06 [UI]** GIVEN a page unlocks, THEN the Manual button shows a glyph + "1 new page", silently; the indicator clears only when no page is Unlocked (new); GIVEN a coach mark showing, THEN the indicator is hidden and appears when the mark is gone.
 
 **Opening and the panel**
 - **SM-07 [Integration]** GIVEN a scripted full Chapter 1 run (11 main + S-1 + S-2), THEN the panel is never Open unless the script presses the button, Ctrl+M or a hint's page link; Onboarding highlights do not open it.
@@ -225,8 +240,9 @@ added during Chapter 1 migration). [UI] = retained screenshot in
 
 **Content checks**
 - **SM-14 [Content-CI]** Every `example` runs without error on the chapter schema.
-- **SM-15 [Content-CI]** Every `example`, submitted as a player query, passes no puzzle except 1-1 (the prefilled exemption, rule 4); in particular "Picking columns" does not pass 1-2.
-- **SM-16 [Content-CI]** Every puzzle keyword has a page; a missing page fails validation.
+- **SM-15 [Content-CI]** Every `example`, submitted as a player query, passes no puzzle except one whose `prefill_sql` is its reference (1-1, rule 4); in particular "Picking columns" does not pass 1-2.
+- **SM-16 [Content-CI]** Every id in every puzzle's `manual_pages` has a page; a missing page fails validation.
+- **SM-22 [Content-CI]** No Chapter 1 page's unconditional `watch_out` states the rule of a Chapter 1 trap (rule 3a); the "More than one condition" page has no precedence `watch_out` in Chapter 1.
 - **SM-17 [Content-CI]** A scan of all page text finds no puzzle id (`1-1` … `S-2`) and no puzzle's reference query.
 
 **Never a textbook; presentation; log**
@@ -239,6 +255,6 @@ added during Chapter 1 migration). [UI] = retained screenshot in
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | Do `watch_out` lines blunt the traps (e.g. "BETWEEN includes both ends" before 1-8)? Compare first-submit fail rates with and without the page read (Playtest Log). | game-designer | Zero-SQL + some-SQL playtest |
+| 1 | Do `watch_out` lines blunt the traps (e.g. "BETWEEN includes both ends" before 1-8)? Rule 3a already bars stating a trap's rule before its puzzle is passed; playtest whether that is enough. Compare first-submit fail rates with and without the page read (Playtest Log). | game-designer | Zero-SQL + some-SQL playtest |
 | 2 | Should the manual offer a small search/filter once later chapters add many pages? | ux-designer | Chapter 3 design |
 | 3 | Voice of the previous part-timer — name, personality, a mystery hook? | narrative-director | Character bios |

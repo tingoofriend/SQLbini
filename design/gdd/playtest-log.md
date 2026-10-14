@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Supports all pillars by measuring them (MVP Definition thresholds in `game-concept.md`)
 
@@ -25,8 +25,8 @@ Chapter 1 without outside help, start a constraint challenge when offered, fail
 1-6 or 1-11 on their first submit, clear 1-1 to 1-3 with zero SQL — and the
 concept prototype report admits the first playtest recorded none of it. The
 Playtest Log is the instrument: every system already designed names the events
-it sends here (grader verdicts with per-dataset results, workbench runs and
-submits with their SQL, hint unlocks and opens, skips, manual pages, onboarding
+it sends here (grader submits and verdicts with per-dataset results, workbench
+runs with their SQL, hint unlocks and opens, skips, manual pages, onboarding
 marks, challenge offers). The log writes them, in order, with timestamps, to one
 file per session on the tester's machine, tagged with an anonymous tester id and
 group ("zero-SQL" / "some-SQL") that the facilitator enters. A facilitator key
@@ -61,17 +61,32 @@ prints the threshold table. Players of the released game never meet this system.
 | Source | Events (data) |
 |---|---|
 | Session | `session_start {tester, group, build}`, `session_end`, `help_given {note}` (facilitator key) |
-| Query Workbench | `run {sql, data: visible/scratch, ok, error_kind, rows, match}`, `edit_burst {chars_changed}` (edits between actions, coalesced) |
-| Hidden-Data Grader | `submit {sql, verdict, cause, level, per_dataset, missing_count, extra_count}` |
+| Query Workbench | `run {sql, dataset: visible/scratch, ok, error_kind, rows, match: bool, build_message?}`, `edit_burst {chars_changed}` (edits between actions, coalesced) |
+| Hidden-Data Grader | `submit {sql, verdict, cause, level, per_dataset, missing_count, extra_count, hint_counted: bool, build_message?}` |
 | Hint System | `hint_unlock {step}`, `hint_open {step}`, `hint_exhausted` |
 | Shift & Chapter Progression | `request_open`, `request_pass`, `request_skip`, `request_unavailable`, `shift_clockout`, `chapter_complete {starred}` |
 | Constraint Challenges | `challenge_offer`, `challenge_try`, `challenge_later` (also written when an unanswered offer expires), `challenge_start {source}`, `challenge_attempt {verdict, rule_met}`, `challenge_clear` |
 | Store Manual | `manual_unlock {page}`, `manual_open {page}`, `manual_copy {page}` |
-| Onboarding | `sql_question {answer}`, `mark_shown/done/dismissed {mark}`, `first_run`, `first_pass` |
-| Request & Reaction Dialogue | `line_shown {line_id, kind, speaker}` (the puzzle id travels in the common `puzzle` field), `log_opened`, `line_skipped` |
+| Onboarding | `sql_question {answer}`, `mark_shown/done/dismissed {mark}` |
+| Request & Reaction Dialogue | `line_shown {line_id, kind, speaker}` (canonical form: the puzzle id travels in the common `puzzle` field, never a `puzzle_id` data field), `log_opened`, `line_skipped` |
 
    A system adds an event by declaring it in its GDD and here; the log rejects
    (and counts) undeclared event names rather than writing free-form data.
+4a. **Field notes.** `submit` is emitted by the Hidden-Data Grader only (the
+   Workbench emits `run`, never `submit`); `verdict` is PASS, FAIL,
+   SUBMIT_ERROR or UNAVAILABLE. `run.dataset` names the dataset the Run used
+   (`visible` / `scratch`), distinct from the common `data` object. `run.match`
+   is the boolean visible-data match bit (true = the Run's result matches the
+   reference on the visible dataset; false otherwise or when not applicable).
+   `submit.hint_counted` is true when the FAIL counted toward hint unlocking
+   (Hint System rule 4a — its normalized query text differs from the previous
+   counted FAIL's); false for every other submit. `build_message` is present
+   only on a `run` whose `error_kind` is CONTENT_ERROR or a `submit` whose
+   verdict is UNAVAILABLE: it carries the sandbox's dataset build message, and
+   this log (and the content-bug report built from it) is the **only** place it
+   appears — it never reaches the player. First-Run and first-pass times are
+   computed by the report from `run` and `request_pass` (Formulas); there are no
+   `first_run` / `first_pass` events.
 5. **Player SQL is recorded verbatim** on Run and Submit — it is the evidence for
    "do the traps bite?". Nothing else the tester types is recorded, and no system
    information beyond the build id (no OS user name, hostname or paths). The
@@ -133,7 +148,8 @@ passes.*
 
 **Shared definitions.** A *tester stream* is all of a tester's sessions merged in
 `wall` order; `T(e)` is cumulative play time (session gaps count 0). A *real
-verdict* is a `submit` with verdict PASS or FAIL; a SUBMIT_ERROR is never one. A
+verdict* is a `submit` with verdict PASS or FAIL; a SUBMIT_ERROR or UNAVAILABLE
+is never one. A
 *pass* on p is a `request_pass` on p.
 
 The **time_to_first_run** formula is defined as:
@@ -149,7 +165,9 @@ The **time_to_first_run** formula is defined as:
 **Output Range:** ≥ 0 s; null if the tester never ran. (`time_to_first_pass` is
 the same with `request_pass`, null if the tester never passed. The two are
 independent: a tester may pass before any Run — Onboarding lets 1-1 be
-submitted unrun (OB-06) — so `time_to_first_pass` can be smaller.)
+submitted unrun (OB-06) — so `time_to_first_pass` can be smaller. Both are
+computed here from `run` and `request_pass`; no system sends a dedicated
+first-run or first-pass event.)
 **Example:** request opened at 12 s, first Run at 47 s → 35 s.
 
 The **puzzle_active_time** formula is defined as:
@@ -160,7 +178,7 @@ The **puzzle_active_time** formula is defined as:
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | gap_i | float (s) | ≥ 0 | calculated | Time between consecutive events in the window |
-| idle_cutoff_s | int (s) | 30–300 (default 90) | data file | Longest gap credited as active — the same config value the Hint System reads |
+| idle_cutoff_s | int (s) | 30–300 (default 90) | data file | Longest gap credited as active — the same **global** config value the Hint System reads (global-only, never per-puzzle) |
 
 **Output Range:** 0 to the window length; "unsettled" (excluded from medians) if
 p was opened but never passed or skipped. Every recorded event, including
@@ -192,9 +210,14 @@ The **finished_chapter_without_help** formula is defined as:
 
 `finished_chapter_without_help(tester) = chapter_complete ∧ no help_given on a Chapter 1 puzzle before that puzzle was passed or skipped`
 
-**Output Range:** boolean. In-game skips are allowed (the report also prints
-"finished with N skips" per tester).
-**Example:** chapter complete, 1-11 left for Kenji, no F9 presses → true (1 skip).
+**Output Range:** boolean. In-game skips are allowed (predicate unchanged). The
+report always prints the claim together with each tester's **skip count** and
+whether the **boss (1-11) was skipped** (side metric, e.g. "finished — 1 skip,
+boss skipped"), and the Finish row of the threshold table shows, beside the
+count, how many of the testers counted had ≥ 1 skip and how many skipped the
+boss.
+**Example:** chapter complete, 1-11 left for Kenji, no F9 presses → true (1 skip,
+boss skipped).
 
 The **started_challenge_when_offered** formula is defined as:
 
@@ -209,16 +232,16 @@ The **boss_skip_rate**, **hint_before_first_fail** and **run_then_fail** formula
 
 `boss_skip_rate = testers with request_skip(1-11) / testers who opened 1-11`
 `hint_before_first_fail(p) = count(hint_open on p before the first FAIL on p)`
-`run_then_fail(p) = all-✓ visible Runs whose next real verdict on p is FAIL / all-✓ Runs followed by a real verdict on p`
+`run_then_fail(p) = matching visible Runs whose next real verdict on p is FAIL / matching visible Runs followed by a real verdict on p`
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| run.match | enum | all / partial / none | data file | Visible-data match of a Run |
+| run.match | bool | true / false | data file | Visible-data match bit of a Run (a *matching visible Run* has `dataset = visible` and `match = true`) |
 
 **Output Range:** rates 0–1 or null (empty denominator, printed "no data", never
 0%); counts ≥ 0.
-**Example:** three all-✓ Runs each followed by a submit, two of them FAIL →
+**Example:** three matching visible Runs each followed by a submit, two of them FAIL →
 `run_then_fail` = 0.67 (how often the visible data misleads — the core "aha").
 
 The **threshold_claims** formula is defined as:
@@ -230,7 +253,7 @@ kept as proportions for larger groups
 
 | Claim | Group | Predicate | Bar (from the concept) |
 |---|---|---|---|
-| Finish | zero-SQL and some-SQL, each | `finished_chapter_without_help` | 2/3 in each (≥ 2 of 3) |
+| Finish | zero-SQL and some-SQL, each | `finished_chapter_without_help` (reported with skip count and boss-skipped flag) | 2/3 in each (≥ 2 of 3) |
 | Wants more | both groups | `started_challenge_when_offered` | 4/6 (≥ 4 of 6) |
 | Traps bite | some-SQL | `first_submit_failed(1-6) ∨ first_submit_failed(1-11)` | 2/3 (≥ 2 of 3) |
 | Can start | zero-SQL | `cleared_without_help(tester, {1-1, 1-2, 1-3})` | 2/3 (≥ 2 of 3) |
@@ -267,6 +290,11 @@ Query Workbench, Hint System, Shift & Chapter Progression, Constraint
 Challenges, Store Manual, Onboarding, Request & Reaction Dialogue — and Puzzle
 Definition (content hash). All In Review; each lists the
 Playtest Log in its Interactions ✓.
+
+**Upstream (soft):** SQL Execution Sandbox — its `build_message` reaches this
+log only as the optional field on `run` (CONTENT_ERROR) and `submit`
+(UNAVAILABLE), carried by the Workbench and the Grader; the Sandbox emits no
+events of its own.
 
 **Downstream:** `tools/playtest-report`, the `/playtest-report` skill, and the
 concept's MVP threshold table.
@@ -311,11 +339,12 @@ sent; these cover the log and the report tool. [UI] = retained screenshot in
 - **PL-07 [Integration]** GIVEN N events flushed and the process killed, THEN the file holds ≥ N lines and every complete line parses.
 - **PL-08 [Integration]** GIVEN the log folder made read-only mid-session, THEN the label reads "Recording stopped", nothing more is written, Run and Submit still work, no error dialog, and frame time stays within the 16.6 ms budget.
 - **PL-09 [Integration]** GIVEN a full session, THEN the only file written is `playtest-logs/<session>.jsonl` and no network socket is opened.
+- **PL-17 [Integration]** GIVEN 1-5 open, WHEN the tester submits FAIL `SELECT 1`, then FAIL `select 1;`, then FAIL `SELECT 2`, THEN three `submit` lines (all from the grader, none from the workbench) carry `hint_counted` true, false, true; GIVEN a visible Run whose result matches, THEN `run.dataset = "visible"` and `run.match = true`; GIVEN a dataset that fails to build, THEN the `run` (error_kind CONTENT_ERROR) or `submit` (verdict UNAVAILABLE) line carries `build_message`, and no other line, and no in-game text, contains it; no `first_run` / `first_pass` lines are ever written.
 - **PL-10 [Integration]** GIVEN 1-4 open, F9 writes `help_given {puzzle: 1-4}` at once; with no puzzle open, `puzzle: null`; after Enter, Esc or 5 s idle in the note field, the editor has keyboard focus again.
 
 **Report tool** (`tools/playtest-report <folder>`, fixture logs)
-- **PL-11 [Tool]** THEN `time_to_first_run` = 35.0 s; `puzzle_active_time` = 170.0 s (events 0, 20, 50, 200, 230 s; cap 90); `first_submit_failed(1-6)` = true for SUBMIT_ERROR, FAIL, PASS; `cleared_without_help` = true when the only help is on 1-4; `finished_chapter_without_help` = true with 1 skip and no help, false with help on 1-5 before its pass; `started_challenge_when_offered` = true for offer → Try with no help, null when never offered; `boss_skip_rate` = 0.50; `run_then_fail` = 0.67; an empty denominator prints "no data", never 0%.
-- **PL-12 [Tool]** THEN Finish (zero-SQL) 3 true → `met`; Traps bite (some-SQL) 1 true, 2 false → `missed`; Can start with 2 eligible testers → `insufficient data`; null predicates n/a; a group of 6 uses bar 4 for 2/3 claims.
+- **PL-11 [Tool]** THEN `time_to_first_run` = 35.0 s; `puzzle_active_time` = 170.0 s (events 0, 20, 50, 200, 230 s; cap 90); `first_submit_failed(1-6)` = true for SUBMIT_ERROR, FAIL, PASS; `cleared_without_help` = true when the only help is on 1-4; `finished_chapter_without_help` = true with 1 skip and no help (printed with "1 skip, boss skipped" when the skip is 1-11), false with help on 1-5 before its pass; `started_challenge_when_offered` = true for offer → Try with no help, null when never offered; `boss_skip_rate` = 0.50; `run_then_fail` = 0.67; an empty denominator prints "no data", never 0%.
+- **PL-12 [Tool]** THEN Finish (zero-SQL) 3 true → `met`, printed with how many of the 3 had ≥ 1 skip and how many skipped the boss; Traps bite (some-SQL) 1 true, 2 false → `missed`; Can start with 2 eligible testers → `insufficient data`; null predicates n/a; a group of 6 uses bar 4 for 2/3 claims.
 - **PL-13 [Tool]** GIVEN two sessions with one tester id, THEN they merge in `wall` order with the gap counted as 0; a changed group keeps the first and is flagged.
 - **PL-14 [Tool]** GIVEN 1-6 under two `content_hash` values, THEN its metrics split per hash with a warning and mixed-hash testers are excluded from claims on 1-6.
 - **PL-15 [Tool]** GIVEN a session without `session_end`, THEN it ends at its last event and is flagged "crashed".
