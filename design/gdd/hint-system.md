@@ -302,6 +302,6 @@ opening the panel is covered by workbench QW-19. [UI] = retained screenshot in
 |---|---|---|---|
 | 1 | Are the default unlock thresholds right? Measure from the zero-SQL playtest logs: time-to-first-submit and how many players open hints before failing. | game-designer (playtest) | Zero-SQL playtest |
 | 2 | Should the helper be Kenji for every hint, or the character most fitting the request? | narrative-director | Request & Reaction Dialogue GDD |
-| 3 | When `exhausted`, does Progression offer a skip, a third "walkthrough" step, or both? Boss puzzles? | game-designer | Shift & Chapter Progression GDD |
+| 3 | ~~When `exhausted`, what does Progression offer?~~ **Answered** in `shift-and-chapter-progression.md` rule 7: Kenji offers to take the request (skip), for every main request including the boss; skipping forgoes only the chapter star. | game-designer | Resolved 2026-10-14 |
 | 4 | A player who never submits never becomes `exhausted` — a possible hard stop. Add a time fallback (`exhausted_minutes`)? | game-designer | Zero-SQL playtest |
 | 5 | The locked label's counts ("1 try" / "2 tries") need a localisation-safe plural rule. | localization-lead | Before localisation |

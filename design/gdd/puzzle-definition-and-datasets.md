@@ -44,7 +44,8 @@ are not specified here → they become an ADR.
 
 1. A **chapter definition** holds what all its puzzles share: chapter id, the
    in-game "today" date, the **schema** (tables and typed columns), the **base
-   visible dataset**, and the **base hidden datasets**. In Chapter 1 all 13
+   visible dataset**, the **base hidden datasets**, and its **shifts** (name,
+   briefing line, flavour wage — `shift-and-chapter-progression.md`). In Chapter 1 all 13
    puzzles share one `products` table, one visible dataset and hidden sets A and
    B — the content pattern `ch1.py` already proved.
 2. A **puzzle definition** holds what is specific to one request. A puzzle uses
@@ -68,7 +69,7 @@ are not specified here → they become an ADR.
 | `hints` | yes | Hint System | Two hint texts, step 1 and step 2; optional per-puzzle unlock overrides (`hint1_fails`, `hint1_minutes`, …) |
 | `pass_reaction` | yes | Request & Reaction Dialogue | The requester's line on PASS |
 | `manual_keywords` | yes | Store Manual | SQL keywords this puzzle first needs (may be empty) |
-| `constraint` | no | Constraint Challenges | e.g. `{type: max_chars, value: 60}` |
+| `constraint` | no | Constraint Challenges | `{type: max_chars / forbid / require, value, offer_line, witness_sql}` — validated by `constraint-challenges.md` rule 12 |
 | `datasets_override` | no | this system | Puzzle-specific dataset changes (rule 5) |
 | `content_status` | yes | this system | `draft` / `verified` / `playtested` / `locked` (States) |
 
@@ -436,6 +437,7 @@ and names the failing check.
 **Report and content**
 - **R-01 [Content-CI]** GIVEN 1-5, WHEN CI runs, THEN the report shows each check true/false, 1 trap, 1 trap passing visible, sizes 24 / 34 / 34, and `boundary_200` caught by {A, B}; warnings (hidden set equal to visible, zero-row reference, `ORDER BY` with `ordered: false`) appear without changing validity; no score or rating appears.
 - **R-02 [Content-CI]** GIVEN all 13 migrated Chapter 1 puzzles, WHEN CI runs, THEN every one passes `puzzle_valid`. *(Depends on Open Questions 3 and 5.)*
+- **R-03 [Logic]** GIVEN a `constraint` missing `type`, `value`, `offer_line` or `witness_sql`, or with a `type` other than `max_chars` / `forbid` / `require`, WHEN loaded, THEN the puzzle is invalid and the report names the missing or bad field (semantic checks are `constraint-challenges.md` CC-11/12).
 
 ## Open Questions
 

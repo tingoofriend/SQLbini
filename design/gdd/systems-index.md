@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-14
-> **Last Updated**: 2026-10-14 (Grader, Puzzle Definition, Sandbox, Workbench, Hints designed)
+> **Last Updated**: 2026-10-14 (Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue designed)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -48,9 +48,9 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 | 4 | Query Workbench | Gameplay | MVP | Designed | design/gdd/query-workbench.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
 | 5 | Back Room | Gameplay | Alpha | Not Started | — | SQL Execution Sandbox, Puzzle Definition & Datasets, Query Workbench |
 | 6 | Hint System | Gameplay | MVP | Designed | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader |
-| 7 | Constraint Challenges | Gameplay | MVP | Not Started | — | Puzzle Definition & Datasets, Hidden-Data Grader |
-| 8 | Shift & Chapter Progression | Progression | MVP | Not Started | — | Puzzle Definition & Datasets, Hidden-Data Grader |
-| 9 | Request & Reaction Dialogue | Narrative | MVP | Not Started | — | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox |
+| 7 | Constraint Challenges | Gameplay | MVP | Designed | design/gdd/constraint-challenges.md | Puzzle Definition & Datasets, Hidden-Data Grader |
+| 8 | Shift & Chapter Progression | Progression | MVP | Designed | design/gdd/shift-and-chapter-progression.md | Puzzle Definition & Datasets, Hidden-Data Grader |
+| 9 | Request & Reaction Dialogue | Narrative | MVP | Designed | design/gdd/request-and-reaction-dialogue.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox |
 | 10 | Store Manual | Narrative | MVP | Not Started | — | Puzzle Definition & Datasets, Shift & Chapter Progression |
 | 11 | Onboarding: First Shift (inferred) | Meta | MVP | Not Started | — | Query Workbench, Request & Reaction Dialogue, Store Manual |
 | 12 | Playtest Log (inferred) | Meta | MVP | Not Started | — | Hidden-Data Grader, Query Workbench, Hint System |
@@ -218,10 +218,10 @@ accepted risks call for.
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 19 |
-| Design docs started | 5 |
+| Design docs started | 8 |
 | Design docs reviewed | 0 |
 | Design docs approved | 0 |
-| MVP systems designed | 5/11 |
+| MVP systems designed | 8/11 |
 | Vertical Slice systems designed | 0/6 |
 
 ---

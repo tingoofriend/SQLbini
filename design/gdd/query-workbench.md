@@ -38,8 +38,10 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
 
 **What is on screen** (one puzzle at a time)
 
-1. **Request bar** — the requester's portrait, name and request line (Request &
-   Reaction Dialogue supplies the text), and the puzzle title.
+1. **Counter scene** (top strip, ~120 px) — a small pixel-art view of the
+   counter with the current speaker and a speech bubble holding the request
+   or reaction, plus the puzzle title and a message-log button (Request &
+   Reaction Dialogue owns its content and behaviour).
 2. **Editor** — an SQL editor with syntax highlighting (keywords, strings,
    numbers, comments), line numbers, undo/redo, and auto-closing of brackets and
    quotes (a setting; on by default in Chapter 1).
@@ -114,6 +116,7 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
 | Next pane (request → editor → schema → results → feedback) | F6 (Shift+F6 back) |
 | Leave the editor (so Tab moves focus) | Esc |
 | Hint / Manual / Back Room | Ctrl+H / Ctrl+M / Ctrl+B |
+| Message log | Ctrl+L |
 
     Inside the editor, Tab indents. All shortcuts are remappable (Accessibility
     Options, Vertical Slice).
@@ -159,7 +162,7 @@ it (the older result is discarded).
 | Back Room | Workbench hosts | A tab that switches Run to `scratch` mode and shows the Back Room's controls | Back Room |
 | Hint System | Workbench hosts | Hint button; hint text panel | Hint System |
 | Store Manual | Workbench hosts | Manual button; manual overlay | Store Manual |
-| Constraint Challenges | Workbench hosts | Shows the active constraint (e.g. "≤ 60 characters") and a live character count | Constraint Challenges |
+| Constraint Challenges | Workbench hosts | Shows the active constraint (e.g. "No OR") and its live check — canonical character count or keyword presence (`constraint-challenges.md` rule 8) | Constraint Challenges |
 | Shift & Chapter Progression | Progression → Workbench | Which puzzle is open; PASS moves the shift on | Progression |
 | Playtest Log | Workbench → Log | Every Run and Submit with timestamps, edits between them | Workbench |
 | Onboarding: First Shift | Onboarding → Workbench | Prefilled text, highlighted elements in 1-1 to 1-3 | Onboarding |
@@ -215,7 +218,7 @@ hidden data — that is the game). The 5-row drinks query → no note.
 The **readability** constants are defined as:
 
 `row_px = round(1.5 × table_font_px × ui_scale)`;
-`H_table = 0.40 × (720 − 56 − 32) − 48`;
+`H_table = 0.40 × (720 − 120 − 32) − 48`;
 `rows_visible = floor(H_table / row_px)`
 
 **Variables:**
@@ -225,10 +228,10 @@ The **readability** constants are defined as:
 | table_font_px | int | 14–32 (default 16) | data file | Result-table and schema font size |
 | ui_scale | float | 1.0–2.0, step 0.25 (default 1.0) | data file | Multiplies all fonts (Accessibility Options) |
 | contrast_min | float | 4.5 | constant | WCAG AA minimum for text in every theme and state; glyphs, borders and focus rings ≥ 3:1 |
-| H_table | int (px) | ≈ 205 | calculated | Height of one result table body: 40% of the area under the 56 px request bar and 32 px of margins, minus 48 px for header and count line |
+| H_table | int (px) | ≈ 179 | calculated | Height of one result table body: 40% of the area under the ~120 px counter scene and 32 px of margins, minus 48 px for header and count line |
 
-**Output Range:** at defaults `row_px = 24`, `rows_visible = 8`; at `ui_scale =
-2.0`, `row_px = 48`, `rows_visible = 4`. The 14 px floor keeps CJK text in string
+**Output Range:** at defaults `row_px = 24`, `rows_visible = 7`; at `ui_scale =
+2.0`, `row_px = 48`, `rows_visible = 3`. The 14 px floor keeps CJK text in string
 literals legible; 18/16 keeps the editor one step above the tables. Chapter 1's
 24 visible rows need scrolling in a full `SELECT *`; that is accepted.
 **Example:** 1-5 at defaults: target 3 rows and the 5-row drinks result both fit
@@ -321,14 +324,16 @@ the opposite of "data reads first"; buttons have no hierarchy; the "extra" mark
 is plain red text without a glyph.
 
 **Layout at 1280×720** (16 px margins; final spec in `/ux-design`)
-- **Request bar** (top, ~56 px): store-paper themed — a cream order slip with the
-  requester's line; Hint / Manual / Back Room as small tabs at its right edge.
+- **Counter scene** (top, ~120 px; changed 2026-10-14 from a 56 px request bar —
+  user chose pixel-art NPCs with speech bubbles): the speaker at the counter
+  with a speech bubble; Hint / Manual / Back Room as small tabs at its right
+  edge. Details in `request-and-reaction-dialogue.md`.
 - **Left column (~46% width):** editor (~62% of the column height), Run / Submit
   row directly under it (Run and Submit separated — UI Requirement 2), schema
   browser beneath as a "shelf" strip (~120 px, collapsible).
 - **Right column (~54%):** "Your result" above "Target" (~40% height each),
   feedback strip below (a receipt).
-- **Paper-themed:** frame, request bar, feedback receipt, grader stamp/note.
+- **Paper-themed:** frame, speech bubbles, feedback receipt, grader stamp/note; the counter scene is pixel art (style fixed in `/art-bible`).
   **Plain, matte, high-contrast:** the editor and both grids — no texture, no
   rotation, opaque cards with a thin paper-tone border.
 
@@ -425,7 +430,7 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 [UI] = a retained screenshot in `production/qa/evidence/`.*
 
 **Screen and Run**
-- **QW-01 [UI]** GIVEN a puzzle open at 1280×720 with default settings, WHEN the screen is captured, THEN the request bar, editor, schema browser, Your result, Target and feedback area (with Hint / Manual / Back Room) are all visible without overlap; the schema browser collapses; the two tables scroll independently.
+- **QW-01 [UI]** GIVEN a puzzle open at 1280×720 with default settings, WHEN the screen is captured, THEN the counter scene, editor, schema browser, Your result, Target and feedback area (with Hint / Manual / Back Room) are all visible without overlap; the schema browser collapses; the two tables scroll independently.
 - **QW-02 [Logic]** GIVEN any editor text, WHEN Run is pressed, THEN the sandbox is called in `query` mode (`scratch` with the Back Room tab active), no grader verdict is produced, and a row count is shown ("3 rows").
 - **QW-03 [Logic]** GIVEN 1-5, WHEN `… price < 200` is run, THEN 3 ✓, 0 + extra, 0 − missing.
 - **QW-04 [Logic]** GIVEN 1-5, WHEN `SELECT name, price FROM products WHERE category = 'Drinks'` is run, THEN 3 ✓ plus + extra Cola 500ml 216 and Energy Drink 248, and the summary reads "3 ✓ · 2 + extra · 0 − missing".
@@ -454,7 +459,7 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 
 **Scale and limits**
 - **QW-23 [Logic]** GIVEN a 576-row cross join, THEN 200 rows render, the count reads "576 rows — showing the first 200", and marks cover all 576; GIVEN a truncated sandbox result, THEN "5,000+ rows — too many to compare" and no marks.
-- **QW-24 [Logic]** GIVEN default settings, THEN `editor_font_px = 18`, `table_font_px = 16`, `row_px = 24`, `rows_visible = 8`; at `ui_scale = 2.0`, `rows_visible = 4`; fonts outside 14–32 and scale outside 1.0–2.0 (step 0.25) are clamped.
+- **QW-24 [Logic]** GIVEN default settings, THEN `editor_font_px = 18`, `table_font_px = 16`, `row_px = 24`, `rows_visible = 7`; at `ui_scale = 2.0`, `rows_visible = 3`; fonts outside 14–32 and scale outside 1.0–2.0 (step 0.25) are clamped.
 
 **Back Room tab**
 - **QW-25 [UI]** GIVEN the Back Room tab active, THEN "Back Room — practice data" is always visible, the Target table and marks are hidden, and the Run note is absent.

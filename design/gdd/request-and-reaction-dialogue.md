@@ -1,0 +1,413 @@
+# Request & Reaction Dialogue
+
+> **Status**: In Design
+> **Author**: tingoofriend + Claude (design-system, autonomous)
+> **Last Updated**: 2026-10-14
+> **Last Verified**: 2026-10-14
+> **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
+
+## Summary
+
+Request & Reaction Dialogue is how SQLbini's people speak: requests arrive from
+someone at the counter, and passes, fails and SQL errors come back in their
+voice — with SQLite's real message always beneath an error, and never a hidden
+row. It is shown as a small cozy pixel-art counter scene with a speech bubble
+above the workbench, plus a message log, and keeps the current request always
+one glance away. Typos get a "did you mean" when a close name exists.
+
+> **Quick reference** — Layer: `Presentation` · Priority: `MVP` · Key deps: `Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox, Query Workbench`
+
+## Overview
+
+Request & Reaction Dialogue is how SQLbini's people talk to the player. Every
+puzzle arrives as something a person at the counter needs — Manager Tanaka's
+disposal list, Mrs. Sato's half-remembered banana snack, an HQ email — and every
+outcome comes back in their voice: a pleased line on a pass, a plain-language
+symptom on a fail, a friendly gloss on an SQL error with SQLite's real message
+underneath. It is what turns a SQL exercise into a shift at a konbini (Pillar 4)
+and what keeps mistakes cheap and human (Pillar 3). The player sees it in a
+small pixel-art **counter scene** at the top of the workbench: the current
+speaker stands at the counter with a speech bubble, and a message log keeps
+every line of the shift for rereading (the developer's chosen "hybrid"
+presentation, 2026-10-14). The mood is aesthetic and cozy. Exact pixel-art style
+is set in `/art-bible`.
+
+## Detailed Design
+
+### Core Rules
+
+**Cast (MVP)**
+
+1. Speakers are data: id, display name, sprite set and a short voice blip.
+   Chapter 1 uses:
+
+| Speaker | Role | Sprite set (MVP) |
+|---|---|---|
+| Manager Tanaka | Gives most requests, shift briefings, the first-submit explainer | neutral · pleased · puzzled |
+| Kenji | Coworker; voice of hints and of the "leave it for me" skip offer | neutral · pleased · puzzled |
+| Mrs. Sato | Elderly regular (1-9) | neutral · pleased · puzzled |
+| Customer (generic) | Walk-in requests (1-5, 1-6) | neutral · pleased · puzzled |
+| HQ | Emails (S-1); no sprite — a printed email/fax slip in the bubble's place | — |
+
+**Kinds of line**
+
+2. Every line the player reads in the counter scene has a kind and a source:
+
+| Kind | Source of the text | Speaker |
+|---|---|---|
+| `request` | Puzzle `request` (Puzzle Definition) | Puzzle's requester |
+| `pass` | Puzzle `pass_reaction` | Requester (pleased) |
+| `fail` | Grader feedback key (cause, level) → the trap's authored feedback, or the built-in line for `columns` / `order` / `nondeterministic` / `generic` | Requester (puzzled) |
+| `error` | Sandbox `error_kind` + `error_text` → an error template (rule 6) | On **Run**: Kenji (looking over your shoulder); on **Submit**: the requester (puzzled) |
+| `briefing` | Shift briefing (chapter definition) | Manager Tanaka |
+| `offer` | Constraint offer line; Kenji's skip offer | Requester / Kenji |
+| `system` | One-time explainers (first Submit) | Manager Tanaka |
+
+   Hints are shown in the Hint System's own panel (Kenji's voice), not in the
+   bubble, so they never displace the request.
+
+**The counter scene and the request**
+
+3. The current puzzle's **request is always one glance away**: the bubble shows
+   the request by default; a reaction (pass, fail, error, offer) temporarily
+   replaces it and the bubble returns to the request after `reaction_hold`
+   (Formulas), or on a click on the speaker or the next Run, or on an editor
+   edit once the reaction has been fully visible for at least
+   `reaction_grace` (1.0 s) — so typing never wipes a line before it can be read.
+4. The **message log** (button in the counter scene, shortcut Ctrl+L) lists every
+   line of the current shift with speaker name and kind, newest at the bottom,
+   for rereading. Nothing is ever lost from the log during a shift.
+5. Text appears with an optional typewriter reveal (`reveal_cps`, Formulas); a
+   click on the bubble, or Enter/Space while the counter scene has keyboard
+   focus, shows the whole line at once (and stops its voice blips). Typing in
+   the editor does not affect the reveal and is never delayed by it. Reveal is
+   off when reduced motion is on. Page advance uses the same inputs; in the
+   editor, Enter is always a newline.
+
+**Errors in a person's voice (Pillar 4)**
+
+6. SQL errors are glossed by templates keyed on the error, and **SQLite's original
+   message is always shown beneath** in monospace (workbench rule 13). MVP
+   templates cover the most common Chapter 1 errors:
+
+| Error pattern | Voiced gloss (example, requester's voice) |
+|---|---|
+| `no such column: X` | "There's no column called 'X'." + "Did you mean 'Y'?" when a close match exists (Formulas) |
+| `no such table: X` | "We don't have a 'X' shelf — the ledger is called 'products'." (closest table name) |
+| `near "X": syntax error` | "Something's off near 'X'." |
+| `incomplete input` / unterminated string | "Looks like the sentence stops halfway — a missing quote or bracket?" |
+| `EMPTY` | "You haven't written anything yet." |
+| `MULTI_STATEMENT` | "One request at a time, please — just one query." |
+| `NOT_A_QUERY` | "I only need a list — no changing the ledger." |
+| `UNSUPPORTED` | "That's more than we need today." |
+| `TIMEOUT` / result `truncated` (over `R_cap` rows) | "That's taking forever — is something repeating?" / "That's far too long a list." |
+| anything else | "Hmm, the register didn't like that." (raw message beneath) |
+
+7. Voiced errors never claim more than the raw message supports, and never
+   mention hidden data.
+
+**Reactions never leak (Pillar 1)**
+
+8. `fail` lines come only from the feedback key (cause, level); this system never
+   receives rows, counts or dataset names (Hidden-Data Grader rule 11).
+
+**Text**
+
+9. All player-facing text lives in string tables keyed by id (English base;
+   localisation later). Puzzle-authored lines are referenced by puzzle id. A
+   missing id shows `[id]` in development builds and the generic line in release
+   builds, and is logged. Lengths (`len`) count grapheme clusters.
+10. Lines are short: a bubble holds at most `bubble_chars_max` characters; longer
+    lines are split into pages the player advances.
+
+### States and Transitions
+
+The counter scene, per open puzzle:
+
+| State | Bubble shows | Event | To |
+|---|---|---|---|
+| `Request` | The request (speaker neutral) | Pass / fail / error / offer arrives | `Reaction` |
+| `Reaction` | The reaction (speaker pleased / puzzled) | `reaction_hold` elapses, editor edit, Run, or click on speaker | `Request` |
+| `Reaction` (pass) | Pass line | Next request arrives (Progression) | `Request` (new speaker) |
+| any | | Message log opened | unchanged (log overlays the editor area, closes with Esc / Ctrl+L) |
+
+### Interactions with Other Systems
+
+| System | Direction | Data | Owner |
+|---|---|---|---|
+| Puzzle Definition & Datasets | Puzzle → Dialogue | `request`, `pass_reaction`, trap feedback texts, speaker ids, chapter shift briefings | Puzzle Definition |
+| Hidden-Data Grader | Grader → Dialogue | Verdict + feedback key `{verdict, cause, level}` only | Grader |
+| SQL Execution Sandbox | Sandbox → (Workbench) → Dialogue | `error_kind`, `error_text`; schema names for "did you mean" | Sandbox |
+| Query Workbench | Workbench hosts | Counter scene strip, message-log overlay | Workbench |
+| Shift & Chapter Progression | Progression → Dialogue | Shift briefing, next request, Kenji's skip offer | Progression |
+| Constraint Challenges | Challenges → Dialogue | Offer line, clear reaction, "right answer, not within the challenge" | Constraint Challenges |
+| Hint System | Dialogue → Hints | Kenji's identity (portrait, name) for the hint panel | Dialogue |
+| Onboarding: First Shift | Onboarding → Dialogue | Tutorial lines in 1-1 to 1-3 | Onboarding |
+| Audio (VS) | Dialogue → Audio | Voice blip per line, speaker id | Audio |
+| Playtest Log | Dialogue → Log | Lines shown, log opened, lines skipped | Dialogue |
+
+## Formulas
+
+*Proposed by `systems-designer` (2026-10-14). Bubble font raised from 16 to 18 px
+to match the art-director's readability guidance; `did_you_mean` examples and
+bubble capacity were re-computed by script.*
+
+The **reaction_hold** formula is defined as:
+
+`reaction_hold = clamp(hold_base + len / read_cps, hold_min, hold_max)`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| len | int | 1 – `bubble_chars_max` | calculated | Characters of the voiced line (the raw SQLite message beneath is excluded) |
+| hold_base | float (s) | 0.5–2.0 (default 1.0) | data file | Time to notice the change |
+| read_cps | float | 12–30 (default 20) | data file | Reading speed, characters per second (~240 wpm) |
+| hold_min, hold_max | float (s) | 1.5–4 / 4–10 (default 2.5 / 6.0) | data file | Clamps |
+
+**Output Range:** 2.5–6.0 s at defaults. The timer starts when the whole line is
+visible (after reveal or skip; on the last page of a paged line) and only
+controls the automatic return to the request — any edit, Run or click on the
+speaker returns at once. The line stays in the log.
+**Example:** "There's no column called 'prise'. Did you mean 'price'?" (55 chars)
+→ 1.0 + 55 / 20 = 3.75 s.
+
+The **reveal_time** formula is defined as:
+
+`reveal_time = (reveal_cps = 0) ? 0 : min(len / reveal_cps, reveal_cap)`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| reveal_cps | float | 0 or 20–120 (default 45) | data file (setting) | Typewriter speed; 0 = instant; forced to 0 under reduced motion |
+| reveal_cap | float (s) | 0.5–2.0 (default 1.0) | data file | Longest any page may take to reveal |
+| len | int | 1 – `bubble_chars_max` | calculated | Characters on the page |
+
+**Output Range:** 0 to `reveal_cap` seconds; long pages speed up rather than
+drag. Reveal never blocks input; any key or click completes it.
+**Example:** 1-5 "Excuse me, which drinks are under 200?" (38 chars) → 38 / 45 ≈ 0.84 s.
+
+The **bubble_chars_max** formula is defined as:
+
+`bubble_chars_max = max(40, floor(lines × chars_per_line × wrap_eff))`, with
+`chars_per_line = floor((bubble_w − 2 × pad_x) / (glyph_w × font_px))` and
+`lines = floor((bubble_h − 2 × pad_y) / (1.25 × font_px))`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| bubble_w, bubble_h | int (px) | 880, 80 (logical, inside the 120 px strip) | data file | Bubble size |
+| pad_x, pad_y | int (px) | 12, 8 | data file | Padding |
+| font_px | int | 18 (range 16–20) | data file | Bubble font size — the workbench body family |
+| glyph_w | float (em) | 0.55 | constant | Average glyph advance — verify against the chosen font |
+| wrap_eff | float | 0.8–0.9 (default 0.85) | constant | Word-wrap waste |
+
+**Output Range:** at defaults `chars_per_line = 86`, `lines = 2`,
+**`bubble_chars_max = 146`**. The strip scales with `ui_scale`, so the logical
+capacity is unchanged from 1.0 to 2.0. Pages split greedily at the last space
+before the limit (a single over-long word is hard-split);
+`pages ≥ ceil(len / bubble_chars_max)`.
+**Example:** the 38-char 1-5 request is one page; a 260-char boss briefing is
+two pages ("1/2 ▸").
+
+The **did_you_mean** formula is defined as:
+
+`did_you_mean(X, names) = argmin over n ∈ names of (d(n), schema_index(n)) subject to d(n) = DL(lower(X), lower(n)) ≤ t(X)`; null if none qualifies;
+`t(X) = min(|X| ≤ 4 ? 1 : 2, |X| − 1)`
+
+**Variables:**
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| X | string | 0–64 chars | calculated | The unknown name from the SQLite message (quotes and any `alias.` prefix stripped) |
+| names | list | schema order | data file | The chapter's column names (`no such column`) or table names (`no such table`) |
+| DL | int | ≥ 0 | calculated | Damerau-Levenshtein distance (a transposition counts 1) |
+| t | int | 0–2 | calculated | Threshold, smaller for short names |
+
+**Output Range:** one name or null; ties go to the earlier schema name; one-letter
+names never get a suggestion. With a single table, `no such table` always names
+it (`products`); the threshold applies only when a chapter has several tables.
+**Example (Chapter 1 columns):** `prise` → `price` (1); `pirce` → `price`
+(transposition, 1); `catagory` → `category` (1); `nam` → `name` (1); `stok` →
+`stock` (1); `shelfs` → `shelf` (1); `product` → `products` (1, table);
+`expiry` → none (`expiry_date` is 5 away) — the gloss omits "Did you mean".
+
+## Edge Cases
+
+*Drafted without specialists — Lean mode.*
+
+- **If the player Runs or edits while a reaction is showing**: the bubble returns to the request at once; the reaction stays in the log.
+- **If several reactions arrive quickly** (repeated submits): only the newest is shown; all are in the log.
+- **If a reaction arrives while the player is reading a paged request**: the reaction replaces it; returning to the request starts at page 1.
+- **If a puzzle's requester has no sprite** (HQ, or a missing asset): a printed slip replaces the speaker; text behaviour is unchanged.
+- **If an error message matches no template**: the generic line ("the register didn't like that") with the raw message beneath.
+- **If `did_you_mean` finds no close name**: the gloss is given without a suggestion — never a wrong guess.
+- **If the misspelled name is a SQL keyword** (`SELEC`): it is a syntax error, not a column error; the `near "X"` template applies.
+- **If a line is longer than one bubble page**: paged with a "1/3 ▸" marker; Enter / click advances; the log shows the whole line.
+- **If reduced motion is on**: no typewriter, no idle sprite motion; text appears whole.
+- **If audio is muted**: voice blips are silent; nothing depends on hearing them.
+- **If the message log is opened mid-shift**: it overlays the workbench below the counter scene; the editor keeps its text and caret; Esc closes it.
+
+## Dependencies
+
+**Upstream (hard):**
+
+| System | GDD | What Dialogue needs | Status |
+|---|---|---|---|
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Request, pass reaction, trap feedback, speaker ids, shift briefings | Designed (pending review) |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Feedback key `{verdict, cause, level}` | Designed (pending review) |
+| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | `error_kind`, `error_text`, schema names | Designed (pending review) |
+| Query Workbench | `design/gdd/query-workbench.md` | Hosts the counter scene and log (layout updated 2026-10-14) | Designed (pending review) |
+
+**Soft:** Shift & Chapter Progression (briefings, skip offer), Constraint
+Challenges (offer / clear lines), Hint System (Kenji's identity), Onboarding
+(tutorial lines), Audio (VS — blips), Playtest Log.
+
+**Bidirectionality:** grader, sandbox, workbench, progression, hints and
+constraint challenges list Request & Reaction Dialogue ✓.
+
+## Visual/Audio Requirements
+
+*Provisional — input from `art-director` (2026-10-14) for the developer's chosen
+hybrid presentation and "aesthetic, cozy" mood (`design/ideas-backlog.md` #1,
+#2). No art bible yet; confirm in `/art-bible`.*
+
+**Counter scene (pixel art)**
+- Native strip **320 × 30 px**, integer-scaled **×4** to 1280 × 120; nearest-
+  neighbour filtering, whole-pixel positions, no sub-pixel camera motion.
+- Palette: one shared **16-colour warm ramp** (cream, tan, terracotta, olive,
+  dusk blue, dark ink-brown). The editor and tables keep their own neutral
+  high-contrast UI palette; a 4 px ink-brown rule with a paper-cream border
+  separates the two zones. Scene colours never tint the editor.
+- **Lighting by shift** via palette swap (not repainted art): Morning — pale
+  yellow window light, cool shadows; Afternoon — neutral warm; Closing — amber
+  lamp, dusk-blue window, longer shadows.
+- Contents: counter in front; shelves of tins and ledgers behind; a window at one
+  edge showing the time of day; a hanging lamp; speaker centre-left, right side
+  clear for the message-log button. Calm and low-detail — at most three value
+  steps near the bubble.
+
+**Characters**
+- **24 × 28 px** busts behind the counter, 2 px ink-brown outline for everyone.
+- Expressions **neutral / pleased / puzzled** differ in silhouette (head tilt,
+  shoulders, a "?" tick), not only face pixels.
+- Idle: 2-frame breathing bob every ~1.2 s, blink every ~4 s. Reduced motion:
+  static neutral frame; expression changes are instant swaps.
+- **HQ** has no face: a 32 × 20 px printed slip on the counter (perforated edge,
+  stamp mark) — the "store paper" language.
+
+**Speech bubble** (a UI-layer element, not baked into the pixel scene, so text is
+crisp at 1280 × 720)
+- Cream paper panel, 2 px ink border, tail to the speaker.
+- **Clean sans/slab at 18–20 px** — the workbench's body family. **No pixel fonts
+  for any functional text** (readability for dyslexic and second-language
+  readers). Ink on cream ≥ 7:1.
+- **Request** = square ticket-style bubble with a notched edge and a "REQUEST" tab;
+  **reaction** = rounded bubble with the speaker's name tag. The sprite's
+  expression also changes for reactions.
+- Paging: "1/3" counter and a "▸" chevron (blinking; static under reduced motion).
+
+**Message log**
+- A ledger / receipt-roll panel over the workbench with a dimmed scrim; same paper
+  and ink; entries grouped by speaker, requests in the ticket style and
+  reactions in the rounded style; 16–18 px; Esc closes; focus stays in the log
+  while open.
+
+**Audio intent** (audio-director owns detail)
+- Per-character voice blips: soft plucked / marimba-like, distinct pitch and
+  rhythm per character; HQ gets a dry printer tick. Optional, with a volume
+  setting; silent when a line is shown instantly.
+- Shift ambience: Morning — soft birds, shop door bell; Afternoon — quiet hum,
+  wall clock; Closing — low lamp buzz, distant crickets.
+
+**Main risk and anti-patterns**
+- The cozy strip competing with the data for attention. Keep it at 120 px, keep
+  motion minimal, and never let pixel art, dithering or texture bleed into the
+  editor or tables.
+- Mixed pixel density: no non-integer scaling or rotation of sprites.
+- Also avoid: colour-only speaker or outcome cues; bobbing that cannot be turned
+  off; dark "cozy" lighting under text; blurry upscaled UI.
+
+> 📌 **Asset Spec** — after the art bible is approved, run
+> `/asset-spec system:request-and-reaction-dialogue` for sprites, scene and
+> bubble assets.
+
+## Game Feel
+
+The counter should feel like a warm little shop window above a calm desk: people
+drop by, say what they need, react with a small expression change, and the
+request never disappears from view. Reactions are brief and kind — a fail reads
+like a customer gently pointing out a problem, never a buzzer. Text never makes
+the player wait: reveal is instant on any key, and typing in the editor is never
+blocked.
+
+## UI Requirements
+
+1. Counter scene strip (~120 px) across the top of the workbench; speaker, bubble,
+   message-log button; never overlaps the editor or result tables.
+2. The current request is readable with at most one action (rule 3).
+3. Message log: Ctrl+L / button; scrollable; speaker name + kind label per line;
+   Esc closes; keyboard reachable.
+4. Bubble text ≥ 4.5:1 contrast (blocking; 7:1 is the target); request vs reaction distinguished
+   by bubble shape and label, not colour alone; paging marker "1/3 ▸".
+5. Raw SQLite error always visible beneath an error gloss (with the workbench's
+   error strip).
+
+> **📌 UX Flag — Request & Reaction Dialogue**: the counter scene and message log
+> belong in the Query Workbench UX spec (`/ux-design`, Pre-Production).
+
+## Cross-References
+
+| This document references | Where | What | Status |
+|---|---|---|---|
+| `design/gdd/hidden-data-grader.md` | Rules 2, 8 | Feedback key; never row data (grader rule 11) | Designed (pending review) |
+| `design/gdd/sql-execution-sandbox.md` | Rule 6 | `error_kind` set and `error_text` | Designed (pending review) |
+| `design/gdd/query-workbench.md` | Overview, UI | Counter scene replaces the 56 px request bar; Ctrl+L; error strip | Designed (pending review), updated for this GDD |
+| `design/gdd/shift-and-chapter-progression.md` | Rule 2 | Briefings; Kenji's skip offer | Designed (pending review) |
+| `design/gdd/constraint-challenges.md` | Rule 2 | Offer / clear / not-within-challenge lines | Designed (pending review) |
+| `design/ideas-backlog.md` | Overview | #1 aesthetic/cozy mood; #2 pixel-art NPCs + speech bubbles (applied) | Developer ideas |
+
+## Acceptance Criteria
+
+*Drafted with `qa-lead` (2026-10-14). Not repeated here: grader payload keys
+(grader AC-18), the first-Submit explainer (QW-15) and the error strip with raw
+text (QW-17). Fixtures use stub grader / sandbox / progression and a fake clock;
+defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
+`reveal_cap` 1.0, `reaction_grace` 1.0.*
+
+**Cast and kinds**
+- **RD-01 [Logic]** GIVEN the Chapter 1 cast data, THEN Tanaka, Kenji, Mrs. Sato and Customer each have id, name, neutral / pleased / puzzled sprites and a blip, and HQ has none; a speaker added only in data renders with no code change; a missing sprite shows the printed slip with unchanged text behaviour.
+- **RD-02 [Integration]** GIVEN a puzzle requested by Mrs. Sato, WHEN each kind arrives, THEN request → her `request`, neutral; pass → `pass_reaction`, pleased; fail with a trap key at level 2 → that trap's level-2 text, puzzled; fail with `columns` / `order` / `nondeterministic` / `generic` → the built-in line; a Run error → Kenji, puzzled; a Submit error → Sato, puzzled; briefing and system lines → Tanaka; skip offer → Kenji; hint text never reaches the bubble.
+
+**Request one action away**
+- **RD-03 [Integration]** GIVEN `reveal_cps` 0 and the 55-char "prise" gloss shown at t = 0, THEN the reaction shows at 3.74 s and the request at 3.75 s (4.75 s with `reveal_cps` 45); a Run or a speaker click at 0.5 s returns the request at once; an editor edit at 0.5 s does not, an edit at 1.1 s does; three reactions within 1 s → only the newest shows, all three logged; a reaction during page 2 of a request → the return opens page 1.
+- **RD-04 [Logic]** `reaction_hold` = 2.5 s at len 1, 3.75 s at 55, 6.0 s at 146; for a paged line the timer starts on the last page.
+
+**No leak**
+- **RD-05 [Logic / code review]** Dialogue entry points accept only `{verdict, cause, level}`, `{error_kind, error_text}`, schema names and line ids — no row, count or dataset type; the same key against different hidden datasets gives identical text.
+
+**Log and reveal**
+- **RD-06 [Integration]** GIVEN 5 lines shown, WHEN Ctrl+L, THEN 5 entries, newest at the bottom, each with speaker name and kind label, paged lines whole; Tab stays inside the log; Esc or Ctrl+L closes it; the editor's text and caret are unchanged; the button is keyboard reachable.
+- **RD-07 [Logic]** Reveal = 0.844 s for 38 chars and 1.0 s (cap) for 146; 0 at `reveal_cps` 0 or under reduced motion; a bubble click, or Enter/Space with the counter scene focused, completes the line in that frame.
+- **RD-08 [Integration]** GIVEN a reveal in progress, WHEN "abc" is typed in the editor, THEN "abc" is inserted in the same frame as with no dialogue showing, the reveal continues, and Enter in the editor inserts a newline.
+
+**Errors and suggestions**
+- **RD-09 [Logic]** Sandbox stubs `no such column`, `no such table`, `near "X"`, incomplete input, unterminated string, `EMPTY`, `MULTI_STATEMENT`, `NOT_A_QUERY`, `UNSUPPORTED`, `TIMEOUT` and a `truncated` result each map to their template with `error_text` passed through unchanged; an unknown message → the generic line; `SELEC name …` → the `near` template.
+- **RD-10 [Logic]** `did_you_mean`: prise, pirce, PRISE and `p.prise` → price; catagory → category; nam → name; stok → stock; shelfs → shelf; table `product` → products; expiry → null (no "Did you mean"); "p" → null; with names [cat, cut], cot → cat, and reversed → cut.
+
+**Text**
+- **RD-11 [Logic]** A 300-char line → 3 pages, each ≤ 146 chars, split at spaces; a 160-char word is hard-split; marker "1/3 ▸"; `bubble_chars_max` = 146 at defaults and unchanged across `ui_scale` 1.0–2.0.
+- **RD-12 [Logic / CI scan]** No player-facing string literal in dialogue code paths; every line resolves through a string-table id or puzzle id; a missing id shows `[id]` in dev builds and the generic line in release, and is logged.
+
+**Presentation and audio**
+- **RD-13 [UI]** Retained screenshots at `ui_scale` 1.0 and 1.5: scene at ×4 / ×6 with nearest filtering (no blurred pixels); a non-pixel body font in the bubble; bubble contrast ≥ 4.5:1 (blocking; 7:1 target reported); in greyscale, request (ticket, REQUEST tab) and reaction (rounded, name tag) are distinguishable, and the three expressions differ by silhouette.
+- **RD-14 [UI]** Morning, Afternoon and Closing screenshots use the same sprite assets with a palette swap; editor colours are identical in all three.
+- **RD-15 [Audio]** Each revealed line plays its speaker's blip (HQ: printer tick) at the blip-volume setting; no blip at volume 0, muted, `reveal_cps` 0 or reduced motion; blips stop the moment a reveal is completed early.
+- **RD-16 [Integration]** The Playtest Log records `line_shown {line_id, kind, speaker, puzzle_id}`, `log_opened` and `line_skipped` (a reveal completed early), each with a timestamp.
+
+## Open Questions
+
+| # | Question | Owner | Resolve by |
+|---|---|---|---|
+| 1 | Pixel-art style specifics (resolution, palette) and how it sits with the clean paper UI | art-director | `/art-bible` |
+| 2 | Is the flavour wage on the payslip worth keeping, or should the manager's end-of-shift comment replace it? (Progression OQ 2) | narrative-director | Writing Chapter 1 lines |
+| 3 | Do voiced error glosses help zero-SQL players read SQLite's raw messages over time, or do they skip the raw text? Watch in playtest. | game-designer | Zero-SQL playtest |
+| 4 | Character bios and voice guide for Tanaka, Kenji, Mrs. Sato | narrative-director / writer | Before Chapter 1 line writing |
