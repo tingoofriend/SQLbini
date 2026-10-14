@@ -42,3 +42,22 @@ production. Carry the two Dictionary-row limitations into the grader's GDD
 (`/design-system`) and an ADR on the SQLite integration
 (`/architecture-decision`). This spike does **not** answer whether the game is
 fun — that is the web-prototype playtest.
+
+## Addendum 2026-10-14 — sandbox contract probe (`probe_api.gd`, `probe_sandbox.gd`, `probe_sandbox2.gd`)
+
+Run on Godot 4.7.2 + godot-sqlite v4.9 to ground the SQL Execution Sandbox GDD.
+
+| Question | Result |
+|---|---|
+| API surface | `query`, `query_with_bindings`, `query_result`, `read_only`, `create_function`, import/export, … — **no interrupt / progress-handler / column-metadata method** |
+| Column count for a zero-row result | Plain `query` → `[]`, columns lost. **`CREATE TEMP VIEW v AS <sql>` + `PRAGMA temp.table_info(v)` returns every column** (name, declared type) even for 0 rows |
+| Duplicate column names | Plain `query` collapses `SELECT name, name, price` to 2 keys. Through the view, SQLite renames to `name`, `name:1`, `price`; `SELECT * FROM v` keeps all 3 |
+| Multiple statements | **godot-sqlite executes every statement**: `SELECT 1; DROP TABLE products` dropped the table — also when wrapped in `CREATE VIEW … AS SELECT 1; DROP …`. Must be rejected before execution |
+| Non-SELECT in a query puzzle | `CREATE TEMP VIEW v AS UPDATE …` → syntax error (the view wrapper enforces "one SELECT/WITH") |
+| Trailing `;`, trailing `-- comment`, `WITH` CTE inside the view | All accepted |
+| `PRAGMA query_only = 1` | Blocks `INSERT` **and** `CREATE TEMP VIEW`; set it *after* creating the view, then `SELECT * FROM v` works and writes fail |
+| Unbounded recursive CTE + outer `LIMIT 5001` | Returns 5,001 rows in 9 ms (streaming) |
+| Unbounded recursive CTE with `ORDER BY` | **Hangs** — killed by a 15 s external timeout. With no interrupt API, a time limit needs another mechanism (ADR) |
+| Value types | INTEGER → `int`, REAL → `float`, NULL → `null`, TEXT → `String`; `7/2` → 3 (integer division preserved) |
+| Cost of one execution (`probe_cost.gd`: fresh DB, 34 rows inserted in a transaction, temp view, `PRAGMA table_info`, `query_only`, fetch with `LIMIT 5001`; 200 runs of puzzle 1-11's reference) | **p50 0.33 ms, p95 0.37 ms, max 0.82 ms** on an Intel i7-1360P laptop (not the yet-unnamed target PC) |
+| `ORDER BY` through the view (`probe_order.gd`: DESC, multi-key, GROUP BY + ORDER BY, ORDER BY + LIMIT on Chapter 1 data) | **Order identical** to the direct query in all 4 cases — observed, not a formal SQLite guarantee |
