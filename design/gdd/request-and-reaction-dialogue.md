@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -171,8 +171,9 @@ is set in `/art-bible`.
    localisation later). Puzzle-authored lines are referenced by puzzle id. A
    missing id shows `[id]` in development builds and the generic line in release
    builds, and is logged. Lengths (`len`) count grapheme clusters.
-10. Lines are short: a bubble holds at most `bubble_chars_max` characters; longer
-    lines are split into pages the player advances.
+10. Lines are short: a bubble page holds only what fits its measured content
+    rect, and authors keep each page within the `bubble_chars_max` budget
+    (Formulas); longer lines are split into pages the player advances.
 
 ### States and Transitions
 
@@ -220,7 +221,9 @@ The **reaction_hold** formula is defined as:
 | read_cps | float | 12–30 (default 20) | data file | Reading speed, characters per second (~240 wpm) |
 | hold_min, hold_max | float (s) | 1.5–4 / 4–10 (default 2.5 / 6.0) | data file | Clamps |
 
-**Output Range:** 2.5–6.0 s at defaults. The timer starts when the whole line is
+**Output Range:** 2.5–6.0 s at defaults; one full page (`len` 83 at `ui_scale`
+1.0) holds 5.15 s, so `hold_max` binds only for a PASS line plus offer line of
+100+ chars. The timer starts when the whole line is
 visible (after reveal or skip; on the last page of a paged line) and only
 controls the automatic return to the request — any edit, Run or click on the
 speaker returns at once. The line stays in the log.
@@ -244,30 +247,37 @@ drag. Reveal never blocks input; any key or click completes it.
 
 The **bubble_chars_max** formula is defined as:
 
-`bubble_chars_max = max(40, floor(lines × chars_per_line × wrap_eff))`, with
+`bubble_chars_max = floor(lines × chars_per_line × wrap_eff)`, with
 `chars_per_line = floor((bubble_w − 2 × pad_x) / (glyph_w × font_px × ui_scale))` and
 `lines = floor((bubble_h − 2 × pad_y) / (1.25 × font_px × ui_scale))`
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| bubble_w, bubble_h | int (px) | 880, 80 (logical, inside the 120 px strip) | data file | Bubble size |
+| bubble_w, bubble_h | int (px) | 510, 80 (logical, inside the 120 px strip; x ≈ 416 px, the niche's right edge, to ≈ 928 px, the tab cluster's left edge — art bible 7.1) | data file | Bubble size; fixed at every `ui_scale` |
 | pad_x, pad_y | int (px) | 12, 8 | data file | Padding |
-| font_px | int | 18 (range 16–20) | data file | Bubble font size — the workbench body family |
-| glyph_w | float (em) | 0.55 | constant | Average glyph advance — verify against the chosen font |
+| font_px | int | 18 (range 16–20) | data file | Bubble font size, IBM Plex Sans Regular, line height 1.25 (art bible 7.2 `bubble`) |
+| glyph_w | float (em) | 0.55 | constant | Average glyph advance — verify against IBM Plex Sans Regular (expected ≈ 0.55–0.58; art bible 7.2) |
 | wrap_eff | float | 0.8–0.9 (default 0.85) | constant | Word-wrap waste |
 | ui_scale | float | 1.0–2.0, step 0.25 (default 1.0) | data file | Text scale (Accessibility Options); the strip and bubble do not scale |
 
-**Output Range:** at defaults `chars_per_line = 86`, `lines = 2`,
-**`bubble_chars_max = 146`**. The strip stays 120 px (pixel art ×4) at every
-`ui_scale` (2026-10-14 review — a scaled ×6/×8 strip would exceed the 1280 px
-width and cost the result tables rows); only the bubble text grows, so capacity
-falls: `ui_scale` 1.5 → 1 line × 57 chars → **48**; 2.0 → 1 line × 43 chars →
-**40** (the floor). Larger text therefore means more pages, never a taller strip. Pages split greedily at the last space
-before the limit (a single over-long word is hard-split);
-`pages ≥ ceil(len / bubble_chars_max)`.
-**Example:** the 38-char 1-5 request is one page; a 260-char boss briefing is
-two pages ("1/2 ▸").
+**Output Range:** at defaults `chars_per_line = 49`, `lines = 2`,
+**`bubble_chars_max = 83`** (art bible 7.1: about 2 lines × 49 chars). The strip
+stays 120 px (pixel art ×4) at every `ui_scale` (2026-10-14 review — a scaled
+×6/×8 strip would exceed the 1280 px width and cost the result tables rows), and
+the bubble frame stays 510 × 80 (art bible 7.8); only the bubble text grows, so
+capacity falls: `ui_scale` 1.5 → 1 line × 32 chars → **27**; 2.0 → 1 line × 24
+chars → **20**. The former `max(40, …)` floor is dropped: it exceeded the real
+one-line capacity at 2.0. Larger text therefore means more pages, never a taller
+strip or a bigger bubble.
+**Paging is measured, not counted** (art bible 7.1): pages split greedily at the
+last space before the **laid-out text** would exceed the content rect's width or
+height at the current `ui_scale` (a single over-long word is hard-split); a page
+never overflows or clips. `bubble_chars_max` is only an **authoring budget** —
+the length a writer keeps a page within — and `ceil(len / bubble_chars_max)` is
+an estimate of the page count, not the rule.
+**Example:** the 38-char 1-5 request is one page at 1.0 (two at 1.5); a 260-char
+boss briefing is about four pages at 1.0 ("1/4 ▸").
 
 The **did_you_mean** formula is defined as:
 
@@ -331,51 +341,64 @@ Dialogue ✓.
 
 ## Visual/Audio Requirements
 
-*Provisional — input from `art-director` (2026-10-14) for the developer's chosen
-hybrid presentation and "aesthetic, cozy" mood (`design/ideas-backlog.md` #1,
-#2). No art bible yet; confirm in `/art-bible`.*
+*Input from `art-director` (2026-10-14) for the developer's chosen hybrid
+presentation and "aesthetic, cozy" mood (`design/ideas-backlog.md` #1, #2).
+Synced to the art bible (`design/art/art-bible.md`) 2026-10-14; the bible is
+authoritative for visuals where they differ.*
 
 **Counter scene (pixel art)**
 - Native strip **320 × 30 px**, integer-scaled **×4** to 1280 × 120 at every
   `ui_scale` (the strip never rescales; only bubble text does); nearest-
   neighbour filtering, whole-pixel positions, no sub-pixel camera motion.
-- Palette: one shared **16-colour warm ramp** (cream, tan, terracotta, olive,
-  dusk blue, dark ink-brown). The editor and tables keep their own neutral
-  high-contrast UI palette; a 4 px ink-brown rule with a paper-cream border
-  separates the two zones. Scene colours never tint the editor.
+- Palette: one shared **16-colour warm ramp**, specified as 16 indices plus
+  transparent (art bible 4.3). Indices 0 (outline ink), 10 (vermilion) and 13
+  (chain indigo) are fixed in every shift; index 8 is the Closing-only cast
+  shadow (it equals the wall in Morning and Afternoon). The editor and tables
+  use the fixed **warm-neutral** UI palette, which shares four hexes with the
+  strip: ink `#2B2420`, cream `#F7F1E3`, indigo `#2F4B7C`, vermilion `#C23B18`
+  (art bible 4.1, 4.2). A 4 px ink-brown rule with a paper-cream line separates
+  the two zones. Scene colours never tint the editor.
 - **Lighting by shift** via palette swap (not repainted art): Morning — pale
   yellow window light, cool shadows; Afternoon — neutral warm; Closing — amber
   lamp, dusk-blue window, longer shadows.
-- Contents: counter in front; shelves of tins and ledgers behind; a window at one
-  edge showing the time of day; a hanging lamp; speaker centre-left, right side
-  clear for the message-log button and the Hint / Manual / Back Room tabs. Calm and low-detail — at most three value
-  steps near the bubble.
+- Contents (zone map, native px; art bible 3.2): window showing the time of
+  day at the **left** edge (x 0–31, never behind a speaker or bubble); Kenji's
+  side slot (x 34–59, plain wall); the **speaker niche** with the hanging lamp
+  above (x 64–103, plain wall only, no props behind a head); shelves of tins and
+  ledgers (x 104–231, mostly behind the bubble); the back-room door with the
+  noren (x 232–319), under the message-log button and the Hint / Manual / Back
+  Room tabs; counter in front (y 22–29). Calm and low-detail — at most three
+  value steps near the bubble.
 
 **Characters**
-- **24 × 28 px** busts behind the counter, 2 px ink-brown outline for everyone.
+- **24 × 28 px** busts behind the counter, **1 native px** ink-brown outline
+  (= 4 screen px at ×4) for everyone (art bible 3.1).
 - Expressions **neutral / pleased / puzzled** differ in silhouette (head tilt,
   shoulders, a "?" tick), not only face pixels.
-- Idle: 2-frame breathing bob every ~1.2 s, blink every ~4 s. Reduced motion:
-  static neutral frame; expression changes are instant swaps.
+- Idle: a **1-frame blink about every 4 s only — no breathing bob** (art bible
+  2.2, 2.3, 7.6). Reduced motion: static neutral frame; expression changes are
+  instant swaps.
 - **HQ** has no face: a 32 × 20 px printed slip on the counter (perforated edge,
   stamp mark) — the "store paper" language.
 
 **Speech bubble** (a UI-layer element, not baked into the pixel scene, so text is
 crisp at 1280 × 720)
 - Cream paper panel, 2 px ink border, tail to the speaker.
-- **Clean sans/slab at 18–20 px** — the workbench's body family. **No pixel fonts
+- **IBM Plex Sans Regular, 18 px base × `ui_scale`** (`bubble` token, art bible
+  7.2). **No pixel fonts
   for any functional text** (readability for dyslexic and second-language
   readers). Ink on cream ≥ 7:1.
 - **Request** = square ticket-style bubble with a notched edge and a "REQUEST" tab;
   **reaction** = rounded bubble with the speaker's name tag. The sprite's
   expression also changes for reactions.
-- Paging: "1/3" counter and a "▸" chevron (blinking; static under reduced motion).
+- Paging: "1/3" counter and a "▸" chevron, **static in all modes** (never
+  blinks; art bible 2.3, 7.6).
 
 **Message log**
 - A ledger / receipt-roll panel over the workbench with a dimmed scrim; same paper
   and ink; entries grouped by speaker, requests in the ticket style and
-  reactions in the rounded style; 16–18 px; Esc closes; focus stays in the log
-  while open.
+  reactions in the rounded style; `body` 16 px base × `ui_scale` (art bible
+  7.2); Esc closes; focus stays in the log while open.
 
 **Audio intent** (audio-director owns detail)
 - Per-character voice blips: soft plucked / marimba-like, distinct pitch and
@@ -389,7 +412,7 @@ crisp at 1280 × 720)
   motion minimal, and never let pixel art, dithering or texture bleed into the
   editor or tables.
 - Mixed pixel density: no non-integer scaling or rotation of sprites.
-- Also avoid: colour-only speaker or outcome cues; bobbing that cannot be turned
+- Also avoid: colour-only speaker or outcome cues; idle motion that cannot be turned
   off; dark "cozy" lighting under text; blurry upscaled UI.
 
 > 📌 **Asset Spec** — after the art bible is approved, run
@@ -448,14 +471,14 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 
 **Request one action away**
 - **RD-03 [Integration]** GIVEN `reveal_cps` 0 and the 55-char "prise" gloss shown at t = 0, THEN the reaction shows at 3.74 s and the request at 3.75 s (4.75 s with `reveal_cps` 45); a Run or a speaker click at 0.5 s returns the request at once; an editor edit at 0.5 s does not, an edit at 1.1 s does; three reactions within 1 s → only the newest shows, all three logged; a reaction during page 2 of a request → the return opens page 1.
-- **RD-04 [Logic]** `reaction_hold` = 2.5 s at len 1, 3.75 s at 55, 6.0 s at 146; for a paged line the timer starts on the last page.
+- **RD-04 [Logic]** `reaction_hold` = 2.5 s at len 1, 3.75 s at 55, 5.15 s at 83 (`bubble_chars_max`), 6.0 s (clamp) at 120 (a PASS line plus offer line); for a paged line the timer starts on the last page.
 
 **No leak**
 - **RD-05 [Logic / code review]** Dialogue entry points accept only `{verdict, cause, level}` (verdict may be `UNAVAILABLE`, with no error text), `{error_kind, error_text}` (where `error_kind` is a sandbox kind or the grader's `TOO_MANY_ROWS`), challenge events `{clear}` / `{rule_broken, keyword}`, schema names and line ids — no row, count or dataset type; the same key against different hidden datasets gives identical text.
 
 **Log and reveal**
 - **RD-06 [Integration]** GIVEN 5 lines shown, WHEN Ctrl+L, THEN 5 entries, newest at the bottom, each with speaker name and kind label, paged lines whole; Tab stays inside the log; Esc or Ctrl+L closes it; the editor's text and caret are unchanged; the button is keyboard reachable.
-- **RD-07 [Logic]** Reveal = 0.844 s for 38 chars and 1.0 s (cap) for 146; 0 at `reveal_cps` 0 or under reduced motion; a bubble click, or Enter/Space with the counter scene focused, completes the line in that frame.
+- **RD-07 [Logic]** Reveal = 0.844 s for 38 chars and 1.0 s (cap) for 83 (83 / 45 = 1.84 s, capped); 0 at `reveal_cps` 0 or under reduced motion; a bubble click, or Enter/Space with the counter scene focused, completes the line in that frame.
 - **RD-08 [Integration]** GIVEN a reveal in progress, WHEN "abc" is typed in the editor, THEN "abc" is inserted in the same frame as with no dialogue showing, the reveal continues, and Enter in the editor inserts a newline.
 
 **Errors and suggestions**
@@ -463,7 +486,7 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 - **RD-10 [Logic]** `did_you_mean`: prise, pirce, PRISE and `p.prise` → price; catagory → category; nam → name; stok → stock; shelfs → shelf; table `product` → products; expiry → null (no "Did you mean"); "p" → null; with names [cat, cut], cot → cat, and reversed → cut.
 
 **Text**
-- **RD-11 [Logic]** A 300-char line → 3 pages, each ≤ 146 chars, split at spaces; a 160-char word is hard-split; marker "1/3 ▸"; `bubble_chars_max` = 146 at defaults, 48 at `ui_scale` 1.5 and 40 at 2.0.
+- **RD-11 [Logic]** At `ui_scale` 1.0 a 300-char line → at least 4 pages, each ≤ 83 chars and each fitting the measured content rect (no glyph clipped or overflowing), split at spaces; a 160-char word is hard-split; marker "1/N ▸" with N the page count; `bubble_chars_max` = 83 at defaults, 27 at `ui_scale` 1.5 and 20 at 2.0; at 2.0 a 40-char W-heavy line pages without clipping (art bible 7.9 S-01).
 - **RD-12 [Logic / CI scan]** No player-facing string literal in dialogue code paths; every line resolves through a string-table id or puzzle id; a missing id shows `[id]` in dev builds and the generic line in release, and is logged.
 
 **Presentation and audio**
@@ -480,7 +503,7 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | Pixel-art style specifics (resolution, palette) and how it sits with the clean paper UI | art-director | `/art-bible` |
+| 1 | ~~Pixel-art style specifics (resolution, palette) and how it sits with the clean paper UI~~ **Resolved** by the art bible (Sections 3–4, 7.1; 2026-10-14) | art-director | `/art-bible` |
 | 2 | Is the flavour wage on the payslip worth keeping, or should the manager's end-of-shift comment replace it? **Shift & Chapter Progression owns this decision (Progression OQ 2)**; Dialogue only writes whatever line Progression asks for. | Progression owner (narrative-director consulted) | Writing Chapter 1 lines |
 | 3 | Do voiced error glosses help zero-SQL players read SQLite's raw messages over time, or do they skip the raw text? Watch in playtest. | game-designer | Zero-SQL playtest |
 | 4 | Character bios and voice guide for Tanaka, Kenji, Mrs. Sato | narrative-director / writer | Before Chapter 1 line writing |

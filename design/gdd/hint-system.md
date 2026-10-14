@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 1 — The Condition, Not the Screen
 
@@ -295,16 +295,17 @@ fixed yet — 1-11 uses the defaults until then.
 ## Visual/Audio Requirements
 
 *`art-director` not consulted — Lean mode (hint visuals are not central to play).
-Review in `/art-bible`.*
+Synced to the art bible (`design/art/art-bible.md`) 2026-10-14; the bible is
+authoritative for visuals where they differ.*
 
 - The hint panel is a **folded note from the helper** (store paper as UI),
   opened from the Hint button; it sits beside the editor and never covers the
   editor or the result tables.
 - Step 1 and step 2 are visibly separate (two folds of the same note), each with
   a label ("Hint 1 — the idea", "Hint 2 — the shape").
-- The "new step available" indicator is a small dot + text on the Hint button —
-  no flashing, no sound, no animation beyond a single fade (none under reduced
-  motion).
+- The "new step available" indicator is a small dot in `accent` indigo
+  `#2F4B7C` + text on the Hint button — no flashing, no sound, no animation: dot
+  and word **appear in place, 0 ms**, in every motion mode (art bible 4.2, 7.6).
 - Audio: a soft paper-unfold sound when a hint is opened; silence on unlock.
 
 ## Game Feel
@@ -376,3 +377,4 @@ opening the panel is covered by workbench QW-19. [UI] = retained screenshot in
 | 4 | ~~A player who never submits never becomes `exhausted`?~~ **Resolved** (design review 2026-10-14): time path `exhausted_minutes` (default 5) after step 2 — rule 11; tune from playtest logs. | game-designer | Resolved 2026-10-14 |
 | 6 | Boss 1-11 needs a per-puzzle override (longer `hint1_minutes` / `exhausted_minutes`); set the values from playtest timings, which also settle the ~4.6 min vs 5–15 min per-puzzle conflict (Formulas). See Progression OQ1. | game-designer (playtest) | Zero-SQL playtest |
 | 5 | The locked label's counts ("1 wrong answer" / "2 wrong answers") need a localisation-safe plural rule. | localization-lead | Before localisation |
+| 7 | (art bible 2026-10-14) The full unlock condition (UI Requirement 1, HS-01) does not fit a strip tab at any `ui_scale` (art bible 7.1, 7.9). ux-designer recommends: the button shows a short locked state (glyph + word), and the condition goes in the hint panel (Ctrl+H opens it while locked) and the button's accessible description. Not decided here. | Hint GDD owner + ux-designer | `/ux-design` |

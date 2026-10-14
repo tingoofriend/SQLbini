@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -173,14 +173,19 @@ Onboarding as a consumer of `tutorial` and `prefill_sql`.
 
 ## Visual/Audio Requirements
 
-*`art-director` not consulted — Lean mode. Review in `/art-bible`.*
+*`art-director` not consulted — Lean mode. Synced to the art bible
+(`design/art/art-bible.md`) 2026-10-14; the bible is authoritative for visuals
+where they differ.*
 
-- Coach mark: a soft paper-tag ring around the target with a short label (glyph +
-  words), ≥ 3:1 against its surroundings; a gentle single pulse on appear (none
-  under reduced motion).
-- Ghost text in the editor: italic, lighter than real code but ≥ 4.5:1 against
-  the editor background, with a small "shape" label so it is never mistaken for
-  typed text.
+- Coach mark: a **2 px dashed `ink`** rounded-rect ring around the target (solid
+  rings are reserved for focus; 13.55:1 on paper) plus a paper tag with a short
+  label (glyph + words). The label tag appears in place on frame 1; the ring
+  starts 4 px outset and settles onto the target with a fade in 200 ms, once
+  (ease-out); under reduced motion the ring appears in its final state (art
+  bible 3.3, 7.5, 7.6).
+- Ghost text in the editor: `ghost` `#A89A7C` IBM Plex Mono Italic (5.71:1 on
+  the editor background), lighter than real code, with a small "shape" label so
+  it is never mistaken for typed text (art bible 4.2, 4.4).
 - Tanaka's guidance is in the coach-mark label: paper tag, his name tag, the
   workbench body font ≥ 4.5:1; the speech bubble keeps the request. Only the
   opening question uses the bubble (before any request).
@@ -266,3 +271,4 @@ retained screenshot in `production/qa/evidence/`.*
 | 1 | Is a prefilled 1-1 too trivial for zero-SQL players to feel they did something? Watch time-to-first-Run and reactions. | ux-designer | Zero-SQL playtest |
 | 2 | Does the ghost text in 1-3 (`… WHERE …`) help, or does it make players guess syntax instead of opening the manual? | ux-designer | Zero-SQL playtest |
 | 3 | Should "Yes, I know SQL" also skip 1-1 and 1-2 (straight to 1-3)? | game-designer | After MVP playtest |
+| 4 | (art bible 2026-10-14) Reduced motion must be reachable at MVP (art bible 7.6; UX R-04): add a reduced-motion toggle to the minimal options panel (UI Requirement 4), or follow the OS preference? Not decided here. | Onboarding owner + ux-designer | `/ux-design` |

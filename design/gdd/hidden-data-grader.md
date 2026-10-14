@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 1 — The Condition, Not the Screen; Pillar 2 — Your Query, Your Way
 
@@ -469,25 +469,26 @@ All values are data-driven; none is hardcoded in the grader.
 
 ## Visual/Audio Requirements
 
-*Provisional — input from `art-director` (2026-10-14) against the draft Visual
-Identity Anchor ("Behind the Counter"); no art bible exists yet. Confirm in `/art-bible`.*
+*Input from `art-director` (2026-10-14) against the Visual Identity Anchor
+("Behind the Counter"). Synced to the art bible (`design/art/art-bible.md`)
+2026-10-14; the bible is authoritative for visuals where they differ.*
 
 Every outcome is distinguished by **shape, text and position**, never colour
 alone. Feedback persists until the player next edits the query.
 
 | Outcome | Visual | Motion (reduced motion: appears in final state, no transition) | Audio intent |
 |---|---|---|---|
-| **PASS** | A hanko stamp lands on the result receipt ("OK / 合格" + checkmark glyph), with a small printed "ACCEPTED" line. The only accent colour is vermilion ink. | Stamp drop 150–200 ms, 2 px settle | One soft, dry stamp "ka-chunk" — closure, no fanfare |
-| **FAIL** | A sticky note beside the result carrying the grader's **neutral** level-1 symptom statement (rule 12; the requester's voiced line is in the counter-scene bubble only, never repeated here); angled/torn edge with a "?" tab; warm grey/amber, **no red X**. Nothing is stamped. | Fade + slide 120 ms | Gentle low "bip" / paper slip — neutral, not punishing |
-| **SUBMIT_ERROR** | A jammed register strip at the **editor** (not the result area) carrying the error label ("ERROR") and SQLite's original `error_text` (or the sandbox's fixed message) in monospace; the voiced error line is in the bubble only; dashed jagged border + ⚠ glyph | Appears instantly, 100 ms fade | Short dull printer-jam tick |
-| **Run: matches on today's data** | A small pencil tally note, "Looks right today (not checked)", hollow circle / dotted outline. Smaller and lighter than PASS; **wording never contains "pass", "correct" or "OK"; never a stamp; never green.** | None | Faint scanner beep, clearly quieter than the stamp |
+| **PASS** | A hanko stamp (circle, vermilion `#C23B18`, "OK / 合格" + ✓; may sit at ±3°) lands on the result receipt, plus the printed "✓ ACCEPTED" line in pass green `#245A30`, which carries the meaning. The stamp never sits on a row tint or over a grid (art bible 3.3, 4.4, 4.5). | "✓ ACCEPTED" appears on frame 1; only the stamp sprite animates: scale 1.12 → 1.0 with fade-in (120 ms), then a 2 px settle (60 ms) = 180 ms, no overshoot (art bible 7.6) | One soft, dry stamp "ka-chunk" — closure, no fanfare |
+| **FAIL** | A sticky note beside the result carrying the grader's **neutral** level-1 symptom statement (rule 12; the requester's voiced line is in the counter-scene bubble only, never repeated here); a square, axis-aligned note on `sticky` yellow `#F8E38A` with a cut folded corner (no rotation; no text is ever rotated) and a "? Not accepted" tab word in fail red `#A3263A` — text only: **no red X, no red fill**. Nothing is stamped (art bible 3.3, 4.2, 4.5). | **Appears in place, 0 ms** (art bible 7.6) | Gentle low "bip" / paper slip — neutral, not punishing |
+| **SUBMIT_ERROR** | A jammed register strip at the **editor** (not the result area) carrying the error label ("ERROR") and SQLite's original `error_text` (or the sandbox's fixed message) in monospace; the voiced error line is in the bubble only; dashed jagged border + ⚠ glyph, ink only (art bible 4.5) | **Appears in place, 0 ms** (art bible 7.6) | Short dull printer-jam tick |
+| **Run: matches on today's data** | A small pencil tally note, "≈ Looks right today (not checked)", a **dotted rectangle** with the "≈" glyph in graphite (`ink_muted`) — **never a circle**, because circles are reserved for the hanko seal (art bible 3.3). Smaller and lighter than PASS; **wording never contains "pass", "correct" or "OK"; never a stamp; never green.** | None | Faint scanner beep, clearly quieter than the stamp |
 
 **No shake, flash, particles or confetti on any outcome.**
 
 **Principles applied**: *Store paper as UI* (stamp, sticky note, receipt strip);
 *Never colour alone* (glyphs and wording carry every state); *Data reads first*
-(feedback sits beside, never over, the result and the editor); *Quiet
-fluorescent calm* (short, settled motion).
+(feedback sits beside, never over, the result and the editor); *Warm,
+quiet, and fast* (text on its first frame; only the stamp moves — art bible 1, 7.6).
 
 **Anti-patterns**: PASS — green flash or confetti that says "done" before the
 player has thought; FAIL — red X or a hidden-row diff (turns play into
@@ -631,3 +632,4 @@ Logic tests use a stub sandbox where noted. Config: `R_cap = 5000`, `k = 2`,
 | 6 | Default `k` (fails per level) = 2 is a guess; tune from playtest logs once levels 2–3 exist. | systems-designer | Vertical Slice |
 | 7 | Which machine is the "target PC" for the 300 ms / 200 ms p95 budgets? Until named, AC-26 cannot be checked. | technical-director | Technical Setup (performance ADR) |
 | 8 | Trap tags, key columns and priority lists for Chapter 1 are not yet authored (the AC fixtures are provisional). Wording for hidden-only runtime errors is not authored. | Puzzle Definition GDD / level design | Before Chapter 1 content locks |
+| 9 | (art bible 2026-10-14) `canon` does not trim (Formulas: trailing-space traps are intended). Should the result grids then show a visible-space marker for leading / trailing spaces (art bible 7.3; the glyph would be added to bible 3.3)? Not decided here. | Grader owner + art-director (`/ux-design` G-08) | `/ux-design` |

@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Supports all pillars by measuring them (MVP Definition thresholds in `game-concept.md`)
 
@@ -302,7 +302,8 @@ concept's MVP threshold table.
 ## Visual/Audio Requirements
 
 None in game beyond the corner label ("● Recording playtest" / "Recording
-stopped"), glyph + words, ≥ 4.5:1, never over the editor or tables.
+stopped"), glyph + words, ≥ 4.5:1, never over the editor or tables. The ● is
+**`ink`, not red** — red is reserved for the Submit verdict (art bible 4.5, 4.6).
 
 ## UI Requirements
 

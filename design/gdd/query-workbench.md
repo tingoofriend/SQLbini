@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 2 — Your Query, Your Way
 
@@ -254,8 +254,8 @@ The **readability** constants are defined as:
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| editor_font_px | int | 14–32 (default 18) | data file | Editor font size at 1280×720 |
-| table_font_px | int | 14–32 (default 16) | data file | Result-table and schema font size |
+| editor_font_px | int | 14–32 (default 18) | data file | Editor font **base** size at 1280×720; the 14–32 clamp applies to the base only, and the effective size = base × `ui_scale`, not clamped again (art bible 7.2) |
+| table_font_px | int | 14–32 (default 16) | data file | Result-table and schema font **base** size; same clamp rule as `editor_font_px` (art bible 7.2) |
 | ui_scale | float | 1.0–2.0, step 0.25 (default 1.0) | data file | Multiplies all fonts (Accessibility Options) |
 | contrast_min | float | 4.5 | constant | WCAG AA minimum for text in every theme and state; glyphs, borders and focus rings ≥ 3:1 |
 | strip_h | int (px) | 120 | constant | Counter-scene height — fixed at every `ui_scale` (pixel art stays ×4; `request-and-reaction-dialogue.md`) |
@@ -355,8 +355,9 @@ list it when designed.
 
 ## Visual/Audio Requirements
 
-*Provisional — input from `art-director` (2026-10-14) against the draft "Behind
-the Counter" anchor; no art bible yet. Grader outcome visuals (stamp, sticky
+*Input from `art-director` (2026-10-14) against the "Behind the Counter" anchor.
+Synced to the art bible (`design/art/art-bible.md`) 2026-10-14; the bible is
+authoritative for visuals where they differ. Grader outcome visuals (stamp, sticky
 note, jammed strip, pencil tally) are defined in `hidden-data-grader.md` and not
 redefined here.*
 
@@ -379,27 +380,37 @@ is plain red text without a glyph.
   feedback strip below (a receipt).
 - **Paper-themed:** frame, speech bubbles, feedback receipt, grader stamp/note; the counter scene is pixel art (style fixed in `/art-bible`).
   **Plain, matte, high-contrast:** the editor and both grids — no texture, no
-  rotation, opaque cards with a thin paper-tone border.
+  rotation, opaque cards with a 1 px `border` `#7D6D5C` (4.42:1 on paper; a
+  paper-tone border would fail 3:1 — art bible 4.2, 4.4).
 
 **Editor and grids**
-- Editor: dark ink-navy background (≈ #1E2230), warm off-white text (≈ #F2EEE4),
-  monospace; ligatures off (SQL glyphs must not change).
+- Editor: dark ink-navy background (`#1E2230`), warm off-white text (`#F2EEE4`),
+  IBM Plex Mono; ligatures off (SQL glyphs must not change) (art bible 4.2, 7.2).
+- Caret: 2 px Lamp Amber (`#F2C46D`) bar, **steady, never blinking**; an error
+  token gets a **2 px wavy underline** in `editor_text`, offset below the
+  descenders — not red, not amber, not dashed (art bible 7.3).
 - Grid values monospace, numbers right-aligned; body text contrast ≥ 7:1; header
   in a distinct paper-tone band; zebra rows ≤ 8% luminance difference.
 - **Syntax roles differ by weight and luminance, not hue alone** (safe for
   deuteranopia/protanopia): keyword bold + blue; string orange; number teal;
   identifier default; comment italic + dimmed. No red/green pairs.
-- **Row marks** in a fixed left gutter (~90 px), always glyph + word (+ tint as
+- **NULL vs empty vs text** (art bible 7.3): SQL `NULL` = the word `NULL` in mono
+  `ink_muted` inside a 1 px solid `border` box (0 px radius, 2 px inset); empty
+  string `''` = `""` in mono `ink_muted`, no box; the text `'NULL'` = plain `ink`.
+- **Row marks** in a fixed left gutter (≈ 90 × `ui_scale` px, frozen with the
+  header while data columns scroll horizontally; art bible 7.8), always glyph + word (+ tint as
   a third channel): "✓ match" (no tint); "+ extra" (amber tint + left bar);
   "− missing" (blue-violet tint, dashed outline, ghost row). Never red/green.
-- **Stale state:** a "Stale — run again" header tag, marks hidden, tables visibly
-  de-emphasised (reduced opacity or italic — art bible decides) while all
-  remaining text stays ≥ 4.5:1 (Formulas `contrast_min`).
+- **Stale state:** a "Stale — run again" header tag, marks and tints hidden,
+  table text in `ink_muted` `#5E544B` — **no opacity reduction, no italic**
+  (art bible 4.2) — so all remaining text stays ≥ 4.5:1 (worst stale pair
+  6.67:1; Formulas `contrast_min`).
 
 **Schema browser:** each table is a shelf-label card (table name header) with
 column chips beneath, each chip showing a type letter/glyph. Hover/focus
 underlines with an "insert" hint; click or Enter inserts at the caret and the
-inserted text flashes briefly (none under reduced motion). Minimum target 32 px;
+inserted text gets a `selection` fill that fades out over 200 ms while the text
+stays still (none under reduced motion; art bible 7.6). Minimum target 32 px;
 fully keyboard reachable.
 
 **Audio intent** (sparse; audio-director owns detail): Run — a soft register
@@ -506,11 +517,11 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 - **QW-19 [Integration] [Alpha]** *(MVP part: everything except the Chapter 2 Ctrl+B check)* THEN Ctrl+Enter runs, Ctrl+Shift+Enter submits, F6 / Shift+F6 cycle the five panes in order, Esc leaves the editor, Ctrl+H / M open Hint / Manual, Ctrl+B opens the Back Room on a Chapter 2 puzzle and does nothing on a Chapter 1 puzzle, and Tab indents while the editor has focus (except accepting onboarding ghost text in an empty editor).
 - **QW-20 [UI]** GIVEN keyboard focus on each pane, WHEN captured, THEN a focus ring is visible, distinct from hover, ≥ 3:1.
 - **QW-21 [Integration]** GIVEN an in-progress Korean or Japanese IME composition, WHEN Run is pressed, THEN the composition is committed and the committed text is executed. *(May be manual-only until Open Question 4 is resolved.)*
-- **QW-22 [Integration]** GIVEN a schema table or column clicked (or selected + Enter), THEN its name is inserted at the caret, with a brief flash unless reduced motion is on. GIVEN `SELECT ▮ FROM products`, WHEN `name` then `price` are clicked, THEN the text is `SELECT name, price FROM products`; GIVEN the caret after `WHERE ` or after `SELECT name, `, THEN no separator is added.
+- **QW-22 [Integration]** GIVEN a schema table or column clicked (or selected + Enter), THEN its name is inserted at the caret, with a 200 ms `selection`-fill fade unless reduced motion is on (art bible 7.6). GIVEN `SELECT ▮ FROM products`, WHEN `name` then `price` are clicked, THEN the text is `SELECT name, price FROM products`; GIVEN the caret after `WHERE ` or after `SELECT name, `, THEN no separator is added.
 
 **Scale and limits**
 - **QW-23 [Logic]** GIVEN a 576-row cross join, THEN 200 rows render, the count reads "576 rows — showing the first 200", and marks cover all 576; GIVEN a truncated sandbox result at the default `grader_row_cap`, THEN "5,000+ rows — too many to compare" (formatted from the knob) and no marks.
-- **QW-24 [Logic]** GIVEN default settings, THEN `editor_font_px = 18`, `table_font_px = 16`, `row_px = 24`, `rows_visible = 7`; at `ui_scale` 1.25 / 1.5 / 1.75 / 2.0, `rows_visible` = 5 / 4 / 3 / 2 and the counter scene stays 120 px; fonts outside 14–32 and scale outside 1.0–2.0 (step 0.25) are clamped.
+- **QW-24 [Logic]** GIVEN default settings, THEN `editor_font_px = 18`, `table_font_px = 16`, `row_px = 24`, `rows_visible = 7`; at `ui_scale` 1.25 / 1.5 / 1.75 / 2.0, `rows_visible` = 5 / 4 / 3 / 2 and the counter scene stays 120 px; base fonts outside 14–32 and scale outside 1.0–2.0 (step 0.25) are clamped; the effective font (base × `ui_scale`, e.g. editor 36 px at 2.0) is not clamped again (art bible 7.2).
 
 **Back Room tab**
 - **QW-25 [UI] [Alpha]** GIVEN the Back Room tab active, THEN "Back Room — practice data" is always visible, the Target table and marks are hidden, and the Run note is absent.
@@ -531,3 +542,5 @@ GDDs.
 | 5 | Should the Target table be hideable (an "expert" mode where the player works only from the request)? | game-designer | After Chapter 1 playtest |
 | 6 | Hint panel layout slot: where the Hint System's panel sits (the manual panel already covers the results column), and one rule for manual vs. hint overlays. Deferred, not designed here (cross-review W8). | ux-designer | `/ux-design` |
 | 7 | Dedicated visible-data view vs. "read the shelf by Run": does the player need a view of the visible dataset, and what is `visible_rows_max` (registry 30, pending)? Scope decision for the user (cross-review W30). | ux-designer + user | `/ux-design` |
+| 8 | (art bible 2026-10-14) `H_table` uses the constant 720; with `expand` aspect on 16:10 windows the logical viewport is taller than 720 (technical-artist, art bible Section 8). Should the formula use the actual logical viewport height? | systems-designer + technical-artist | `/ux-design` |
+| 9 | (art bible 2026-10-14) A 32 px base font × `ui_scale` 2.0 = 64 px effective (art bible 7.2): must layout support it, or should the 14–32 knob range narrow (QW-24)? | systems-designer | `/ux-design` |

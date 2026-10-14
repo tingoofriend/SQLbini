@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 2 — Your Query, Your Way; Pillar 1 — The Condition, Not the Screen
 
@@ -325,20 +325,25 @@ content, governed by the authoring guidance in Formulas.
 ## Visual/Audio Requirements
 
 *`art-director` not consulted — Lean mode (challenge visuals extend the grader's
-established stamp language). Review in `/art-bible`.*
+established stamp language). Synced to the art bible (`design/art/art-bible.md`)
+2026-10-14; the bible is authoritative for visuals where they differ.*
 
-- **Rule banner** above the editor in challenge mode: a small paper tag with the
-  rule ("No OR", "≤ 60 characters"), glyph + word.
+- **Rule banner** above the editor in challenge mode: a small paper rule tag
+  (eyelet hole + string at the left) with the rule ("No OR", "≤ 60
+  characters"), glyph + word (art bible 3.3).
 - **Live check** under the editor: "54 / 60" or "OR — not used ✓" in the
-  workbench's table font; changes are instant, never animated.
+  workbench's table font, in `ink` — never pass green, which is reserved for
+  the Submit verdict (art bible 4.5); changes are instant, never animated.
 - **Challenge cleared:** a second, smaller stamp beside the puzzle's PASS stamp
-  (e.g. a star-shaped hanko), with a short soft stamp sound at least 6 dB
+  — the star hanko (44 px, vermilion), landing 60 ms after the PASS stamp with
+  the same 180 ms motion (art bible 3.3, 7.4, 7.6) — with a short soft stamp sound at least 6 dB
   quieter (peak) than the main PASS sound, so the base puzzle remains the main
   event.
-- **"Right answer, but not within the challenge":** the requester's sticky note
-  style (not a fail), naming the broken part.
-- The chapter list shows a challenge mark (available) and a challenge stamp
-  (cleared) — glyph + word, not colour alone.
+- **"Right answer, but not within the challenge":** a sticky note (`sticky`
+  yellow) with an **`ink`** "☆ Not within the rule" tab — no fail red, because it
+  is not a fail — naming the broken part (art bible 3.3, 4.5).
+- The chapter list shows ☆ (challenge available) and ★ in vermilion (challenge
+  cleared) — glyph + word, not colour alone (art bible 3.3, 4.6).
 
 ## Game Feel
 

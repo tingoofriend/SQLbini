@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -252,17 +252,24 @@ No balance formulas; these are content values in the chapter definition.
 ## Visual/Audio Requirements
 
 *Optional for `Progression` systems; `art-director` not consulted — Lean mode.
-Mood direction "aesthetic, cozy" is in `design/ideas-backlog.md` (#1) for the art
-bible.*
+Synced to the art bible (`design/art/art-bible.md`) 2026-10-14; the bible is
+authoritative for visuals where they differ.*
 
 - **Shift briefing:** a short line from the manager over the store at the time of
   day (morning light, afternoon, closing) — the time of day is the shift's
-  visual signature.
+  visual signature. The light changes only by the strip's palette swap, on the
+  shift-start card: a 300 ms crossfade, instant under reduced motion (art bible
+  2.1, 7.6).
 - **Payslip:** a printed receipt (store paper as UI) listing the shift's requests
-  with glyph + word marks (✓ passed, ↷ left for later, ★ challenge cleared) and
-  the wage line; a soft receipt-printer sound.
+  with glyph + word marks (✓ passed in pass green `#245A30`, ↷ left for later in
+  `ink_muted` `#5E544B`, ★ challenge cleared in vermilion `#C23B18`; art bible
+  4.2, 4.5) and the wage line under a dashed tear rule; a soft receipt-printer
+  sound.
+- **End of day:** after the Closing shift the strip's sign flips to "Closed" (a
+  1-frame sprite swap), and the chapter list shows it afterwards (art bible 2.2).
 - **Chapter list:** a shift-by-shift checklist on a clipboard; states use glyph +
-  word, never colour alone.
+  word (same glyphs and colours as the payslip; ☆ challenge available), never
+  colour alone (art bible 3.3, 4.6).
 - **Chapter star:** a single small ★ stamp on the chapter card — no fanfare.
 
 ## Game Feel

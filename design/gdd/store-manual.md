@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL (anti-pillar: NOT a textbook)
 
@@ -173,16 +173,22 @@ onboarding and dialogue list the Store Manual ✓.
 
 ## Visual/Audio Requirements
 
-*`art-director` not consulted — Lean mode. Review in `/art-bible`.*
+*`art-director` not consulted — Lean mode. Synced to the art bible
+(`design/art/art-bible.md`) 2026-10-14; the bible is authoritative for visuals
+where they differ.*
 
-- A worn ring binder with handwritten-style headings (decorative only) and
-  **clean body text** at the workbench body size or larger — no handwriting or
-  pixel fonts for anything the player must read; ≥ 4.5:1 contrast.
-- `shape` and `example` in the editor's monospace, on the plain editor background
+- A ring binder (ring holes down the left edge) with **printed IBM Plex Sans
+  SemiBold page titles** — no handwriting or display face; the "worn binder"
+  feel comes from the shape, not the lettering (art bible 3.3, 7.2) — and
+  **clean body text** (IBM Plex Sans, `body` 16 px base × `ui_scale`) — no
+  handwriting or pixel fonts for anything the player must read; ≥ 4.5:1 contrast.
+- `shape` and `example` in the editor's monospace (IBM Plex Mono, art bible 7.2), on the plain editor background
   colours (code looks like code).
-- `watch_out` lines on a small sticky note with a "!" glyph and the word "Watch
-  out" (not colour alone).
-- Locked pages: greyed title + "later" label; new pages: a small tab + "new".
+- `watch_out` lines on a small sticky note (`sticky` yellow `#F8E38A`) with a
+  "!" glyph and the word "Watch out" (not colour alone; art bible 3.3, 4.2).
+- Locked pages: title in `ink_muted` `#5E544B` (6.55:1 on paper; never a lighter
+  grey) + "later" label; new pages: a small `accent` indigo tab + "new" (art
+  bible 4.2).
 - Sound: a soft page turn on open; silence on unlock.
 
 ## Game Feel

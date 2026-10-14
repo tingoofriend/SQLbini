@@ -261,33 +261,42 @@ would actually make, we choose **the store's request**.
 
 ## Visual Identity Anchor
 
-*Draft — the AD-CONCEPT-VISUAL gate was skipped (review mode: lean). Confirm or
-replace in `/art-bible`.*
+*Confirmed and revised in `/art-bible` 2026-10-14 — the full statement, palette
+and contrast table live in `design/art/art-bible.md` (Sections 1–4); this is the
+summary.*
 
-**Direction: "Behind the Counter"**
+**Direction: "Behind the Counter" (revised: evening shift)**
 
-**One-line visual rule**: Every UI element looks like something you'd find
-behind a konbini counter.
+**One-line visual rule**: Everything looks like it belongs behind a konbini
+counter in the evening: warm paper, wood and cardboard around the work, with the
+data on top of it all and always legible.
+
+**Two registers**: a warm pixel-art **world** — a 320×30 native-pixel counter
+strip shown at ×4 (1280×120 px, nearest filtering) with NPCs and a speech bubble
+— and a clean **work surface** — the SQL editor and result tables, undecorated,
+high-contrast, non-pixel fonts. They share one palette family.
 
 **Supporting principles**:
-1. **Data reads first** — the result table and query are always the most
-   legible things on screen. *Design test*: if decoration competes with the
-   readability of a result row, the decoration goes.
-2. **Store paper as UI** — results print as receipts, errors arrive as sticky
-   notes, passes get a hanko-style stamp, shelf labels name the tables.
-   *Design test*: when a UI element needs a frame, ask what paper or object in
-   a konbini would hold it.
-3. **Quiet fluorescent calm** — a clean, softly lit store, never neon chaos.
-   *Design test*: between more motion and more calm, choose calm unless it is
-   feedback on the player's action.
+1. **Data reads first** (Pillar 1) — the result table and query are always the
+   most legible things on screen; text ≥ 4.5:1 (`contrast_min`), glyphs/borders
+   ≥ 3:1. *Design test*: if decoration competes with the readability of a
+   result row, the decoration goes.
+2. **Store paper as UI** (Pillar 4) — results print as receipts, errors arrive as
+   sticky notes, passes get a hanko-style stamp, shelf labels name the tables;
+   paper stays flat under SQL text. *Design test*: when a UI element needs a
+   frame, ask what paper or object in a konbini would hold it.
+3. **Warm, quiet, and fast** (Pillar 3; replaces "Quiet fluorescent calm") — a
+   slightly aesthetic, cozy store in soft evening light, never neon chaos, and
+   feedback is never slowed by ambience. *Design test*: between more atmosphere
+   or motion and faster, calmer feedback, choose faster feedback.
 
-**Color philosophy**: Off-white receipt paper and cool fluorescent neutrals as
-the base; one fictional chain accent color for brand identity; never colour
-alone — every pass/fail or matching/missing signal also carries an icon or word;
-green and red
-reserved strictly for pass/fail and matching/missing rows, so color always
-carries meaning. Light Japanese flavor (いらっしゃいませ on the sign) in
-decoration only — all gameplay text is English.
+**Color philosophy**: Warm cream receipt paper, wood and cardboard browns and
+soft lamp-amber light as the base (replaces "cool fluorescent neutrals"); one
+fictional chain accent (indigo) plus hanko vermilion for seals; never colour
+alone — every signal also carries a glyph and a word; green and red reserved for
+the Submit verdict only (result rows use neither, so a matching Run never looks
+like a PASS). Light Japanese flavor (いらっしゃいませ on the sign) in decoration
+only — all gameplay text is English.
 
 ---
 
@@ -432,7 +441,7 @@ leaderboards, Workshop, localization.
 - [x] Concept prototype — web prototype playtested: PROCEED (conditional), see `prototypes/sqlbini-web/REPORT.md`
 - [x] Technical spike — godot-sqlite + CodeEdit on 4.7.2: YES
 - [ ] `/gate-check` — confirm readiness to advance from Concept
-- [ ] `/art-bible` — confirm or replace the draft Visual Identity Anchor
+- [x] `/art-bible` — Visual Identity Anchor confirmed and revised warmer (`design/art/art-bible.md`)
 - [x] `/map-systems` — decompose the concept into systems (`design/gdd/systems-index.md`)
 - [x] `/design-system` for each MVP system — 11 GDDs written; cause feedback (level 1), zero-row column count and duplicate column names are covered (grader, sandbox rules 10–11); trap difficulty for players with some SQL remains a playtest question
 - [ ] Zero-SQL playtest with an observation log, recording per-puzzle timings (before the demo)
