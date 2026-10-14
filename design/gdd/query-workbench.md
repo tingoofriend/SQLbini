@@ -89,7 +89,9 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
     always available (a failed submit costs nothing — Pillar 3).
 11. The first time a player submits in the game, the manager says one line that
     explains the difference ("Run checks today's shelf. Submit is me checking it
-    holds every day.") — diegetic, once, skippable.
+    holds every day.") — diegetic, once, skippable. With onboarding on, 1-1's
+    guided Submit covers this and the line moves to the first submit of 1-2
+    (`onboarding-first-shift.md` rule 2).
 12. The verdict (PASS stamp, FAIL note, SUBMIT_ERROR strip) is rendered as the
     grader's Visual/Audio section specifies and stays until the editor text
     changes.

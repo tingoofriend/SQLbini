@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-14
-> **Last Updated**: 2026-10-14 (Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue designed)
+> **Last Updated**: 2026-10-14 (Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -51,9 +51,9 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 | 7 | Constraint Challenges | Gameplay | MVP | Designed | design/gdd/constraint-challenges.md | Puzzle Definition & Datasets, Hidden-Data Grader |
 | 8 | Shift & Chapter Progression | Progression | MVP | Designed | design/gdd/shift-and-chapter-progression.md | Puzzle Definition & Datasets, Hidden-Data Grader |
 | 9 | Request & Reaction Dialogue | Narrative | MVP | Designed | design/gdd/request-and-reaction-dialogue.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox |
-| 10 | Store Manual | Narrative | MVP | Not Started | — | Puzzle Definition & Datasets, Shift & Chapter Progression |
-| 11 | Onboarding: First Shift (inferred) | Meta | MVP | Not Started | — | Query Workbench, Request & Reaction Dialogue, Store Manual |
-| 12 | Playtest Log (inferred) | Meta | MVP | Not Started | — | Hidden-Data Grader, Query Workbench, Hint System |
+| 10 | Store Manual | Narrative | MVP | Designed | design/gdd/store-manual.md | Puzzle Definition & Datasets, Shift & Chapter Progression |
+| 11 | Onboarding: First Shift (inferred) | Meta | MVP | Designed | design/gdd/onboarding-first-shift.md | Query Workbench, Request & Reaction Dialogue, Store Manual |
+| 12 | Playtest Log (inferred) | Meta | MVP | Designed | design/gdd/playtest-log.md | Hidden-Data Grader, Query Workbench, Hint System |
 | 13 | Save/Load & Settings (inferred) | Persistence | Vertical Slice | Not Started | — | Shift & Chapter Progression |
 | 14 | Game Shell & Screen Flow (inferred) | UI | Vertical Slice | Not Started | — | Shift & Chapter Progression, Save/Load & Settings |
 | 15 | Efficiency Stats | Progression | Vertical Slice | Not Started | — | SQL Execution Sandbox, Hidden-Data Grader |
@@ -218,10 +218,10 @@ accepted risks call for.
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 19 |
-| Design docs started | 8 |
+| Design docs started | 11 |
 | Design docs reviewed | 0 |
 | Design docs approved | 0 |
-| MVP systems designed | 8/11 |
+| MVP systems designed | 11/11 |
 | Vertical Slice systems designed | 0/6 |
 
 ---
