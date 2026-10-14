@@ -50,7 +50,12 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
    quotes (a setting; on by default in Chapter 1).
 3. **Schema browser** — the chapter's tables with their columns and types,
    collapsible. Clicking a table or column name inserts it at the editor cursor
-   (keyboard: select + Enter).
+   (keyboard: select + Enter). **Auto-separator:** when a column name is inserted
+   inside the `SELECT` list and the nearest non-space text before the caret is
+   an identifier (a column name or `*`), `, ` is inserted first, so two clicks
+   give `name, price`, never `nameprice` (`onboarding-first-shift.md` rule 3).
+   No separator after `SELECT`, a comma or an opening parenthesis, and none
+   outside the `SELECT` list.
 4. **Your result** — the player's last Run on the active data (visible dataset,
    or the Back Room's scratch data when the Back Room tab is active).
 5. **Target** — the reference result on the visible dataset, computed (never
@@ -434,7 +439,7 @@ This system *is* the main gameplay screen; its full screen-level spec belongs to
 | `design/gdd/sql-execution-sandbox.md` | Core Rules 7, 13, Edge Cases | Modes, result shape, `error_kind`/`error_text`, `R_cap` truncation | In Review |
 | `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–5 | Puzzle fields; target computed from `reference_sql`; `visible_rows_max` (Open Question 6) | In Review |
 | `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1, Formulas, Visual/Audio | Counter scene (fixed 120 px, ×4), message log | Designed |
-| `design/gdd/onboarding-first-shift.md` | Core Rules 11, 15 | Guided 1-1 Submit; Tab accepts ghost text | Designed |
+| `design/gdd/onboarding-first-shift.md` | Core Rules 2, 3, 6 | Guided 1-1 Submit; auto-separator for 1-2; Tab accepts ghost text | In Review |
 | `design/gdd/game-concept.md` | Overview, Rules 8, 11 | Pillars 2–3; concept review findings (Run vs Submit, row-diff marking, onboarding) | Source of intent |
 | `docs/engine-reference/godot/modules/ui.md` | UI Requirements 4, 7 | Dual focus (4.6), AccessKit (4.5), FoldableContainer (4.5) | Verified for 4.6, not re-verified for 4.7 |
 | `prototypes/sqlbini-spike-2026-10-14/` | Overview | `CodeEdit` with SQL highlighting proven | Evidence |
@@ -473,7 +478,7 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 - **QW-19 [Integration]** THEN Ctrl+Enter runs, Ctrl+Shift+Enter submits, F6 / Shift+F6 cycle the five panes in order, Esc leaves the editor, Ctrl+H / M open Hint / Manual, Ctrl+B opens the Back Room on a Chapter 2 puzzle and does nothing on a Chapter 1 puzzle, and Tab indents while the editor has focus (except accepting onboarding ghost text in an empty editor).
 - **QW-20 [UI]** GIVEN keyboard focus on each pane, WHEN captured, THEN a focus ring is visible, distinct from hover, ≥ 3:1.
 - **QW-21 [Integration]** GIVEN an in-progress Korean or Japanese IME composition, WHEN Run is pressed, THEN the composition is committed and the committed text is executed. *(May be manual-only until Open Question 4 is resolved.)*
-- **QW-22 [Integration]** GIVEN a schema table or column clicked (or selected + Enter), THEN its name is inserted at the caret, with a brief flash unless reduced motion is on.
+- **QW-22 [Integration]** GIVEN a schema table or column clicked (or selected + Enter), THEN its name is inserted at the caret, with a brief flash unless reduced motion is on. GIVEN `SELECT ▮ FROM products`, WHEN `name` then `price` are clicked, THEN the text is `SELECT name, price FROM products`; GIVEN the caret after `WHERE ` or after `SELECT name, `, THEN no separator is added.
 
 **Scale and limits**
 - **QW-23 [Logic]** GIVEN a 576-row cross join, THEN 200 rows render, the count reads "576 rows — showing the first 200", and marks cover all 576; GIVEN a truncated sandbox result, THEN "5,000+ rows — too many to compare" and no marks.

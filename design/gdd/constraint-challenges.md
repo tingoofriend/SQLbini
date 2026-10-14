@@ -75,10 +75,13 @@ comments, so `'COLOR'` never counts as `OR`.
 
 6. The challenge becomes available when the base puzzle is **PASSED** (and its
    `unlock_after` puzzle, if any — rule 2a). Without `unlock_after`, the offer is
-   **attached to the PASS reaction** in the message log: the requester (or Kenji)
-   adds one line ("Bet you can't do it without OR.") with two inline buttons,
-   **Try it** / **Later**. It is not a menu and never blocks: the next request
-   arrives at once as usual (Progression rule 11). The buttons stay answerable
+   **attached to the PASS reaction** in the counter-scene bubble: the requester
+   (or Kenji) adds one line ("Bet you can't do it without OR.") with two inline
+   buttons, **Try it** / **Later** (`request-and-reaction-dialogue.md` rule 3a).
+   It is not a menu and never blocks: the next request arrives when the PASS
+   reaction ends, answered or not (Progression rule 11); an unanswered offer
+   then waits as an **offer ticket** on the counter strip. The line is also in
+   the message log. The buttons stay answerable
    until the player's first Submit on the next request, until another request
    is opened, or until the shift clocks out; then the offer counts as **Later**. Choosing **Try it** counts as
    starting a challenge for the MVP playtest threshold ("starts a constraint
@@ -370,7 +373,7 @@ dataset checks are covered in their own GDDs. Fixtures from
 - **CC-10 [UI]** Retained screenshots for 1-4, 1-6 and 1-8 show: banner and live check as glyph + word at ≥ 4.5:1; the rule-broken message in sticky-note style, not a fail stamp; a cleared puzzle with the smaller challenge stamp beside the PASS stamp; chapter-list marks for available vs cleared distinguishable without colour.
 - **CC-11 [Content-CI]** For each Chapter 1 witness (1-4, 1-6, 1-8), THEN it passes on visible, hidden A and hidden B and obeys its rule, and the reference breaks the rule.
 - **CC-12 [Content-CI]** Each of these makes the puzzle invalid and the challenge is not offered at runtime: a witness failing one dataset; a reference that obeys the rule; empty keyword list; `max_chars(0)` (Alpha) — and at MVP any `max_chars` constraint; `forbid(AND)` on 1-6; `unlock_after` naming a missing puzzle, a side puzzle, or a puzzle ordered before the base puzzle (e.g. 1-4 with `unlock_after: 1-3`).
-- **CC-13 [Integration]** The Playtest Log records `offer_shown`, `try` / `later`, `challenge_start {source: offer | chapter_list}`, each attempt `{verdict, rule_met}`, and `cleared`, with puzzle id and timestamp.
+- **CC-13 [Integration]** The Playtest Log records `challenge_offer`, `challenge_try` / `challenge_later` (from the bubble or the offer ticket; an expired offer logs `challenge_later`), `challenge_start {source: offer | chapter_list}`, each `challenge_attempt {verdict, rule_met}`, and `challenge_clear`, with puzzle id and timestamp — names exactly as in `playtest-log.md` rule 4.
 - **CC-14 [Audio]** The challenge-clear stamp sound's peak is ≥ 6 dB below the PASS stamp's peak (measured on the exported audio assets; audio lead signs off).
 
 ## Open Questions

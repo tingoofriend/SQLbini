@@ -1,6 +1,6 @@
 # Request & Reaction Dialogue
 
-> **Status**: In Design
+> **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-14
 > **Last Verified**: 2026-10-14
@@ -60,11 +60,22 @@ is set in `/art-bible`.
 | `fail` | Grader feedback key (cause, level) → the trap's authored feedback, or the built-in line for `columns` / `order` / `nondeterministic` / `generic` | Requester (puzzled) |
 | `error` | Sandbox `error_kind` + `error_text` → an error template (rule 6) | On **Run**: Kenji (looking over your shoulder); on **Submit**: the requester (puzzled) |
 | `briefing` | Shift briefing (chapter definition) | Manager Tanaka |
-| `offer` | Constraint offer line; Kenji's skip offer | Requester / Kenji |
-| `system` | One-time explainers (first Submit) | Manager Tanaka |
+| `offer` | Constraint offer line (appended to the pass line, with **Try it** / **Later** buttons — rule 3a); Kenji's skip offer | Requester / Kenji |
+| `system` | One-time explainers (first Submit); the new-game "Ever used SQL?" question, shown once **before** 1-1's request with two choice buttons (`onboarding-first-shift.md` rule 1) | Manager Tanaka |
 
    Hints are shown in the Hint System's own panel (Kenji's voice), not in the
-   bubble, so they never displace the request.
+   bubble, so they never displace the request. Onboarding's step-by-step
+   guidance ("Press Run…") is shown in the **coach-mark label** next to its
+   target with Tanaka's name tag, not in the bubble (`onboarding-first-shift.md`
+   rule 7), so the request stays in the bubble throughout 1-1 to 1-3.
+
+   Built-in `fail` lines (string ids `fail.columns`, `fail.order`,
+   `fail.nondeterministic`, `fail.generic`) are owned here. Required content:
+   `columns` says the list has the wrong number of columns; `order` says the
+   rows are right but in the wrong order; `nondeterministic` says the answer
+   changes each time it is run; `generic` says some rows are wrong and must
+   include "check what each column holds and in what order" (Hidden-Data
+   Grader rule 10). None names a row, value or count.
 
 **The counter scene and the request**
 
@@ -74,6 +85,19 @@ is set in `/art-bible`.
    (Formulas), or on a click on the speaker or the next Run, or on an editor
    edit once the reaction has been fully visible for at least
    `reaction_grace` (1.0 s) — so typing never wipes a line before it can be read.
+3a. **After a PASS** the sequence is: the pass line (plus the constraint offer
+   line and its **Try it** / **Later** buttons, when Constraint Challenges offers
+   one) stays in the bubble for `reaction_hold` of the combined line, timed from
+   when it is fully visible; a click on the speaker or bubble, or Enter/Space
+   with the counter scene focused, ends it early. Editor edits and Run do **not**
+   end a pass line (the passed puzzle's draft is kept). Only then does the next
+   request arrive (Shift & Chapter Progression rule 11) — no menu, no wait for
+   an answer. An offer still unanswered at that moment moves to a small
+   **offer ticket** at the right of the counter strip (glyph + "Challenge?",
+   opens the same two buttons) until it expires under `constraint-challenges.md`
+   rule 6 (first Submit on the next request, another request opened, or
+   clock-out); then it is removed and counts as **Later**. The pass and offer
+   lines are also in the log.
 4. The **message log** (button in the counter scene, shortcut Ctrl+L) lists every
    line of the current shift with speaker name and kind, newest at the bottom,
    for rereading. Nothing is ever lost from the log during a shift.
@@ -86,25 +110,30 @@ is set in `/art-bible`.
 
 **Errors in a person's voice (Pillar 4)**
 
-6. SQL errors are glossed by templates keyed on the error, and **SQLite's original
-   message is always shown beneath** in monospace (workbench rule 13). MVP
-   templates cover the most common Chapter 1 errors:
+6. SQL errors are glossed by templates keyed on the sandbox `error_kind` (and,
+   for `SQL_ERROR`, on SQLite's message), and **SQLite's original message is
+   always shown beneath** in monospace — in the workbench's error strip
+   (workbench rule 13); the bubble carries the voiced gloss only. Every
+   `error_kind` has a template. MVP templates:
 
 | Error pattern | Voiced gloss (example, requester's voice) |
 |---|---|
 | `no such column: X` | "There's no column called 'X'." + "Did you mean 'Y'?" when a close match exists (Formulas) |
 | `no such table: X` | "We don't have a 'X' shelf — the ledger is called 'products'." (closest table name) |
 | `near "X": syntax error` | "Something's off near 'X'." |
-| `incomplete input` / unterminated string | "Looks like the sentence stops halfway — a missing quote or bracket?" |
+| `incomplete input` / `unrecognized token` (e.g. an unterminated string, sandbox edge case) | "Looks like the sentence stops halfway — a missing quote or bracket?" |
 | `EMPTY` | "You haven't written anything yet." |
 | `MULTI_STATEMENT` | "One request at a time, please — just one query." |
 | `NOT_A_QUERY` | "I only need a list — no changing the ledger." |
+| `NOT_ALLOWED` | "That's not something we do from the register." |
 | `UNSUPPORTED` | "That's more than we need today." |
 | `TIMEOUT` / result `truncated` (over `R_cap` rows) | "That's taking forever — is something repeating?" / "That's far too long a list." |
-| anything else | "Hmm, the register didn't like that." (raw message beneath) |
+| `CONTENT_ERROR` | Kenji: "Sorry — the ledger itself is smudged. Not your fault; this one's on us." (never the requester's puzzled face; the raw text is still shown) |
+| any other `SQL_ERROR` | "Hmm, the register didn't like that." (raw message beneath) |
 
 7. Voiced errors never claim more than the raw message supports, and never
-   mention hidden data.
+   mention hidden data. `CONTENT_ERROR` is a content bug (sandbox), so its line
+   never implies the player made a mistake.
 
 **Reactions never leak (Pillar 1)**
 
@@ -127,8 +156,8 @@ The counter scene, per open puzzle:
 | State | Bubble shows | Event | To |
 |---|---|---|---|
 | `Request` | The request (speaker neutral) | Pass / fail / error / offer arrives | `Reaction` |
-| `Reaction` | The reaction (speaker pleased / puzzled) | `reaction_hold` elapses, editor edit, Run, or click on speaker | `Request` |
-| `Reaction` (pass) | Pass line | Next request arrives (Progression) | `Request` (new speaker) |
+| `Reaction` | The reaction (speaker pleased / puzzled) | `reaction_hold` elapses, Run, click on speaker, or editor edit after `reaction_grace` | `Request` |
+| `PassReaction` | Pass line (+ offer line and buttons) | `reaction_hold` elapses, or click / Enter / Space on the counter scene (edits and Run do not end it) | `Request` (next request, new speaker); an unanswered offer → offer ticket (rule 3a) |
 | any | | Message log opened | unchanged (log overlays the editor area, closes with Esc / Ctrl+L) |
 
 ### Interactions with Other Systems
@@ -140,9 +169,9 @@ The counter scene, per open puzzle:
 | SQL Execution Sandbox | Sandbox → (Workbench) → Dialogue | `error_kind`, `error_text`; schema names for "did you mean" | Sandbox |
 | Query Workbench | Workbench hosts | Counter scene strip, message-log overlay | Workbench |
 | Shift & Chapter Progression | Progression → Dialogue | Shift briefing, next request, Kenji's skip offer | Progression |
-| Constraint Challenges | Challenges → Dialogue | Offer line, clear reaction, "right answer, not within the challenge" | Constraint Challenges |
+| Constraint Challenges | Challenges → Dialogue | Offer line (shown with the pass line; offer ticket if unanswered — rule 3a), clear reaction, "right answer, not within the challenge" | Constraint Challenges |
 | Hint System | Dialogue → Hints | Kenji's identity (portrait, name) for the hint panel | Dialogue |
-| Onboarding: First Shift | Onboarding → Dialogue | Tutorial lines in 1-1 to 1-3 | Onboarding |
+| Onboarding: First Shift | Onboarding → Dialogue | The "Ever used SQL?" `system` line and its two choices; guidance itself is in coach-mark labels, not the bubble | Onboarding |
 | Audio (VS) | Dialogue → Audio | Voice blip per line, speaker id | Audio |
 | Playtest Log | Dialogue → Log | Lines shown, log opened, lines skipped | Dialogue |
 
@@ -159,7 +188,8 @@ The **reaction_hold** formula is defined as:
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| len | int | 1 – `bubble_chars_max` | calculated | Characters of the voiced line (the raw SQLite message beneath is excluded) |
+| len | int | 1 – `bubble_chars_max` | calculated | Characters of the voiced line's last page (a paged line is timed on its last page; for a PASS, the pass line plus any offer line); the raw SQLite message is excluded |
+| reaction_grace | float (s) | 0.5–2.0 (default 1.0) | data file | Minimum fully-visible time before an editor edit may dismiss a reaction (rule 3) |
 | hold_base | float (s) | 0.5–2.0 (default 1.0) | data file | Time to notice the change |
 | read_cps | float | 12–30 (default 20) | data file | Reading speed, characters per second (~240 wpm) |
 | hold_min, hold_max | float (s) | 1.5–4 / 4–10 (default 2.5 / 6.0) | data file | Clamps |
@@ -222,7 +252,7 @@ The **did_you_mean** formula is defined as:
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | X | string | 0–64 chars | calculated | The unknown name from the SQLite message (quotes and any `alias.` prefix stripped) |
-| names | list | schema order | data file | The chapter's column names (`no such column`) or table names (`no such table`) |
+| names | list | schema order | data file | The open puzzle's column names (`no such column`) or table names (`no such table`), from its schema |
 | DL | int | ≥ 0 | calculated | Damerau-Levenshtein distance (a transposition counts 1) |
 | t | int | 0–2 | calculated | Threshold, smaller for short names |
 
@@ -238,7 +268,9 @@ it (`products`); the threshold applies only when a chapter has several tables.
 
 *Drafted without specialists — Lean mode.*
 
-- **If the player Runs or edits while a reaction is showing**: the bubble returns to the request at once; the reaction stays in the log.
+- **If the player Runs while a reaction is showing, or edits once it has been fully visible for `reaction_grace`**: the bubble returns to the request at once; the reaction stays in the log. An earlier edit does not dismiss it (rule 3). A pass line is not dismissed by edits or Run (rule 3a).
+- **If a CONTENT_ERROR occurs** (a dataset failed to build): Kenji's apology line, never the requester's puzzled reaction; the raw text is shown and logged.
+- **If the player answers the offer ticket after the next request arrived**: Try it / Later behave exactly as in the bubble (`constraint-challenges.md` rule 6a).
 - **If several reactions arrive quickly** (repeated submits): only the newest is shown; all are in the log.
 - **If a reaction arrives while the player is reading a paged request**: the reaction replaces it; returning to the request starts at page 1.
 - **If a puzzle's requester has no sprite** (HQ, or a missing asset): a printed slip replaces the speaker; text behaviour is unchanged.
@@ -256,10 +288,10 @@ it (`products`); the threshold applies only when a chapter has several tables.
 
 | System | GDD | What Dialogue needs | Status |
 |---|---|---|---|
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Request, pass reaction, trap feedback, speaker ids, shift briefings | Designed (pending review) |
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Feedback key `{verdict, cause, level}` | Designed (pending review) |
-| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | `error_kind`, `error_text`, schema names | Designed (pending review) |
-| Query Workbench | `design/gdd/query-workbench.md` | Hosts the counter scene and log (layout updated 2026-10-14) | Designed (pending review) |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Request, pass reaction, trap feedback, speaker ids, shift briefings | In Review |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Feedback key `{verdict, cause, level}` | In Review |
+| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | `error_kind`, `error_text`, schema names | In Review |
+| Query Workbench | `design/gdd/query-workbench.md` | Hosts the counter scene and log (layout updated 2026-10-14) | In Review |
 
 **Soft:** Shift & Chapter Progression (briefings, skip offer), Constraint
 Challenges (offer / clear lines), Hint System (Kenji's identity), Onboarding
@@ -347,7 +379,7 @@ blocked.
 ## UI Requirements
 
 1. Counter scene strip (120 px at every `ui_scale`) across the top of the
-   workbench; speaker, bubble, message-log button, and the workbench's Hint /
+   workbench; speaker, bubble, the offer ticket when one is pending (rule 3a), message-log button, and the workbench's Hint /
    Manual / Back Room tabs at its right edge; never overlaps the editor or
    result tables.
 2. The current request is readable with at most one action (rule 3).
@@ -365,11 +397,11 @@ blocked.
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/hidden-data-grader.md` | Rules 2, 8 | Feedback key; never row data (grader rule 11) | Designed (pending review) |
-| `design/gdd/sql-execution-sandbox.md` | Rule 6 | `error_kind` set and `error_text` | Designed (pending review) |
-| `design/gdd/query-workbench.md` | Overview, UI | Counter scene replaces the 56 px request bar; Ctrl+L; error strip | Designed (pending review), updated for this GDD |
-| `design/gdd/shift-and-chapter-progression.md` | Rule 2 | Briefings; Kenji's skip offer | Designed (pending review) |
-| `design/gdd/constraint-challenges.md` | Rule 2 | Offer / clear / not-within-challenge lines | Designed (pending review) |
+| `design/gdd/hidden-data-grader.md` | Rules 2, 8 | Feedback key; never row data (grader rule 11) | In Review |
+| `design/gdd/sql-execution-sandbox.md` | Rule 6 | `error_kind` set and `error_text` | In Review |
+| `design/gdd/query-workbench.md` | Overview, UI | Counter scene replaces the 56 px request bar; Ctrl+L; error strip | In Review, updated for this GDD |
+| `design/gdd/shift-and-chapter-progression.md` | Rule 2 | Briefings; Kenji's skip offer | In Review |
+| `design/gdd/constraint-challenges.md` | Rule 2 | Offer / clear / not-within-challenge lines | In Review |
 | `design/ideas-backlog.md` | Overview | #1 aesthetic/cozy mood; #2 pixel-art NPCs + speech bubbles (applied) | Developer ideas |
 
 ## Acceptance Criteria
@@ -382,7 +414,7 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 
 **Cast and kinds**
 - **RD-01 [Logic]** GIVEN the Chapter 1 cast data, THEN Tanaka, Kenji, Mrs. Sato and Customer each have id, name, neutral / pleased / puzzled sprites and a blip, and HQ has none; a speaker added only in data renders with no code change; a missing sprite shows the printed slip with unchanged text behaviour.
-- **RD-02 [Integration]** GIVEN a puzzle requested by Mrs. Sato, WHEN each kind arrives, THEN request → her `request`, neutral; pass → `pass_reaction`, pleased; fail with a trap key at level 2 → that trap's level-2 text, puzzled; fail with `columns` / `order` / `nondeterministic` / `generic` → the built-in line; a Run error → Kenji, puzzled; a Submit error → Sato, puzzled; briefing and system lines → Tanaka; skip offer → Kenji; hint text never reaches the bubble.
+- **RD-02 [Integration]** GIVEN a puzzle requested by Mrs. Sato, WHEN each kind arrives, THEN request → her `request`, neutral; pass → `pass_reaction`, pleased; fail with a trap key at level 1 → that trap's level-1 text, puzzled (level 2 at Vertical Slice, `feedback_max_level` 1 in MVP); fail with `columns` / `order` / `nondeterministic` / `generic` → the built-in line; a Run error → Kenji, puzzled; a Submit error → Sato, puzzled; briefing and system lines → Tanaka; skip offer → Kenji; hint text never reaches the bubble.
 
 **Request one action away**
 - **RD-03 [Integration]** GIVEN `reveal_cps` 0 and the 55-char "prise" gloss shown at t = 0, THEN the reaction shows at 3.74 s and the request at 3.75 s (4.75 s with `reveal_cps` 45); a Run or a speaker click at 0.5 s returns the request at once; an editor edit at 0.5 s does not, an edit at 1.1 s does; three reactions within 1 s → only the newest shows, all three logged; a reaction during page 2 of a request → the return opens page 1.
@@ -397,7 +429,7 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 - **RD-08 [Integration]** GIVEN a reveal in progress, WHEN "abc" is typed in the editor, THEN "abc" is inserted in the same frame as with no dialogue showing, the reveal continues, and Enter in the editor inserts a newline.
 
 **Errors and suggestions**
-- **RD-09 [Logic]** Sandbox stubs `no such column`, `no such table`, `near "X"`, incomplete input, unterminated string, `EMPTY`, `MULTI_STATEMENT`, `NOT_A_QUERY`, `UNSUPPORTED`, `TIMEOUT` and a `truncated` result each map to their template with `error_text` passed through unchanged; an unknown message → the generic line; `SELEC name …` → the `near` template.
+- **RD-09 [Logic]** Sandbox stubs `no such column`, `no such table`, `near "X"`, `incomplete input`, `unrecognized token`, `EMPTY`, `MULTI_STATEMENT`, `NOT_A_QUERY`, `NOT_ALLOWED`, `UNSUPPORTED`, `TIMEOUT`, `CONTENT_ERROR` and a `truncated` result each map to their template with `error_text` passed through unchanged; every `error_kind` in the sandbox enum has a template; `CONTENT_ERROR` is spoken by Kenji with no puzzled requester sprite; an unknown message → the generic line; `SELEC name …` → the `near` template.
 - **RD-10 [Logic]** `did_you_mean`: prise, pirce, PRISE and `p.prise` → price; catagory → category; nam → name; stok → stock; shelfs → shelf; table `product` → products; expiry → null (no "Did you mean"); "p" → null; with names [cat, cut], cot → cat, and reversed → cut.
 
 **Text**
@@ -408,6 +440,8 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 - **RD-13 [UI]** Retained screenshots at `ui_scale` 1.0 and 1.5: scene at ×4 and 120 px in both (only the bubble text larger at 1.5) with nearest filtering (no blurred pixels); a non-pixel body font in the bubble; bubble contrast ≥ 4.5:1 (blocking; 7:1 target reported); in greyscale, request (ticket, REQUEST tab) and reaction (rounded, name tag) are distinguishable, and the three expressions differ by silhouette.
 - **RD-14 [UI]** Morning, Afternoon and Closing screenshots use the same sprite assets with a palette swap; editor colours are identical in all three.
 - **RD-15 [Audio]** Each revealed line plays its speaker's blip (HQ: printer tick) at the blip-volume setting; no blip at volume 0, muted, `reveal_cps` 0 or reduced motion; blips stop the moment a reveal is completed early.
+- **RD-17 [Integration]** GIVEN `reveal_cps` 0 and a PASS with a 40-char pass line and a 40-char offer line, THEN the bubble holds both with Try it / Later for 5.0 s (1.0 + 80 / 20), and only then does the next request appear; an editor edit or Run at 1.5 s does not end it; a click at 1.5 s does; with no answer, the offer ticket shows on the strip and still opens Try it / Later until the first Submit on the new request, then disappears and `challenge_later` is logged; a PASS with no offer behaves the same with no ticket.
+- **RD-18 [Integration]** GIVEN onboarding Guided in 1-1 to 1-3, THEN the bubble shows the request whenever no reaction is showing and guidance appears only in coach-mark labels; on a new game, the "Ever used SQL?" line with its two buttons is shown before 1-1's request.
 - **RD-16 [Integration]** The Playtest Log records `line_shown {line_id, kind, speaker, puzzle_id}`, `log_opened` and `line_skipped` (a reveal completed early), each with a timestamp.
 
 ## Open Questions

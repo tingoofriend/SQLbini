@@ -1,6 +1,6 @@
 # Onboarding: First Shift
 
-> **Status**: In Design
+> **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-14
 > **Last Verified**: 2026-10-14
@@ -38,9 +38,14 @@ balancing rules in this system.
 **Who gets it**
 
 1. At the start of a new game, Tanaka asks once: "Ever used SQL before?" —
-   **"No, show me around"** (default) or **"Yes, I know SQL"**. "Yes" turns off
-   coach marks and ghost text for the whole game (also a setting); the puzzles,
-   hints and manual are unchanged. The choice is logged.
+   **"No, show me around"** (default) or **"Yes, I know SQL"**. The question is
+   a Dialogue `system` line in the bubble with the two choices as buttons,
+   shown **before** 1-1's request arrives (`request-and-reaction-dialogue.md`
+   rule 2), so it never competes with a request. "Yes" turns off coach marks
+   and ghost text for the whole game (also a setting); the puzzles (including
+   1-1's prefill), hints and manual are unchanged, and the workbench's
+   first-submit explainer then shows on 1-1's first submit as usual. The choice
+   is logged.
 
 **The scaffolded Morning shift** (coach marks on)
 
@@ -56,7 +61,9 @@ balancing rules in this system.
 3. **1-2 New Price Tags** — the editor starts **empty** with **ghost text**
    showing the shape `SELECT … FROM products` (see rule 6). Coach mark on the
    **schema browser**: "Click a column to put it in your query." Clicking `name`
-   then `price` inserts them at the caret (workbench rule 3). Then Run, then
+   then `price` inserts them at the caret, and the workbench's auto-separator
+   adds the `, ` between them (workbench rule 3), giving
+   `SELECT name, price FROM products` with nothing typed. Then Run, then
    Submit — marks appear for each only until the player has used it once on
    their own.
 4. **1-3 Noodle Aisle Check** — the first `WHERE`. When the request opens, the
@@ -64,8 +71,9 @@ balancing rules in this system.
    **Manual button**: "New page in the binder — have a look if you need it."
    Ghost text shows `SELECT … FROM products WHERE …`. No other scaffolding: the
    first hidden-data lesson (hardcoded ids fail) is the player's own.
-5. After 1-3 coach marks end. Hints (with their earlier unlocks on 1-1 to 1-3 —
-   Hint System Formulas) and the manual remain as the support for the rest of
+5. After 1-3 coach marks and ghost text end. Hints (both steps at once on the
+   `tutorial` puzzles 1-1 and 1-2, and the faster 1-3 override — Hint System
+   Formulas) and the manual remain as the support for the rest of
    the game.
 
 **Coach marks and ghost text**
@@ -77,11 +85,15 @@ balancing rules in this system.
    real text, and Run on an empty editor still says "nothing to run yet".
    Pressing **Tab** in the empty editor, or clicking the ghost text,
    **materialises the shape** as real text with the caret in the first blank
-   (`SELECT ▮ FROM products`), so a zero-SQL player can build 1-2 from the shape,
-   two schema clicks and a typed comma. The shape is still not an answer.
+   (`SELECT ▮ FROM products`), so a zero-SQL player can build 1-2 from the shape
+   and two schema clicks. The shape is still not an answer. Ghost text exists
+   only on 1-2 and 1-3; its two strings are Onboarding data (string ids
+   `onboarding.ghost.1-2`, `onboarding.ghost.1-3`), not puzzle fields.
 7. **Coach marks** (a dismissed mark never reappears; turning coach marks back
-   on in settings resumes from the next unfinished step): at most one at a time; a ring + short label around the target
-   and the matching line in Tanaka's bubble; they never block input, never cover
+   on in settings resumes from the next unfinished step): at most one at a time; a ring around the target plus a
+   label holding Tanaka's guidance line (with his name tag). **Guidance is never
+   put in the speech bubble** — the bubble keeps the current request (Dialogue
+   rule 2); they never block input, never cover
    the editor's text or the result tables, and disappear as soon as the target
    action is done. Esc or a "Got it" button dismisses one early. Ring is static
    under reduced motion.
@@ -108,9 +120,9 @@ later target early marks the earlier ones `Done`.
 | System | Direction | Data | Owner |
 |---|---|---|---|
 | Query Workbench | Onboarding → Workbench | 1-1 prefill; ghost text; coach-mark anchors (Run, Submit, schema browser, Manual button) | Workbench renders; Onboarding decides |
-| Request & Reaction Dialogue | Onboarding → Dialogue | Tanaka's guidance lines (string ids); the "Ever used SQL?" question | Dialogue renders |
+| Request & Reaction Dialogue | Onboarding → Dialogue | The "Ever used SQL?" `system` line and its two choices (before 1-1's request); guidance lines are rendered in coach-mark labels by Onboarding, never in the bubble | Dialogue renders the question |
 | Store Manual | Manual → Onboarding | "Filtering rows" unlocked on 1-3 → coach mark on the Manual button | Store Manual |
-| Hint System | — | Early-puzzle unlock overrides for 1-1 to 1-3 (Hint System Formulas) | Hint System |
+| Hint System | — | `tutorial` puzzles 1-1/1-2 (both steps at once) and the 1-3 override (Hint System Formulas) | Hint System |
 | Shift & Chapter Progression | Progression → Onboarding | Which request is open | Progression |
 | Puzzle Definition & Datasets | Puzzle → Onboarding | `tutorial` flags (1-1, 1-2) | Puzzle Definition |
 | Accessibility Options (VS) / Settings | Settings ↔ Onboarding | "Coach marks" on/off; reduced motion | Settings |
@@ -135,9 +147,9 @@ later target early marks the earlier ones `Done`.
 
 | System | GDD | What Onboarding needs | Status |
 |---|---|---|---|
-| Query Workbench | `design/gdd/query-workbench.md` | Prefill, ghost text, coach-mark anchors, click-to-insert | Designed (pending review) |
-| Request & Reaction Dialogue | `design/gdd/request-and-reaction-dialogue.md` | Tanaka's lines, the opening question | Designed (pending review) |
-| Store Manual | `design/gdd/store-manual.md` | Unlock event for "Filtering rows" | Designed (pending review) |
+| Query Workbench | `design/gdd/query-workbench.md` | Prefill, ghost text, coach-mark anchors, click-to-insert | In Review |
+| Request & Reaction Dialogue | `design/gdd/request-and-reaction-dialogue.md` | Tanaka's lines, the opening question | In Review |
+| Store Manual | `design/gdd/store-manual.md` | Unlock event for "Filtering rows" | In Review |
 
 **Soft:** Shift & Chapter Progression, Puzzle Definition (tutorial flags), Hint
 System (early unlocks), Settings (VS), Playtest Log.
@@ -155,7 +167,9 @@ Onboarding ✓ (workbench Interactions; dialogue Interactions; manual rule 6).
 - Ghost text in the editor: italic, lighter than real code but ≥ 4.5:1 against
   the editor background, with a small "shape" label so it is never mistaken for
   typed text.
-- Tanaka's guidance uses the normal speech bubble (no special tutorial frame).
+- Tanaka's guidance is in the coach-mark label: paper tag, his name tag, the
+  workbench body font ≥ 4.5:1; the speech bubble keeps the request. Only the
+  opening question uses the bubble (before any request).
 - No tutorial sounds beyond the normal dialogue blips.
 
 ## Game Feel
@@ -171,8 +185,9 @@ they no longer need it.
 2. Coach marks anchored to Run, Submit, schema browser and Manual button; "Got
    it" button; Esc dismisses.
 3. Ghost text in an empty editor, labelled "shape".
-4. Settings toggle "Coach marks" (MVP: in a minimal options panel; full settings
-   are Vertical Slice).
+4. Settings toggle "Coach marks" (MVP: in a minimal options panel owned by
+   Onboarding, holding only this toggle; the answer and toggle last for the
+   session until Save/Load & Settings exists — Vertical Slice).
 
 > **📌 UX Flag — Onboarding**: include coach marks, ghost text and the opening
 > question in the Query Workbench UX spec (`/ux-design`, Pre-Production).
@@ -182,10 +197,10 @@ they no longer need it.
 | This document references | Where | What | Status |
 |---|---|---|---|
 | `design/gdd/game-concept.md` | Overview | Top design risk (zero-SQL bounce); MVP threshold "≥ 2 of 3 zero-SQL testers clear 1-1 to 1-3 without outside help" | Source of intent |
-| `design/gdd/query-workbench.md` | Rules 2–3, 6–7 | Click-to-insert; first-submit explainer (moved to 1-2 when onboarding is on) | Designed (pending review) |
-| `design/gdd/hint-system.md` | Rule 5 | Early unlocks on 1-1 to 1-3 | Designed (pending review) |
-| `design/gdd/store-manual.md` | Rule 4 | "Filtering rows" page | Designed (pending review) |
-| `design/gdd/puzzle-definition-and-datasets.md` | Rule 2 | 1-1 and 1-2 flagged `tutorial` | Designed (pending review) |
+| `design/gdd/query-workbench.md` | Rules 2–3, 6–7 | Click-to-insert with auto-separator; first-submit explainer (moved to 1-2 when onboarding is on) | In Review |
+| `design/gdd/hint-system.md` | Rule 5 | Early unlocks on 1-1 to 1-3 | In Review |
+| `design/gdd/store-manual.md` | Rules 4–6 | "Filtering rows" page unlock; 1-1 exemption from the example check | In Review |
+| `design/gdd/puzzle-definition-and-datasets.md` | Rule 2 | 1-1 and 1-2 flagged `tutorial` | In Review |
 
 ## Acceptance Criteria
 
@@ -196,7 +211,7 @@ retained screenshot in `production/qa/evidence/`.*
 
 **Opening question**
 - **OB-01 [UI]** GIVEN a new game, WHEN the question appears, THEN "No, show me around" is the default and both choices are keyboard reachable.
-- **OB-02 [Logic]** GIVEN "Yes, I know SQL", THEN no coach mark or ghost text appears in 1-1 to 1-3; puzzles, hints and manual behave as in Guided; the answer is logged.
+- **OB-02 [Logic]** GIVEN "Yes, I know SQL", THEN no coach mark or ghost text appears in 1-1 to 1-3; 1-1 is still prefilled and the first-submit explainer shows on 1-1; puzzles, hints and manual behave as in Guided; the answer is logged.
 - **OB-03 [Integration]** GIVEN Off, WHEN coach marks are turned on in settings, THEN marks and ghost text resume from the next unfinished step; turning them off stops them at once.
 
 **1-1**
@@ -226,7 +241,8 @@ retained screenshot in `production/qa/evidence/`.*
 **Presentation, log, threshold**
 - **OB-20 [UI]** Screenshots of each mark, the ghost text with its "shape" label, and the opening question; ghost text ≥ 4.5:1, ring ≥ 3:1; static ring under reduced motion.
 - **OB-21 [Integration]** The Playtest Log records the answer, each mark shown / done / dismissed with timestamps, time to first Run and time to first PASS.
-- **OB-22 [Integration]** A scripted zero-SQL path clears 1-1 by clicks only (Run, Submit) and 1-2 using Tab, two schema clicks and at most 2 typed characters (", ").
+- **OB-22 [Integration]** A scripted zero-SQL path clears 1-1 by clicks only (Run, Submit) and 1-2 using Tab, two schema clicks and no typed characters.
+- **OB-23 [UI]** Screenshots of each 1-1 to 1-3 mark show the request in the bubble and Tanaka's guidance only in the coach-mark label; the new-game screenshot shows the "Ever used SQL?" question in the bubble before any request.
 
 ## Open Questions
 

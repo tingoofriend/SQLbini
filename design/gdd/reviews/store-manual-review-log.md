@@ -15,3 +15,4 @@ Findings:
 - [RECOMMENDED] Header / Dependencies / Cross-References: Status "In Design" and "Designed (pending review)" are stale (index: Designed; puzzle definition, progression, workbench, hints are In Review)
 Reviewed-Content-Hash: design/gdd/store-manual.md d415000cade3195f19b5cbe0492c1718d73ad2c3
 Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
+Revised in-session (2026-10-14, after the review; user decision: exempt 1-1 only): BLOCKING rule 4 fixed — puzzles whose editor Onboarding prefills with the reference (1-1) are exempt, so "Reading the ledger" may show `SELECT * FROM products`; 1-2 stays checked and "Picking columns" uses another list (SM-15). Also fixed: stale statuses. Not done: `watch_out` vs 1-8 / 1-10 traps (still OQ 1), `manual_open` event granularity, panel vs results column (recommended). Re-review pending in a fresh session.

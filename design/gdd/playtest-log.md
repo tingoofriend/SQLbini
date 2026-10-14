@@ -1,6 +1,6 @@
 # Playtest Log
 
-> **Status**: In Design
+> **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-14
 > **Last Verified**: 2026-10-14
@@ -54,8 +54,9 @@ prints the threshold table. Players of the released game never meet this system.
    `build`, `event`, `puzzle` (id, when relevant), `content_hash` (the puzzle's
    content hash, so a log is tied to the exact puzzle version — Puzzle Definition
    States), and an event-specific `data` object.
-4. The event catalogue is the union of what each system sends (their
-   Interactions tables). The MVP catalogue:
+4. The event catalogue below is **canonical**: it is the union of what each
+   system sends, and each sending GDD uses these exact names (their ACs cite
+   this rule). The MVP catalogue:
 
 | Source | Events (data) |
 |---|---|
@@ -63,11 +64,11 @@ prints the threshold table. Players of the released game never meet this system.
 | Query Workbench | `run {sql, data: visible/scratch, ok, error_kind, rows, match}`, `edit_burst {chars_changed}` (edits between actions, coalesced) |
 | Hidden-Data Grader | `submit {sql, verdict, cause, level, per_dataset, missing_count, extra_count}` |
 | Hint System | `hint_unlock {step}`, `hint_open {step}`, `hint_exhausted` |
-| Shift & Chapter Progression | `request_open`, `request_pass`, `request_skip`, `shift_clockout`, `chapter_complete {starred}` |
-| Constraint Challenges | `challenge_offer`, `challenge_try`, `challenge_later`, `challenge_start {source}`, `challenge_attempt {verdict, rule_met}`, `challenge_clear` |
+| Shift & Chapter Progression | `request_open`, `request_pass`, `request_skip`, `request_unavailable`, `shift_clockout`, `chapter_complete {starred}` |
+| Constraint Challenges | `challenge_offer`, `challenge_try`, `challenge_later` (also written when an unanswered offer expires), `challenge_start {source}`, `challenge_attempt {verdict, rule_met}`, `challenge_clear` |
 | Store Manual | `manual_unlock {page}`, `manual_open {page}`, `manual_copy {page}` |
 | Onboarding | `sql_question {answer}`, `mark_shown/done/dismissed {mark}`, `first_run`, `first_pass` |
-| Request & Reaction Dialogue | `line_shown {line_id, kind, speaker}`, `log_opened`, `line_skipped` |
+| Request & Reaction Dialogue | `line_shown {line_id, kind, speaker}` (the puzzle id travels in the common `puzzle` field), `log_opened`, `line_skipped` |
 
    A system adds an event by declaring it in its GDD and here; the log rejects
    (and counts) undeclared event names rather than writing free-form data.
@@ -146,7 +147,9 @@ The **time_to_first_run** formula is defined as:
 | T(first request_open) | int (ms) | ≥ 0 | data file | Time the first request opened |
 
 **Output Range:** ≥ 0 s; null if the tester never ran. (`time_to_first_pass` is
-the same with `request_pass`; it is ≥ `time_to_first_run` or null.)
+the same with `request_pass`, null if the tester never passed. The two are
+independent: a tester may pass before any Run — Onboarding lets 1-1 be
+submitted unrun (OB-06) — so `time_to_first_pass` can be smaller.)
 **Example:** request opened at 12 s, first Run at 47 s → 35 s.
 
 The **puzzle_active_time** formula is defined as:
@@ -262,7 +265,7 @@ excluded from claims on it.
 **Upstream (hard):** every MVP system that declares events — Hidden-Data Grader,
 Query Workbench, Hint System, Shift & Chapter Progression, Constraint
 Challenges, Store Manual, Onboarding, Request & Reaction Dialogue — and Puzzle
-Definition (content hash). All Designed (pending review); each lists the
+Definition (content hash). All In Review; each lists the
 Playtest Log in its Interactions ✓.
 
 **Downstream:** `tools/playtest-report`, the `/playtest-report` skill, and the
@@ -279,8 +282,9 @@ stopped"), glyph + words, ≥ 4.5:1, never over the editor or tables.
    note ("This session records your actions and the SQL you type, on this
    computer only").
 2. Corner label while recording.
-3. F9 help marker with an optional note field that never steals focus from the
-   editor.
+3. F9 help marker with an optional note field: it holds focus only while open
+   (the facilitator should press F9 when the tester's hands are off the
+   keyboard) and returns it to the editor on Enter, Esc or 5 s idle (rule 7).
 
 ## Cross-References
 
@@ -288,8 +292,8 @@ stopped"), glyph + words, ≥ 4.5:1, never over the editor or tables.
 |---|---|---|---|
 | `design/gdd/game-concept.md` | Overview, Rule 10, Formulas | MVP Definition threshold table | Source of intent |
 | `prototypes/sqlbini-web/REPORT.md` | Overview | First playtest kept no log | Evidence |
-| All MVP GDDs in `design/gdd/` | Rule 4 | Their declared events | Designed (pending review) |
-| `design/gdd/hidden-data-grader.md` | Rule 6 | Hidden details may appear only in this developer-facing log | Designed (pending review) |
+| All MVP GDDs in `design/gdd/` | Rule 4 | Their declared events (must use the canonical names) | In Review |
+| `design/gdd/hidden-data-grader.md` | Rule 6 | Hidden details may appear only in this developer-facing log | In Review |
 
 ## Acceptance Criteria
 

@@ -1,6 +1,6 @@
 # Store Manual
 
-> **Status**: In Design
+> **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-14
 > **Last Verified**: 2026-10-14
@@ -70,6 +70,12 @@ playtest (clear 1-1 to 1-3 without outside help) has no way to pass.
    specific puzzle, its data, or its answer.
 4. **Examples never solve a puzzle.** No page example, run as a player's query,
    may pass any puzzle in the game (content CI check, like the Hint System's).
+   **One exception:** a puzzle whose editor Onboarding prefills with its
+   reference (1-1, `SELECT * FROM products` — `onboarding-first-shift.md`
+   rule 2) is exempt, since its answer is already on screen; this lets
+   "Reading the ledger" show the plain `SELECT * FROM products`. Every other
+   puzzle, including tutorial 1-2, is checked — so "Picking columns" uses a
+   list other than 1-2's (e.g. `SELECT name, category FROM products`).
 
 **Unlocking and opening**
 
@@ -141,9 +147,9 @@ the workbench state; the editor keeps its text and caret.
 
 | System | GDD | What the Manual needs | Status |
 |---|---|---|---|
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `manual_keywords`; chapter schema | Designed (pending review) |
-| Shift & Chapter Progression | `design/gdd/shift-and-chapter-progression.md` | Request-opened events | Designed (pending review) |
-| Query Workbench | `design/gdd/query-workbench.md` | Host: button, Ctrl+M, side panel, copy to editor | Designed (pending review) |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `manual_keywords`; chapter schema | In Review |
+| Shift & Chapter Progression | `design/gdd/shift-and-chapter-progression.md` | Request-opened events | In Review |
+| Query Workbench | `design/gdd/query-workbench.md` | Host: button, Ctrl+M, side panel, copy to editor | In Review |
 
 **Soft:** Hint System (page links), Onboarding (highlight), Playtest Log,
 Save/Load (VS).
@@ -187,9 +193,9 @@ grades, and always gives you something you can try right away.
 | This document references | Where | What | Status |
 |---|---|---|---|
 | `design/gdd/game-concept.md` | Overview, Rule 10 | Core Mechanic #6 store manual; anti-pillar "NOT a textbook" (reference allowed) | Source of intent |
-| `design/gdd/puzzle-definition-and-datasets.md` | Rules 2, 5 | `manual_keywords` field | Designed (pending review) |
-| `design/gdd/hint-system.md` | Rule 6 | Hints may name a page; same "never solves a puzzle" CI pattern | Designed (pending review) |
-| `design/gdd/query-workbench.md` | Rules 8–9 | Manual button, Ctrl+M, panel placement | Designed (pending review) |
+| `design/gdd/puzzle-definition-and-datasets.md` | Rules 2, 5 | `manual_keywords` field | In Review |
+| `design/gdd/hint-system.md` | Rule 6 | Hints may name a page; same "never solves a puzzle" CI pattern | In Review |
+| `design/gdd/query-workbench.md` | Rules 8–9 | Manual button, Ctrl+M, panel placement | In Review |
 | `design/levels/chapter-1-puzzles.md` | Rule 2 | Learning goals per Chapter 1 puzzle | Level design |
 
 ## Acceptance Criteria
@@ -219,7 +225,7 @@ added during Chapter 1 migration). [UI] = retained screenshot in
 
 **Content checks**
 - **SM-14 [Content-CI]** Every `example` runs without error on the chapter schema.
-- **SM-15 [Content-CI]** Every `example`, submitted as a player query, passes no puzzle on any of `visible`, `hidden_a`, `hidden_b`.
+- **SM-15 [Content-CI]** Every `example`, submitted as a player query, passes no puzzle except 1-1 (the prefilled exemption, rule 4); in particular "Picking columns" does not pass 1-2.
 - **SM-16 [Content-CI]** Every puzzle keyword has a page; a missing page fails validation.
 - **SM-17 [Content-CI]** A scan of all page text finds no puzzle id (`1-1` … `S-2`) and no puzzle's reference query.
 

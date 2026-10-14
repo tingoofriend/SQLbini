@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-14
-> **Last Updated**: 2026-10-14 (design review: Request & Reaction Dialogue, Store Manual, Onboarding, Playtest Log NEEDS REVISION; earlier: design review: Hint System, Constraint Challenges, Shift & Chapter Progression NEEDS REVISION → revised, In Review; earlier: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
+> **Last Updated**: 2026-10-14 (design review: Request & Reaction Dialogue, Store Manual, Onboarding, Playtest Log NEEDS REVISION → revised, In Review; earlier: design review: Hint System, Constraint Challenges, Shift & Chapter Progression NEEDS REVISION → revised, In Review; earlier: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -50,10 +50,10 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 | 6 | Hint System | Gameplay | MVP | In Review | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader |
 | 7 | Constraint Challenges | Gameplay | MVP | In Review | design/gdd/constraint-challenges.md | Puzzle Definition & Datasets, Hidden-Data Grader |
 | 8 | Shift & Chapter Progression | Progression | MVP | In Review | design/gdd/shift-and-chapter-progression.md | Puzzle Definition & Datasets, Hidden-Data Grader |
-| 9 | Request & Reaction Dialogue | Narrative | MVP | Needs Revision | design/gdd/request-and-reaction-dialogue.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox |
-| 10 | Store Manual | Narrative | MVP | Needs Revision | design/gdd/store-manual.md | Puzzle Definition & Datasets, Shift & Chapter Progression |
-| 11 | Onboarding: First Shift (inferred) | Meta | MVP | Needs Revision | design/gdd/onboarding-first-shift.md | Query Workbench, Request & Reaction Dialogue, Store Manual |
-| 12 | Playtest Log (inferred) | Meta | MVP | Needs Revision | design/gdd/playtest-log.md | Hidden-Data Grader, Query Workbench, Hint System |
+| 9 | Request & Reaction Dialogue | Narrative | MVP | In Review | design/gdd/request-and-reaction-dialogue.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox |
+| 10 | Store Manual | Narrative | MVP | In Review | design/gdd/store-manual.md | Puzzle Definition & Datasets, Shift & Chapter Progression |
+| 11 | Onboarding: First Shift (inferred) | Meta | MVP | In Review | design/gdd/onboarding-first-shift.md | Query Workbench, Request & Reaction Dialogue, Store Manual |
+| 12 | Playtest Log (inferred) | Meta | MVP | In Review | design/gdd/playtest-log.md | Hidden-Data Grader, Query Workbench, Hint System |
 | 13 | Save/Load & Settings (inferred) | Persistence | Vertical Slice | Not Started | — | Shift & Chapter Progression |
 | 14 | Game Shell & Screen Flow (inferred) | UI | Vertical Slice | Not Started | — | Shift & Chapter Progression, Save/Load & Settings |
 | 15 | Efficiency Stats | Progression | Vertical Slice | Not Started | — | SQL Execution Sandbox, Hidden-Data Grader |
@@ -219,7 +219,7 @@ accepted risks call for.
 |--------|-------|
 | Total systems identified | 19 |
 | Design docs started | 11 |
-| Design docs reviewed | 11 (grader, puzzle-def, sandbox, workbench, hints, constraint challenges, progression: revised, In Review; dialogue, store manual, onboarding, playtest log: Needs Revision) |
+| Design docs reviewed | 11 (grader, puzzle-def, sandbox, workbench, hints, constraint challenges, progression: revised, In Review; dialogue, store manual, onboarding, playtest log: revised, In Review) |
 | Design docs approved | 0 |
 | MVP systems designed | 11/11 |
 | Vertical Slice systems designed | 0/6 |

@@ -112,9 +112,12 @@ amounts are content values.
 
 11. Each shift starts with a short briefing line from the manager (Request &
     Reaction Dialogue). Between requests the next requester's message arrives
-    immediately — no menus between puzzles. A constraint challenge offer is not
-    a menu: it is attached inline to the PASS reaction and never delays the next
-    request (`constraint-challenges.md` rules 6–6a). While challenge mode is
+    as soon as the PASS reaction ends — after `reaction_hold` (2.5–6 s), or at
+    once on a click / Enter (`request-and-reaction-dialogue.md` rule 3a) — with
+    no menus between puzzles. A constraint challenge offer is not a menu: it is
+    shown inline with the PASS reaction, never waits for an answer, and moves to
+    an offer ticket on the counter strip if unanswered
+    (`constraint-challenges.md` rules 6–6a). While challenge mode is
     open the shift does not advance; leaving it returns to the open main
     request.
 12. The **chapter list** (opened from the shift screen; the "chapter menu" in
@@ -193,7 +196,7 @@ independently, `Starred` (all main passed).
 - **If the player quits the game (MVP, no save)** — mid-shift or after *Stop for today*: progress is lost; on relaunch the chapter starts at the Morning shift. *Stop for today* warns about this (rule 6). (Vertical Slice Save/Load fixes this.)
 - **If the player opens a side request mid-shift**: allowed; the main request's draft and state are kept (workbench draft restore).
 - **If a side request is never opened**: no effect on completion, star or wage.
-- **If a request is withheld by content validation** (invalid data): it is passed over for ordering (never marked `Skipped`), shown as "unavailable" in the chapter list, and excluded from completion and star checks; the Playtest Log records it.
+- **If a request is withheld by content validation** (invalid data): it is passed over for ordering (never marked `Skipped`), shown as "unavailable" in the chapter list, and excluded from completion and star checks; the Playtest Log records `request_unavailable`.
 - **If two shifts' requests are reordered in data**: order is taken from the data; no hardcoded sequence.
 - **If a replayed passed request is failed**: no effect on its `Passed` state (same as the grader rule).
 - **If every main request of a shift is unavailable** (withheld): the shift clocks out at once with a note on the payslip; the log records it.
@@ -306,12 +309,12 @@ GDDs. [UI] = retained screenshot in `production/qa/evidence/`.*
 **Invalid data, persistence, UI, log**
 - **PR-13 [Integration]** GIVEN a withheld main request, THEN ordering skips it, the chapter list shows "unavailable", it is excluded from completion and star, and it is logged; GIVEN a withheld side request, THEN it is not offered and is logged; GIVEN all mains of a shift withheld, THEN the shift clocks out at once with a note.
 - **PR-14 [Integration]** GIVEN the player quits mid-shift at MVP, WHEN relaunched, THEN the chapter starts at Morning with progress reset.
-- **PR-15 [UI]** GIVEN each shift start THEN a briefing line is shown; GIVEN a PASS THEN the next request arrives with no intervening menu — also on 1-6, where the constraint offer is inline in the PASS reaction (no modal).
+- **PR-15 [UI]** GIVEN each shift start THEN a briefing line is shown; GIVEN a PASS THEN the next request arrives when the PASS reaction ends (`reaction_hold`, or a click) with no intervening menu — also on 1-6, where the constraint offer is inline in the PASS reaction (no modal) and the next request arrives whether or not it was answered.
 - **PR-16 [UI]** GIVEN the chapter list, THEN each request shows glyph + word for locked / open / passed / left for later / unavailable, plus a challenge mark and a replay/reopen action, at ≥ 4.5:1, never colour alone.
 - **PR-18 [Integration]** GIVEN 1-5 `Open` with 2 FAILs, step 1 read and a draft, WHEN Restart is chosen and confirmed, THEN grader counters are 0, hints `Locked`, the draft empty and the request still `Open`; GIVEN a `Passed` or `Skipped` request, WHEN restarted, THEN its progress state is unchanged; GIVEN 1-1, WHEN restarted, THEN the prefill returns; GIVEN an empty draft, THEN no confirmation is asked; **Cancel** changes nothing.
 - **PR-19 [Logic]** GIVEN the Morning shift `ClockedOut`, THEN 1-4 is `Locked` until *Next shift* (or continue after *Stop for today*), then `Open`; GIVEN *Stop for today* at MVP, THEN the shift screen shows the "Progress is kept until you close the game" note and progress is intact.
 - **PR-20 [Integration]** GIVEN 1-6's challenge in challenge mode while 1-7 is `Open`, THEN 1-7 stays `Open` and no shift advances until challenge mode is left, after which 1-7 is shown.
-- **PR-17 [Integration]** GIVEN opens, passes, skips, unavailable requests, clock-outs and chapter completion, THEN each is written to the Playtest Log with a timestamp.
+- **PR-17 [Integration]** GIVEN opens, passes, skips, unavailable requests, clock-outs and chapter completion, THEN each is written to the Playtest Log with a timestamp as `request_open`, `request_pass`, `request_skip`, `request_unavailable`, `shift_clockout`, `chapter_complete` (`playtest-log.md` rule 4).
 
 ## Open Questions
 
