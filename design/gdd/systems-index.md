@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-14
-> **Last Updated**: 2026-10-14 (design review: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
+> **Last Updated**: 2026-10-14 (design review: Hint System, Constraint Challenges, Shift & Chapter Progression NEEDS REVISION; earlier: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -47,9 +47,9 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 | 3 | SQL Execution Sandbox (inferred) | Core | MVP | In Review | design/gdd/sql-execution-sandbox.md | — |
 | 4 | Query Workbench | Gameplay | MVP | In Review | design/gdd/query-workbench.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
 | 5 | Back Room | Gameplay | Alpha | Not Started | — | SQL Execution Sandbox, Puzzle Definition & Datasets, Query Workbench |
-| 6 | Hint System | Gameplay | MVP | Designed | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader |
-| 7 | Constraint Challenges | Gameplay | MVP | Designed | design/gdd/constraint-challenges.md | Puzzle Definition & Datasets, Hidden-Data Grader |
-| 8 | Shift & Chapter Progression | Progression | MVP | Designed | design/gdd/shift-and-chapter-progression.md | Puzzle Definition & Datasets, Hidden-Data Grader |
+| 6 | Hint System | Gameplay | MVP | Needs Revision | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader |
+| 7 | Constraint Challenges | Gameplay | MVP | Needs Revision | design/gdd/constraint-challenges.md | Puzzle Definition & Datasets, Hidden-Data Grader |
+| 8 | Shift & Chapter Progression | Progression | MVP | Needs Revision | design/gdd/shift-and-chapter-progression.md | Puzzle Definition & Datasets, Hidden-Data Grader |
 | 9 | Request & Reaction Dialogue | Narrative | MVP | Designed | design/gdd/request-and-reaction-dialogue.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox |
 | 10 | Store Manual | Narrative | MVP | Designed | design/gdd/store-manual.md | Puzzle Definition & Datasets, Shift & Chapter Progression |
 | 11 | Onboarding: First Shift (inferred) | Meta | MVP | Designed | design/gdd/onboarding-first-shift.md | Query Workbench, Request & Reaction Dialogue, Store Manual |
@@ -219,7 +219,7 @@ accepted risks call for.
 |--------|-------|
 | Total systems identified | 19 |
 | Design docs started | 11 |
-| Design docs reviewed | 4 (grader, puzzle-def: revised, In Review; sandbox, workbench: revised, In Review) |
+| Design docs reviewed | 7 (grader, puzzle-def, sandbox, workbench: revised, In Review; hints, constraint challenges, progression: Needs Revision) |
 | Design docs approved | 0 |
 | MVP systems designed | 11/11 |
 | Vertical Slice systems designed | 0/6 |
