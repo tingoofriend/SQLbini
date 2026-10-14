@@ -4,6 +4,8 @@
 > 현재 단계: **Systems Design** — MVP GDD 11개 작성 완료(모두 "Designed", 독립 검토 대기)
 > 마지막 커밋: `693b34f` (origin/main에 푸시됨)
 
+> 세션별 문서(공통 프롬프트 포함, 블록 하나만 복사): `production/session-prompts/session-N-*.md`
+
 각 세션은 **새 Claude Code 세션**에서 시작하세요(`/clear` 또는 새 터미널).
 아래 프롬프트를 그대로 복사해 붙여 넣으면 됩니다. 순서대로 진행하는 것을 권장합니다.
 
