@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-14
-> **Last Updated**: 2026-10-14 (design review: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
+> **Last Updated**: 2026-10-14 (design review: Sandbox + Workbench NEEDS REVISION; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -44,8 +44,8 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Hidden-Data Grader | Gameplay | MVP | In Review | design/gdd/hidden-data-grader.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
 | 2 | Puzzle Definition & Datasets | Core | MVP | In Review | design/gdd/puzzle-definition-and-datasets.md | — |
-| 3 | SQL Execution Sandbox (inferred) | Core | MVP | Designed | design/gdd/sql-execution-sandbox.md | — |
-| 4 | Query Workbench | Gameplay | MVP | Designed | design/gdd/query-workbench.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
+| 3 | SQL Execution Sandbox (inferred) | Core | MVP | Needs Revision | design/gdd/sql-execution-sandbox.md | — |
+| 4 | Query Workbench | Gameplay | MVP | Needs Revision | design/gdd/query-workbench.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
 | 5 | Back Room | Gameplay | Alpha | Not Started | — | SQL Execution Sandbox, Puzzle Definition & Datasets, Query Workbench |
 | 6 | Hint System | Gameplay | MVP | Designed | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader |
 | 7 | Constraint Challenges | Gameplay | MVP | Designed | design/gdd/constraint-challenges.md | Puzzle Definition & Datasets, Hidden-Data Grader |
@@ -219,7 +219,7 @@ accepted risks call for.
 |--------|-------|
 | Total systems identified | 19 |
 | Design docs started | 11 |
-| Design docs reviewed | 2 (both NEEDS REVISION → revised, In Review) |
+| Design docs reviewed | 4 (grader, puzzle-def: revised, In Review; sandbox, workbench: Needs Revision) |
 | Design docs approved | 0 |
 | MVP systems designed | 11/11 |
 | Vertical Slice systems designed | 0/6 |

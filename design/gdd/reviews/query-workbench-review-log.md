@@ -1,0 +1,20 @@
+# Review Log: query-workbench
+
+## Review — 2026-10-14 — Verdict: NEEDS REVISION
+Scope signal: M
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 2 | Recommended: 7
+Summary: The Run-vs-Submit model, row marks and "never a pass on Run" rule are strong and testable; the 1-5 fixture matches `ch1.py`. The 120 px counter scene is reflected in the layout formula at defaults (H_table = 0.40 × 568 − 48 = 179 → rows_visible 7 ✓), but not at ui_scale > 1 (the dialogue GDD scales the strip, the workbench keeps 120 px) and not in Core Rule 6 / QW-01, which still place the entry points in the feedback area.
+Prior verdict resolved: First review
+Findings:
+- [BLOCKING] Formulas readability / QW-24: H_table fixes the strip at 120 px and the 48 px header at all ui_scale, but `request-and-reaction-dialogue.md` scales the strip with ui_scale (×6 at 1.5, RD-13) — at 2.0 the strip is 240 px and rows_visible is ≤ 2, not 3; also a ×8 strip (2560 px) cannot fit a 1280 px width — fix jointly with Dialogue
+- [BLOCKING] Core Rule 6 / QW-01 / QW-19: entry points are in the feedback area (rule 6, QW-01) vs tabs at the counter scene's right edge (Visual/Audio); QW-01 and QW-19 require Back Room / Ctrl+B, which rule 6 removes in Chapter 1 — QW-01 cannot pass on a Chapter 1 puzzle
+- [RECOMMENDED] Edge Cases vs Formulas display_rows_max: "paged or virtualised" vs "showing the first 200" — pick one
+- [RECOMMENDED] Edge Cases: no Run handling for TIMEOUT, MULTI_STATEMENT (likely for beginners with two queries), NOT_A_QUERY, UNSUPPORTED or CONTENT_ERROR (target fails to compute)
+- [RECOMMENDED] Formulas readability: header/count 48 px and margins do not scale with ui_scale; define which layout parts scale
+- [RECOMMENDED] Core Rule 15: pane list still names "request" — now the counter scene
+- [RECOMMENDED] Dependencies / Cross-References: stale — hosted systems (Hint, Manual, Constraint Challenges, Dialogue, Onboarding) have GDDs and list the workbench; upstream are In Review
+- [RECOMMENDED] QW-13: p95 ≤ 200 ms needs the target PC named (grader OQ 7), as SB-20
+- [RECOMMENDED] Tuning Knobs absent (advisory at standard); puzzle-definition OQ 6 (24–30 visible rows in a 7-row panel) stays open — workbench accepts scrolling
+Reviewed-Content-Hash: design/gdd/query-workbench.md 5340f8929b4fea66cb5acc7562af2df61cc59c4c
+Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
