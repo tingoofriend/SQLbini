@@ -1,8 +1,8 @@
 # 다음 세션 프롬프트 모음
 
-> 작성: 2026-10-14 · 프로젝트: SQLbini (Godot 4.7.2 / GDScript)
-> 현재 단계: **Systems Design** — 세션 6(아트 바이블)·6a 완료: 채점기·퍼즐 정의·샌드박스 **Approved**, 나머지 8개 In Review → 6b~6d 재검토 → 세션 7
-> 마지막 커밋: `1fe20f0` (채점기 재검토 APPROVED)
+> 작성: 2026-10-14 (갱신 2026-10-15) · 프로젝트: SQLbini (Godot 4.7.2 / GDScript)
+> 현재 단계: **Systems Design** — 세션 6a~6c-2 완료: **Approved 10개**(채점기·퍼즐 정의·샌드박스·워크벤치·제약 도전·Playtest Log·힌트·진행·대화·매뉴얼), 수정 후 In Review 1개(온보딩) → 6c-3 재검토 → 6d → 세션 7
+> 마지막 커밋: `f6e1f0a` (6c-2 재검토: 힌트·진행·대화·매뉴얼 APPROVED, 온보딩 수정)
 
 > 세션별 문서(공통 프롬프트 포함, 블록 하나만 복사): `production/session-prompts/session-N-*.md`
 
@@ -112,7 +112,7 @@ NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 �
 끝나면 결과를 표로 요약하고 커밋할지 물어봐줘.
 ```
 
-## 세션 6b — 기능 GDD 재검토 (워크벤치, 힌트, 제약 도전)
+## 세션 6b — 기능 GDD 재검토 (워크벤치, 힌트, 제약 도전) — ✅ 완료 2026-10-14 (워크벤치·제약 도전 Approved, 힌트 수정 → 6c-2)
 
 ```
 이번 세션 작업: 다음 GDD 세 개를 독립 재검토해줘.
@@ -135,7 +135,7 @@ NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 �
 끝나면 결과를 표로 요약하고 커밋할지 물어봐줘.
 ```
 
-## 세션 6c — 진행·표현·메타 GDD 재검토 (진행, 대화, 매뉴얼, 온보딩, 기록)
+## 세션 6c — 진행·표현·메타 GDD 재검토 (진행, 대화, 매뉴얼, 온보딩, 기록) — ✅ 완료 2026-10-15 (Playtest Log Approved, 나머지 4개 수정 → 6c-2)
 
 ```
 이번 세션 작업: 다음 GDD 다섯 개를 독립 재검토해줘.
@@ -159,13 +159,58 @@ NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 �
 끝나면 결과를 표로 요약하고 커밋할지 물어봐줘.
 ```
 
+## 세션 6c-2 — 수정 후 재검토 (힌트, 진행, 대화, 매뉴얼, 온보딩) — ✅ 완료 2026-10-15 (4개 Approved, 온보딩 수정 → 6c-3)
+
+```
+이번 세션 작업: 6b·6c에서 NEEDS REVISION → 수정된 GDD 다섯 개를 독립 재검토해줘.
+1. /design-review design/gdd/hint-system.md
+2. /design-review design/gdd/shift-and-chapter-progression.md
+3. /design-review design/gdd/request-and-reaction-dialogue.md
+4. /design-review design/gdd/store-manual.md
+5. /design-review design/gdd/onboarding-first-shift.md
+각 review-log 마지막 항목의 차단 항목과 "Revised in-session" 메모를 기준으로, 고친 내용이
+제대로 들어갔고 다른 문서와 맞는지 확인해줘. 특히:
+- 힌트: rule 4b hint_counted(채점기 → Playtest Log 전달), tokenize 정규화, shown(p), 챌린지 모드 예외
+- 진행 ↔ 워크벤치: Restart(rule 12a)를 워크벤치가 구독(워크벤치 rule 14, 엣지 케이스, QW-30)
+- 진행 ↔ 대화: skip.offer / skip.accept, side kind, 대화 rule 3b, RD-21, PR-18·PR-21
+- 매뉴얼: 조건부 watch_out 삭제, rule_tag + trap_rules CI 검사(rule 3a, SM-01, SM-22)
+- 온보딩: rule 7a 코치마크 표(1-1.run, 1-1.submit, 1-2.schema, 1-3.manual), 1-2는 스키마 마크만
+수정은 요청 범위만 다뤘으니, 전체 문서를 다시 읽되 이미 기록된 권고(RECOMMENDED)를
+새 차단 항목으로 올리지는 마. /ux-design·플레이테스트로 미룬 항목도 차단 항목이 아니야.
+문맥이 70%를 넘으면 남은 문서는 다음 세션으로 넘겨줘(active.md에 기록).
+결과는 각 review-log에 남기고, APPROVED면 systems-index 상태와 문서 헤더를 Approved로 바꿔줘.
+NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 뒤 고치고, 상태는 In Review로
+두고 다음 새 세션에서 다시 검토하도록 active.md에 적어줘.
+끝나면 결과를 표로 요약하고, GDD 11개 중 몇 개가 Approved인지 알려주고, 커밋할지 물어봐줘.
+```
+
+## 세션 6c-3 — 온보딩 재검토
+
+```
+이번 세션 작업: 6c-2에서 NEEDS REVISION → 수정된 온보딩 GDD를 독립 재검토해줘.
+/design-review design/gdd/onboarding-first-shift.md
+review-log 마지막 항목의 차단 항목과 "Revised in-session" 메모를 기준으로 확인해줘. 특히:
+- 코치마크 완료 조건이 자기 퍼즐 안에서만 성립하는지(rule 7a 범위 문단, rule 8, States)
+- 예외는 1-1에서 Run 전에 Submit한 경우(1-1.run Done) 하나뿐인지
+- 매뉴얼 엣지 케이스 분리(1-1/1-2에서 열면 아무것도 Done 아님, 1-3에서 마크 전에 열면 Done)와 OB-11·OB-13
+- 마크 id가 Playtest Log의 mark_shown/done/dismissed {mark}와 맞는지
+전체 문서를 다시 읽되 이미 기록된 권고(RECOMMENDED)를 새 차단 항목으로 올리지는 마.
+/ux-design·플레이테스트로 미룬 항목도 차단 항목이 아니야.
+결과는 review-log에 남기고, APPROVED면 systems-index 상태와 문서 헤더를 Approved로 바꿔줘.
+NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 뒤 고치고, 상태는 In Review로
+두고 다음 새 세션에서 다시 검토하도록 active.md에 적어줘.
+끝나면 결과를 요약하고, GDD 11개 중 몇 개가 Approved인지 알려주고, 커밋할지 물어봐줘.
+```
+
 ## 세션 6d — 재검토 후 교차 일관성 확인
 
 ```
 이번 세션 작업: /review-all-gdds since-last-review 를 실행해줘.
-기준은 세션 5 보고서(design/gdd/gdd-cross-review-2026-10-14.md)야. 6a~6c 재검토에서
+기준은 세션 5 보고서(design/gdd/gdd-cross-review-2026-10-14.md)야. 6a~6c-3 재검토에서
 고친 문서들이 서로, 그리고 game-concept.md·design/registry/entities.yaml과 여전히 맞는지
 확인하고, 충돌이 있으면 어느 문서를 고칠지 나에게 물어봐줘.
+active.md의 "For 6d" 목록(채점기의 hint_counted 인용 4a → 4b, 의존성 표의 옛 상태 표기,
+매뉴얼 OQ1 문구, 샌드박스의 tokenize 소비자에 힌트 추가, CC OQ2 등)도 함께 처리해줘.
 GDD 11개가 모두 Approved인지도 확인해서, 아니면 어떤 문서가 남았는지 알려줘.
 끝나면 결과를 표로 요약하고 커밋할지 물어봐줘.
 ```
@@ -176,7 +221,7 @@ GDD 11개가 모두 Approved인지도 확인해서, 아니면 어떤 문서가 �
 이번 세션 작업: /gate-check technical-setup 을 실행해줘.
 Concept 게이트에서 받아들인 위험(production/gate-checks/2026-10-14-concept-to-systems-design-rerun.md)이
 해결됐는지도 함께 확인해줘.
-시작 전에 6a~6d 재검토가 끝나 MVP GDD 11개가 모두 Approved인지 먼저 확인하고,
+시작 전에 6a~6c-3 재검토와 6d가 끝나 MVP GDD 11개가 모두 Approved인지 먼저 확인하고,
 아니면 게이트를 돌리지 말고 남은 문서를 알려줘.
 ```
 
