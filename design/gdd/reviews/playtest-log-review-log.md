@@ -17,3 +17,17 @@ Findings:
 Reviewed-Content-Hash: design/gdd/playtest-log.md cd5809a5a49b3d65307674013f9a6a00127f06f5
 Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
 Revised in-session (2026-10-14, after the review): BLOCKING catalogue fixed — rule 4's table is canonical; Constraint Challenges CC-13 now uses `challenge_offer` / `challenge_try` / `challenge_later` / `challenge_attempt` / `challenge_clear` (an expired offer logs `challenge_later`), and `request_unavailable` is added and named in Progression edge case and PR-17. Also fixed: `time_to_first_pass` inequality removed (pass before any Run is possible); F9 focus rule made consistent; Dialogue's puzzle id via the common field; stale statuses. Not done: focus/pause events vs the hint's `active_time`, `run.match` enum derivation (recommended). Re-review pending in a fresh session.
+
+## Review — 2026-10-15 (re-review after cross-GDD review fixes, fresh session) — Verdict: APPROVED
+Scope signal: M
+Specialists: none (lean mode; fresh session, not the authoring session — each doc reviewed by a read-only subagent, blocking items verified against the text in the main session)
+Blocking items: 0 | Recommended: 3
+Summary: The prior blocker (catalogue vs sibling event names) is resolved — CC-13 and PR-17 now match. Every applicable cross-review resolution is in: W13 (common puzzle field, boolean run.match, run.dataset), W23 (16.6 ms, SB-19 aligned), D2 (skip count + boss skip beside the Finish claim), W24 (global idle_cutoff_s), B1 (UNAVAILABLE, build_message log-only, Sandbox soft upstream), B2 (manual page ids), D1 (hint_counted). Upstream event names all match the catalogue; MVP thresholds match the concept.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Core Rules 4a: hint_counted cites Hint System rule 4a; the owning rule is 4b (add "false for challenge-mode submits")
+- [RECOMMENDED] Formulas puzzle_active_time: edit_burst emission timing unstated; no focus events — gaps can misread long typing (carried over)
+- [RECOMMENDED] Core Rules 4: "their ACs cite this rule" only partly true (workbench, HS-09, SM-19, grader AC-19)
+- [NICE-TO-HAVE] manual_* {page} = manual.<slug>; {mark} = Onboarding rule 7a mark id; time-to-first-submit formula (Hint OQ1); help_given puzzle in challenge mode; Tuning Knobs pointer
+Reviewed-Content-Hash: design/gdd/playtest-log.md 6d2bd175fd353f50e98845e47344f1d536b3e8cb
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084

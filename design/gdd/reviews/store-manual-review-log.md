@@ -16,3 +16,22 @@ Findings:
 Reviewed-Content-Hash: design/gdd/store-manual.md d415000cade3195f19b5cbe0492c1718d73ad2c3
 Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
 Revised in-session (2026-10-14, after the review; user decision: exempt 1-1 only): BLOCKING rule 4 fixed — puzzles whose editor Onboarding prefills with the reference (1-1) are exempt, so "Reading the ledger" may show `SELECT * FROM products`; 1-2 stays checked and "Picking columns" uses another list (SM-15). Also fixed: stale statuses. Not done: `watch_out` vs 1-8 / 1-10 traps (still OQ 1), `manual_open` event granularity, panel vs results column (recommended). Re-review pending in a fresh session.
+
+## Review — 2026-10-15 (re-review after cross-GDD review fixes, fresh session) — Verdict: NEEDS REVISION
+Scope signal: S
+Specialists: none (lean mode; fresh session, not the authoring session — each doc reviewed by a read-only subagent, blocking items verified against the text in the main session)
+Blocking items: 1 | Recommended: 7
+Summary: Prior blocker (rule 4 vs 1-1 prefill) resolved via the prefill_sql exemption; B2 manual_pages, W9 (mark on 1-3), W10, D4 rule 3a, D6 indicator suppression and the playtest events are in. New blocker: rule 3a's "conditional watch_out" had no data contract and SM-22 could not be checked by CI.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Core Rules 3a / SM-22: conditional watch_out has no field, no pass event, no skip rule; SM-22 [Content-CI] not machine-checkable
+- [RECOMMENDED] Core Rules 1, 3: example watch_outs ("BETWEEN includes both ends", "= NULL never matches") are the 1-8 / 1-10 traps (fixed in-session: marked as later-chapter examples)
+- [RECOMMENDED] Core Rules 8: manual_open {page} granularity (panel open vs page select) unresolved (carried over)
+- [RECOMMENDED] Core Rules 6 / SM-06: indicator text hard-coded "1 new page" — specify N
+- [RECOMMENDED] SM-02: omits 1-3, 1-9, 1-10 mappings
+- [RECOMMENDED] Interactions (Onboarding): Onboarding consumes a "Filtering rows unlocked" signal the Manual does not define; direction/owner disagree
+- [RECOMMENDED] Dependencies: Puzzle Definition lists the Manual as soft, Manual lists Puzzle Definition as hard
+- [RECOMMENDED] Naming: "Manual button" vs workbench/dialogue "tab"
+Reviewed-Content-Hash: design/gdd/store-manual.md b1d4fc095da347bda4d29433752387a98a32365b
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+Revised in-session (2026-10-15, after the review; user decision "drop conditional + rule_tag"): rule 3a — trap-rule watch_outs are omitted in Chapter 1 (no conditional watch_out at MVP; A range / Empty values named); each watch_out carries a required `rule_tag`; manual content data holds `trap_rules` (Chapter 1 trap id → rule_tag); CI fails on a matching tag or an unmapped trap id; SM-01, SM-22 rewritten; rule 1/3 examples marked as later-chapter. Status stays In Review; re-review in a fresh session.

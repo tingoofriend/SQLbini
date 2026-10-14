@@ -18,3 +18,22 @@ Findings:
 Reviewed-Content-Hash: design/gdd/onboarding-first-shift.md d52a9d9b17909a35dd111a4c5af5bbbe53a69e9d
 Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
 Revised in-session (2026-10-14, after the review; user decisions: guidance in coach-mark labels, auto comma): BLOCKING fixed — guidance lines live in the coach-mark label with Tanaka's name tag and never in the bubble, which keeps the request; the opening question is a Dialogue `system` line with two buttons shown before 1-1's request (rules 1, 7, Visual, OB-23; Dialogue rule 2 / RD-18). Also fixed: workbench auto-separator makes 1-2 two clicks and no typing (rule 3, OB-22, workbench rule 3 / QW-22); ghost text scope and data owner (1-2, 1-3 only); "Yes" mode keeps 1-1's prefill and shows the explainer on 1-1 (OB-02); minimal options panel owned by Onboarding; hint row and cross-references (store manual rules 4–6, workbench now cites rules 2, 3, 6); stale statuses. Re-review pending in a fresh session.
+
+## Review — 2026-10-15 (re-review after cross-GDD review fixes, fresh session) — Verdict: NEEDS REVISION
+Scope signal: S
+Specialists: none (lean mode; fresh session, not the authoring session — each doc reviewed by a read-only subagent, blocking items verified against the text in the main session)
+Blocking items: 1 | Recommended: 7
+Summary: Prior blocker (guidance/question lines without a Dialogue kind) resolved; Day One naming, W6, W7 Esc, W16, W20, W9, W10, D6, S1 and the first_run/first_pass removal are in. One blocker: the coach marks and their ids were never enumerated, and the 1-2 Run/Submit condition read two ways.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Core Rules 3, 7 / OB-13: no enumerated mark list or mark ids (Playtest Log {mark} undefined); "used it once on their own" for 1-2 Run/Submit is ambiguous
+- [RECOMMENDED] Edge Cases: "start over" line after an error loses to Dialogue's newest-wins rule; needs a queue exception
+- [RECOMMENDED] Edge Cases / OB-07: start-over trigger ("error/feedback") vs Run-error-only AC
+- [RECOMMENDED] Core Rules 6: Tab result on 1-3 ghost text unspecified (OB-09 covers 1-2 only)
+- [RECOMMENDED] Interactions: Hint row direction "—" vs hint :154; Store Manual row direction vs manual :136
+- [RECOMMENDED] Dependencies: bidirectionality note stale (Puzzle Definition now lists Onboarding; Progression, Playtest Log omitted)
+- [RECOMMENDED] Partner citations stale: workbench :481 "rule 15", store manual :217 "Rules 4, 6"
+- [RECOMMENDED] OB-19 "never writes editor text" vs rule 6 Tab/click materialisation
+Reviewed-Content-Hash: design/gdd/onboarding-first-shift.md 924fc9d35924c9799db8a01a6760ee4780c4bb96
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+Revised in-session (2026-10-15, after the review; user decision "table + 1-2 schema only"): rule 7a table of the four Guided marks (`1-1.run`, `1-1.submit`, `1-2.schema`, `1-3.manual`) with target, label and Done condition — the mark id is the Playtest Log `{mark}` value; 1-2 has only the schema mark; unopened puzzle's mark stays Pending; States, the submit-before-run edge case and OB-13 updated. Status stays In Review; re-review in a fresh session.

@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (re-review 6b: TOO_MANY_ROWS strip text; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (Restart subscriber, from the Progression re-review 6c; earlier: re-review 6b: TOO_MANY_ROWS strip text; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 2 — Your Query, Your Way
 
@@ -130,7 +130,11 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
 
 14. Each puzzle keeps its own draft text; switching puzzles and returning
     restores it for the session (persistence across sessions is Save/Load,
-    Vertical Slice).
+    Vertical Slice). On Progression's **Restart** event for a puzzle
+    (`shift-and-chapter-progression.md` rule 12a) the workbench resets that
+    puzzle's draft to its `prefill_sql` (or empty), clears its last Run result
+    and last verdict; it tells Progression whether a puzzle's draft is empty
+    (for Restart's confirmation).
 15. Keyboard-first: every action is reachable without the mouse.
 
 | Action | Default shortcut |
@@ -196,7 +200,7 @@ it (the older result is discarded).
 | Hint System | Workbench hosts | Hint button; hint text panel | Hint System |
 | Store Manual | Workbench hosts | Manual button; manual overlay | Store Manual |
 | Constraint Challenges | Workbench hosts | Shows the active constraint (e.g. "No OR") and its live check — canonical character count or keyword presence (`constraint-challenges.md` rule 8) | Constraint Challenges |
-| Shift & Chapter Progression | Progression → Workbench | Which puzzle is open; PASS moves the shift on | Progression |
+| Shift & Chapter Progression | Progression ↔ Workbench | Which puzzle is open; PASS moves the shift on; the Restart event (rule 14 — reset draft, clear last result and verdict). Workbench → Progression: whether a puzzle's draft is empty | Progression (event); Workbench (draft state) |
 | Playtest Log | Workbench → Log | The `run` event (with timestamps and edits between Runs). The `submit` event is emitted by the Hidden-Data Grader, not the workbench | Workbench |
 | Onboarding: First Shift | Onboarding → Workbench | Ghost text, highlighted elements in 1-1 to 1-3; coach-mark visibility (suppresses tab indicators, rule 6). The 1-1 prefill is the puzzle's `prefill_sql` field (Puzzle Definition row) | Onboarding |
 | Accessibility Options (VS) | Options → Workbench | Text scale, contrast theme, shortcut remapping, reduced motion | Accessibility Options |
@@ -327,6 +331,7 @@ discarded by request order.
 - **If an IME composition is in progress when Run is pressed**: the composition is committed first, then Run executes the committed text.
 - **If the player pastes very long text** (over 10,000 characters): accepted; Run proceeds; the sandbox rules apply unchanged.
 - **If the player leaves and reopens a puzzle in the same session**: the draft text, last Run result and last verdict are restored.
+- **If Progression restarts a puzzle** (rule 14): its draft becomes its `prefill_sql` or empty, and its last Run result and last verdict are cleared; if it is the open puzzle, the editor, result area and note update at once.
 
 **Back Room tab**
 - **If the Back Room tab is active**: Run uses the scratch data; the Target table and row marks are hidden (the target is defined only for the visible dataset); a label "Back Room — practice data" is always visible so scratch results are never mistaken for the real shelf.
@@ -514,6 +519,7 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 - **QW-27 [Integration]** GIVEN a stub grader returning `UNAVAILABLE`, WHEN Submit is pressed, THEN the state returns to `Editing`, the strip shows "Content error — reported" with no raw or build text, and no verdict, counter or puzzle state changes.
 - **QW-28 [Integration]** GIVEN a coach mark shown and focus in the editor, WHEN Esc is pressed, THEN focus leaves the editor and the mark stays; GIVEN focus on the mark, Esc dismisses it; GIVEN a coach mark shown and a new manual page or hint unlocked, THEN no "new" indicator shows until the mark is gone.
 - **QW-29 [Logic]** GIVEN `grader_row_cap` set to 1,000 and a truncated result, THEN the strings read "1,000+ rows — too many to compare"; no workbench string contains a hardcoded 5000 / 5,000.
+- **QW-30 [Integration]** GIVEN 1-5 with a draft, a last Run result and a FAIL verdict, WHEN a stub Progression sends Restart for 1-5, THEN the draft is empty and the result area and verdict note are cleared; GIVEN 1-1, THEN the draft is `SELECT * FROM products;`; the workbench reports "draft empty" true after the reset and false before it.
 
 **Editing and input**
 - **QW-18 [Logic]** GIVEN two puzzles, WHEN the player switches away and back in the session, THEN the draft, last result and last verdict are restored.

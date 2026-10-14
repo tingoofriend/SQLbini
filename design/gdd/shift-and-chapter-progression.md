@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -62,7 +62,9 @@ amounts are content values.
 4. Main requests arrive one at a time, in order. The next main request becomes
    available when the current one is **passed** or **left for later** (rule 7).
 5. Side requests are offered as messages (HQ email, a question from the manager)
-   when their shift starts. They are optional, can be opened any time during the
+   when their shift starts — a `side` line in the message log plus a message
+   ticket on the counter strip, never replacing the bubble's request
+   (`request-and-reaction-dialogue.md` rule 3b). They are optional, can be opened any time during the
    chapter, and never block anything.
 6. A shift **ends** when all its main requests are passed or left for later. The
    player then **clocks out**: the payslip screen (rule 10) is shown and the
@@ -85,9 +87,11 @@ amounts are content values.
    `exhausted` has a time path, this holds for a player who only produces
    syntax errors or never submits: at hint defaults the offer can appear after
    11 active minutes. The offer still requires both hints to have been opened —
-   the skip comes after asking for help, never instead of it. Accepting the
-   skip on the boss (or on any shift's last main request): Kenji's accept line
-   plays for its `reaction_hold`, then the shift clocks out and the payslip is
+   the skip comes after asking for help, never instead of it. When the
+   skip is accepted, Kenji's accept line (`skip.accept`; the offer itself is `skip.offer`,
+   both Dialogue rule 3b) holds like a pass line for its `reaction_hold`, then
+   the next main request opens — or, on the boss (or any shift's last main
+   request), the shift clocks out and the payslip is
    shown (rule 6). The location of the persistent "Leave it for Kenji" button
    is deferred to `/ux-design`.
 8. A skipped request stays in the chapter list and can be reopened at any time;
@@ -140,10 +144,13 @@ amounts are content values.
     `exhausted` cleared), the editor draft to empty (or to the puzzle's
     `prefill_sql` when it has one — 1-1's `SELECT * FROM products;`, Puzzle
     Definition), the result panel cleared. Restart is broadcast as an event;
-    the Hint System and the grader subscribe to it to reset their state. It never changes progress: a
+    the Hint System, the grader and the Query Workbench subscribe to it to
+    reset their state (the Workbench resets the draft as above and clears that
+    puzzle's last Run result and last verdict). It never changes progress: a
     `Passed` request stays `Passed`, a `Skipped` one stays `Skipped`, and the
     challenge state, manual pages and Playtest Log history are kept. When the
-    draft is non-empty, Restart asks once ("Start this request over? Your
+    draft is non-empty (the Workbench reports whether that puzzle's draft is
+    empty), Restart asks once ("Start this request over? Your
     query will be cleared.") with **Restart** / **Cancel**.
 
 **Persistence**
@@ -184,8 +191,8 @@ independently, `Starred` (all main passed).
 | Hidden-Data Grader | Grader → Progression | PASS events | Grader |
 | Hint System | Hints ↔ Progression | `exhausted` per request (Hints → Progression); Restart event broadcast by Progression, subscribed to by the Hint System (Progression → Hints) — a runtime cycle | Hint System (`exhausted`); Progression (Restart) |
 | Constraint Challenges | both | Base PASS triggers the offer; challenge marks on the chapter list; a clear shows on the payslip of the shift in which it is cleared (after the final clock-out: End of day screen only — `constraint-challenges.md` rule 6b) | Constraint Challenges |
-| Query Workbench | Progression → Workbench | Which request is open | Progression |
-| Request & Reaction Dialogue | Progression → Dialogue | Shift briefing, Kenji's skip offer, side-request messages | Dialogue |
+| Query Workbench | Progression ↔ Workbench | Progression → Workbench: which request is open; the Restart event (rule 12a — the Workbench resets that puzzle's draft to empty or `prefill_sql` and clears its last Run result and verdict). Workbench → Progression: whether a puzzle's draft is empty (for the Restart confirmation) | Progression (event); Workbench (draft state) |
+| Request & Reaction Dialogue | Progression → Dialogue | Shift briefing, Kenji's skip offer and accept line (`skip.offer`, `skip.accept`), side-request messages at shift start (`side` kind) — all Dialogue rule 3b; Dialogue → Progression: end of the `skip.accept` hold | Progression owns timing; Dialogue owns the lines |
 | Store Manual | Progression → Manual | Request opened (manual pages unlock by the request's `manual_pages`) | Store Manual |
 | Onboarding: First Shift | Progression → Onboarding | Request opened for 1-1 to 1-3 (Morning shift of Day One); Restart returns 1-1's `prefill_sql` (coach marks do not replay) | Onboarding |
 | Save/Load & Settings (VS) | Progression → Save | Request, shift, chapter states | Save/Load |
@@ -333,10 +340,10 @@ GDDs. [UI] = retained screenshot in `production/qa/evidence/`.*
 - **PR-14 [Integration]** GIVEN the player quits mid-shift at MVP, WHEN relaunched, THEN the chapter starts at Morning with progress reset.
 - **PR-15 [UI]** GIVEN each shift start THEN a briefing line is shown; GIVEN a PASS THEN the next request arrives when the PASS reaction ends (`reaction_hold`, or a click) with no intervening menu — also on 1-6, where the constraint offer is inline in the PASS reaction (no modal) and the next request arrives whether or not it was answered.
 - **PR-16 [UI]** GIVEN the chapter list, THEN each request shows glyph + word for locked / open / passed / left for later / unavailable, plus a challenge mark and a replay/reopen action, at ≥ 4.5:1, never colour alone.
-- **PR-18 [Integration]** GIVEN 1-5 `Open` with 2 FAILs, step 1 read and a draft, WHEN Restart is chosen and confirmed, THEN grader counters are 0, hints `Locked`, the draft empty and the request still `Open`; GIVEN a `Passed` or `Skipped` request, WHEN restarted, THEN its progress state is unchanged; GIVEN 1-1, WHEN restarted, THEN the prefill returns; GIVEN an empty draft, THEN no confirmation is asked; **Cancel** changes nothing.
+- **PR-18 [Integration]** GIVEN 1-5 `Open` with 2 FAILs, step 1 read and a draft, WHEN Restart is chosen and confirmed, THEN grader counters are 0, hints `Locked`, the draft empty, the result panel and last verdict cleared, and the request still `Open`; GIVEN a `Passed` or `Skipped` request, WHEN restarted, THEN its progress state is unchanged; GIVEN 1-1, WHEN restarted, THEN the prefill returns; GIVEN an empty draft, THEN no confirmation is asked; **Cancel** changes nothing.
 - **PR-19 [Logic]** GIVEN the Morning shift `ClockedOut`, THEN 1-4 is `Locked` until *Next shift* (or continue after *Stop for today*), then `Open`; GIVEN *Stop for today* at MVP, THEN the shift screen shows the "Progress is kept until you close the game" note and progress is intact.
 - **PR-20 [Integration]** GIVEN 1-6's challenge in challenge mode while 1-7 is `Open`, THEN 1-7 stays `Open` (its `request_open` logged once, before challenge mode), its hint `active_time` does not grow, and no shift advances until challenge mode is left, after which 1-7 is shown.
-- **PR-21 [Integration]** GIVEN boss 1-11 exhausted, WHEN the player accepts Kenji's offer, THEN Kenji's accept line is shown for its `reaction_hold`, then the Closing shift clocks out, the payslip lists 1-11 as left for later, and End of day follows.
+- **PR-21 [Integration]** GIVEN boss 1-11 exhausted, WHEN the player accepts Kenji's offer, THEN Kenji's `skip.accept` line is shown for its `reaction_hold` (an edit or Run does not end it), then the Closing shift clocks out, the payslip lists 1-11 as left for later, and End of day follows.
 - **PR-17 [Integration]** GIVEN opens, passes, skips, unavailable requests, clock-outs and chapter completion, THEN each is written to the Playtest Log with a timestamp as `request_open`, `request_pass`, `request_skip`, `request_unavailable`, `shift_clockout`, `chapter_complete` (`playtest-log.md` rule 4).
 
 ## Open Questions

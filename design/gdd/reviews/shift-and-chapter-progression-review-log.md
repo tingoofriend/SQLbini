@@ -19,3 +19,22 @@ Findings:
 Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md 2feda659a976e3f06fc7a1ce81325f0b94a5dbea
 Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
 Revised in-session (2026-10-14, after the review; user decisions: hint time path, Restart defined here, inline challenge offer): BLOCKING skip guarantee fixed — rule 7 now rests on `exhausted`'s time path (hint rule 11). BLOCKING restart fixed — rule 12a Restart on the chapter list (resets grader counters, hints, draft, 1-1 prefill; never progress), PR-18. BLOCKING flow fixed — rule 11 states the inline offer is not a menu; challenge mode pauses the shift (PR-15, PR-20). Also fixed: MVP *Stop for today* keeps progress in-session with a note (rule 6, PR-19), next-shift transitions, "full-clear" star vs concept's "mastered", withheld requests "passed over", new edge cases, stale statuses, Tuning Knobs section. Not done: OQ 3 shift length (playtest); Player Fantasy (advisory). Re-review pending in a fresh session.
+
+## Review — 2026-10-15 (re-review after cross-GDD review fixes, fresh session) — Verdict: NEEDS REVISION
+Scope signal: M
+Specialists: none (lean mode; fresh session, not the authoring session — each doc reviewed by a read-only subagent, blocking items verified against the text in the main session)
+Blocking items: 2 | Recommended: 6
+Summary: Prior blockers (never-stuck skip, inline offer) resolved and Restart rule 12a matches grader/hint/onboarding; cross-review resolutions (Day One, S5 challenge-mode state, offer expiry, prefill owner, Onboarding in tables) are in. Two contract gaps remained: Restart had no Query Workbench side, and Kenji's accept line / side-request messages had no Dialogue kind or string id.
+Prior verdict resolved: Partly (2 of 3; Restart missing its Workbench side)
+Findings:
+- [BLOCKING] Core Rules 12a / Interactions (Workbench): Restart resets draft/result but the Workbench never subscribes; confirmation reads a draft state no interface provides
+- [BLOCKING] Core Rules 5, 7 / Interactions (Dialogue): side-request messages and Kenji's accept line have no Dialogue kind, string id or end rule (S4 boss skip → payslip depends on it)
+- [RECOMMENDED] Edge Cases: repeated UNAVAILABLE leaves the request Open with only the 11-min exhausted path out
+- [RECOMMENDED] Edge Cases: "Try it" on a shift's last main request — CC rule 6a return target and clock-out timing undefined
+- [RECOMMENDED] Bidirectionality: Progression↔Challenges runtime coupling not named; CC row owner disagrees with CC :173
+- [RECOMMENDED] Core Rules 7: "further fails" → "counted FAILs (hint rule 4a)"
+- [RECOMMENDED] Edge Cases: empty-chapter star when every main is withheld (incl. the boss)
+- [RECOMMENDED] Playtest Log: Restart not logged (no request_restart) although it resets hint state
+Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md 4f000605792334e14db84b598e743753353ec3f8
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+Revised in-session (2026-10-15, after the review; user decisions): rule 12a + Workbench row — the Query Workbench subscribes to Restart (resets draft to prefill/empty, clears last result and verdict, reports draft-empty for the confirmation; workbench rule 14, edge case, QW-30); rules 5, 7 + Dialogue row — side-request messages = `side` line in the message log + strip ticket, Kenji's `skip.offer` / `skip.accept` defined in Dialogue rule 3b (accept holds like a pass line, then next request or clock-out); PR-18, PR-21 updated. Status stays In Review; re-review in a fresh session.

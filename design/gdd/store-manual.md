@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6c fix: `watch_out` carries a `rule_tag`, no conditional `watch_out`, `trap_rules` CI check; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL (anti-pillar: NOT a textbook)
 
@@ -45,7 +45,9 @@ playtest (clear 1-1 to 1-3 without outside help) has no way to pass.
    pattern, e.g. `SELECT columns FROM table WHERE condition`), one `example`
    query on the chapter's visible data with a one-line note of what it returns,
    and an optional `watch_out` line (the common mistake, stated as a fact —
-   e.g. "BETWEEN includes both ends").
+   e.g., on a later chapter's page, "BETWEEN includes both ends") with its
+   required `rule_tag` (a short id for the SQL rule the line states, e.g.
+   `between_inclusive`; rule 3a).
 2. Chapter 1 pages (MVP):
 
 | Page | Covers | First needed by |
@@ -67,16 +69,21 @@ playtest (clear 1-1 to 1-3 without outside help) has no way to pass.
    the table is the Chapter 1 default. Page ids are used so pages with no
    keyword ("Picking columns", comparison operators) can still be unlocked.
 3. Pages tell the truth about SQL (Pillar 4) — `watch_out` lines state real
-   rules ("`= NULL` never matches; use `IS NULL`"). Traps still bite because
+   rules (e.g., outside Chapter 1, "`= NULL` never matches; use `IS NULL`"). Traps still bite because
    requests are written in natural language and the player must apply the rule
    to what the customer *means* (trap philosophy). Pages never mention a
    specific puzzle, its data, or its answer.
 3a. **No `watch_out` pre-solves a Chapter 1 trap.** A page's `watch_out` must
-   not state the rule a Chapter 1 trap tests until that trap's puzzle has been
-   passed. In particular, in Chapter 1 the "More than one condition" (AND/OR)
-   page carries **no precedence `watch_out`** (the 1-6 and 1-11 traps). A
-   `watch_out` that would state a trap's rule is either omitted or made
-   conditional on that puzzle being passed (content data; checked in CI).
+   not state the rule a Chapter 1 trap tests. Such a line is simply **omitted**
+   in Chapter 1 (there is no conditional `watch_out` at MVP). In particular,
+   the "More than one condition" (AND/OR) page carries **no precedence
+   `watch_out`** (the 1-6 and 1-11 traps), "A range" none on inclusive ends
+   (1-8) and "Empty values" none on `= NULL` (1-10). The check is mechanical:
+   the manual's content data holds `trap_rules` — a map from every Chapter 1
+   trap id (Puzzle Definition) to the `rule_tag` of the rule it tests, written
+   by the content author alongside the trap — and CI fails if any Chapter 1
+   page's `watch_out.rule_tag` is one of those tags, or if a Chapter 1 trap id
+   has no `trap_rules` entry.
 4. **Examples never solve a puzzle.** No page example, run as a player's query,
    may pass any puzzle in the game (content CI check, like the Hint System's).
    **One exception:** a puzzle whose `prefill_sql` (Puzzle Definition) is its
@@ -228,7 +235,7 @@ definition behaviour is covered in their own GDDs. Datasets: `visible`,
 `production/qa/evidence/`.*
 
 **Pages and unlocking**
-- **SM-01 [Logic]** GIVEN page data, WHEN loaded, THEN each page has `id` (`manual.<slug>`), `title`, keyword(s), `body` (2–4 sentences), `shape`, `example` with a one-line result note, optional `watch_out`; a page missing a required field fails validation.
+- **SM-01 [Logic]** GIVEN page data, WHEN loaded, THEN each page has `id` (`manual.<slug>`), `title`, keyword(s), `body` (2–4 sentences), `shape`, `example` with a one-line result note, optional `watch_out` with a `rule_tag`; a page missing a required field, or a `watch_out` without a `rule_tag`, fails validation.
 - **SM-02 [Content-CI]** GIVEN Chapter 1 data, THEN exactly the 11 pages of Core Rule 2 exist and every id in each puzzle's `manual_pages` resolves to one of them (1-1 → `manual.reading-the-ledger`, 1-2 → Picking columns, 1-4 → Comparing numbers and dates, 1-5 → More than one condition, 1-6 → A list of values, 1-8 → A range, S-1 → No duplicates, S-2 → Calculated columns — slugs are content data).
 - **SM-03 [Logic]** GIVEN a fresh session, WHEN 1-1 is first opened, THEN "Reading the ledger" is Unlocked (new) and every other page is Locked.
 - **SM-04 [Logic]** GIVEN S-1 opened before 1-6, THEN "No duplicates" unlocks at once, and opening the remaining requests in any order ends with the same unlocked set; a page shared by two puzzles unlocks once, on the first.
@@ -248,7 +255,7 @@ definition behaviour is covered in their own GDDs. Datasets: `visible`,
 - **SM-14 [Content-CI]** Every `example` runs without error on the chapter schema.
 - **SM-15 [Content-CI]** Every `example`, submitted as a player query, passes no puzzle except one whose `prefill_sql` is its reference (1-1, rule 4); in particular "Picking columns" does not pass 1-2.
 - **SM-16 [Content-CI]** Every id in every puzzle's `manual_pages` has a page; a missing page fails validation.
-- **SM-22 [Content-CI]** No Chapter 1 page's unconditional `watch_out` states the rule of a Chapter 1 trap (rule 3a); the "More than one condition" page has no precedence `watch_out` in Chapter 1.
+- **SM-22 [Content-CI]** GIVEN the Chapter 1 pages and `trap_rules`, THEN every Chapter 1 trap id (all 15) has a `trap_rules` entry, and no Chapter 1 page's `watch_out.rule_tag` equals any `trap_rules` tag (rule 3a); a fixture page whose `watch_out` carries `and_or_precedence` while 1-6's trap maps to it fails the check.
 - **SM-17 [Content-CI]** A scan of all page text finds no puzzle id (`1-1` … `S-2`) and no puzzle's reference query.
 
 **Never a textbook; presentation; log**

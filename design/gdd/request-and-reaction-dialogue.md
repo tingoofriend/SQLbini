@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6c fixes: `skip.offer` / `skip.accept` lines, side-request messages, `TOO_MANY_ROWS` on any visible run; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -60,7 +60,8 @@ is set in `/art-bible`.
 | `fail` | Grader feedback key (cause, level) → the trap's authored feedback, or the built-in line for `columns` / `order` / `nondeterministic` / `generic` | Requester (puzzled) |
 | `error` | Sandbox `error_kind` (or the grader's `TOO_MANY_ROWS`) + `error_text` → an error template (rule 6, string id `error.<KIND>`) | On **Run**: Kenji (looking over your shoulder); on **Submit**: the requester (puzzled); `CONTENT_ERROR` / `UNAVAILABLE`: always Kenji |
 | `briefing` | Shift briefing (chapter definition) | Manager Tanaka |
-| `offer` | Constraint offer line (appended to the pass line in the bubble, with **Try it** / **Later** buttons — rule 3a; offer ticket if unanswered; also recorded in the message log); Kenji's skip offer | Requester / Kenji |
+| `offer` | Constraint offer line (appended to the pass line in the bubble, with **Try it** / **Later** buttons — rule 3a; offer ticket if unanswered; also recorded in the message log); Kenji's skip offer (built-in `skip.offer`, with **Leave it for Kenji** / **Keep trying**) and accept line (built-in `skip.accept`) — rule 3b | Requester / Kenji |
+| `side` | A side request's `request` text (Puzzle Definition), delivered as a message at shift start (rule 3b) — message log + strip ticket, never the bubble | The side puzzle's requester (HQ email, the manager) |
 | `challenge` | Built-in `challenge.clear` and `challenge.rule_broken` (slot `{keyword}`), reported by Constraint Challenges | Requester (pleased / puzzled) |
 | `system` | One-time explainers (first Submit); the new-game "Ever used SQL before?" question, shown once **before** 1-1's request with two choice buttons (`onboarding-first-shift.md` rule 1); Tanaka's one-time "start over" line (Guided only, `onboarding-first-shift.md` Edge Cases) | Manager Tanaka |
 
@@ -86,6 +87,13 @@ is set in `/art-bible`.
    voices it. Required content: `clear` is the requester's pleased reaction to
    a dare done; `rule_broken` says "Right answer, but not within the
    challenge — uses {keyword}".
+
+   Built-in skip lines (string ids `skip.offer`, `skip.accept`, speaker Kenji)
+   are owned here; Shift & Chapter Progression decides when they are sent
+   (rule 7 there). Required content: `offer` is Kenji offering to take the
+   request ("leave it for me"), never implying the player failed a test;
+   `accept` is Kenji's easy-going acknowledgement. Neither names a row, value
+   or answer.
 
    **Bubble vs. note/strip (no sentence in both).** The bubble carries the
    **voiced line only** and is temporary (it returns to the request after
@@ -118,6 +126,19 @@ is set in `/art-bible`.
    rule 6 (first Submit on the next request, another request opened, or
    clock-out); then it is removed and counts as **Later**. The pass and offer
    lines are also in the log.
+3b. **Progression lines.** Kenji's `skip.offer` is a reaction (state
+   `Reaction`) with its two buttons; the "Leave it for Kenji" button that stays
+   on an exhausted request is Progression's (location deferred to
+   `/ux-design`). When the skip is accepted, `skip.accept` is shown like a pass
+   line (state `PassReaction`): it lasts `reaction_hold`, only a click or
+   Enter/Space ends it early, edits and Run do not; only then does Progression
+   open the next main request or, on a shift's last main request, clock out.
+   **Side-request messages** (`side` kind) arrive when their shift starts: each
+   is added to the message log and shown as a small **message ticket** on the
+   counter strip (envelope glyph + the requester's name) that opens the side
+   request; they never replace the current request in the bubble. The ticket
+   is removed once the side request has been opened or the shift clocks out
+   (the side request stays on the chapter list).
 4. The **message log** (button in the counter scene, shortcut Ctrl+L) lists every
    line of the current shift with speaker name and kind, newest at the bottom,
    for rereading. Nothing is ever lost from the log during a shift.
@@ -153,7 +174,7 @@ is set in `/art-bible`.
 | `NOT_ALLOWED` | "That's not something we do from the register." |
 | `UNSUPPORTED` | "That's more than we need today." |
 | `TIMEOUT` | "That's taking forever — is something repeating?" |
-| `TOO_MANY_ROWS` (grader SUBMIT_ERROR: over `grader_row_cap` rows on the visible pre-check) | "That's far too long a list." |
+| `TOO_MANY_ROWS` (grader SUBMIT_ERROR: over `grader_row_cap` rows on any visible run — the pre-check, the determinism run or the visible grading run, Hidden-Data Grader rules 6 and 7a) | "That's far too long a list." |
 | `CONTENT_ERROR` on Run, or grader verdict `UNAVAILABLE` on Submit (`error.CONTENT_ERROR`) | Kenji: "Sorry — the ledger itself is smudged. Not your fault; this one's on us." (never the requester's puzzled face; **no raw text is shown** — the build message goes only to the Playtest Log / content-bug report) |
 | any other `SQL_ERROR` | "Hmm, the register didn't like that." (raw message beneath) |
 
@@ -185,7 +206,7 @@ The counter scene, per open puzzle:
 |---|---|---|---|
 | `Request` | The request (speaker neutral) | Pass / fail / error / offer arrives | `Reaction` |
 | `Reaction` | The reaction (speaker pleased / puzzled) | `reaction_hold` elapses, Run, click on speaker, or editor edit after `reaction_grace` | `Request` |
-| `PassReaction` | Pass line (+ offer line and buttons) | `reaction_hold` elapses, or click / Enter / Space on the counter scene (edits and Run do not end it) | `Request` (next request, new speaker); an unanswered offer → offer ticket (rule 3a) |
+| `PassReaction` | Pass line (+ offer line and buttons), or Kenji's `skip.accept` (rule 3b) | `reaction_hold` elapses, or click / Enter / Space on the counter scene (edits and Run do not end it) | `Request` (next request, new speaker) or, after `skip.accept` on a shift's last main request, clock-out; an unanswered offer → offer ticket (rule 3a) |
 | any | | Message log opened | unchanged (log overlays the editor area, closes with Esc / Ctrl+L) |
 
 ### Interactions with Other Systems
@@ -196,7 +217,7 @@ The counter scene, per open puzzle:
 | Hidden-Data Grader | Grader → Dialogue | Verdict + feedback key `{verdict, cause, level}` only; `{verdict: UNAVAILABLE}` (no error text); SUBMIT_ERROR as `{error_kind, error_text}` incl. `TOO_MANY_ROWS` | Grader |
 | SQL Execution Sandbox | Sandbox → (Workbench) → Dialogue | `error_kind`, `error_text`; schema names for "did you mean" | Sandbox |
 | Query Workbench | Workbench hosts | Counter scene strip, message-log overlay | Workbench |
-| Shift & Chapter Progression | Progression → Dialogue | Shift briefing, next request, Kenji's skip offer | Progression |
+| Shift & Chapter Progression | Progression → Dialogue | Shift briefing, next request, Kenji's skip offer and accept (`skip.offer`, `skip.accept`, rule 3b), side-request messages at shift start (`side` kind, rule 3b); Dialogue → Progression: end of the `skip.accept` hold (then the next request or clock-out) | Progression owns timing; Dialogue owns the lines |
 | Constraint Challenges | Challenges → Dialogue | Challenges reports: offer (shown with the pass line in the bubble; offer ticket if unanswered — rule 3a; recorded in the log), clear, rule broken `{keyword}`, and challenge mode open/closed (the bubble then shows the challenge puzzle's request). Dialogue voices them via `challenge.clear` / `challenge.rule_broken` | Challenges owns the events; Dialogue owns the lines |
 | Hint System | Dialogue → Hints | Kenji's identity (portrait, name) for the hint panel | Dialogue |
 | Store Manual | Dialogue → Manual | The previous part-timer's voice as a writing guide for pages; no speaker in the scene | Dialogue |
@@ -499,6 +520,7 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 - **RD-18 [Integration]** GIVEN onboarding Guided in 1-1 to 1-3, THEN the bubble shows the request whenever no reaction is showing and guidance appears only in coach-mark labels; on a new game, the "Ever used SQL before?" line with its two buttons is shown before 1-1's request.
 - **RD-16 [Integration]** The Playtest Log records `line_shown {line_id, kind, speaker}`, `log_opened` and `line_skipped` (a reveal completed early), each with a timestamp and the common `puzzle` field.
 - **RD-19 [Integration]** GIVEN a FAIL that latches `exhausted` (stub progression sends Kenji's skip offer in the same frame), THEN the fail line shows first and the offer only after the fail line's `reaction_hold`; both are logged, in that order.
+- **RD-21 [Integration]** GIVEN a shift whose side request is valid, WHEN the shift starts, THEN a `side` line from its requester is in the message log and a message ticket shows on the strip while the bubble keeps the main request; opening the ticket opens the side request and removes the ticket. GIVEN an exhausted request, THEN `skip.offer` (Kenji) shows with Leave it for Kenji / Keep trying; WHEN accepted, THEN `skip.accept` holds for its `reaction_hold` (an edit or Run at 1.0 s does not end it, a click does) and only then does the next request open — or, on the shift's last main request, the clock-out begins.
 - **RD-20 [Integration]** GIVEN a FAIL, THEN the bubble shows only the voiced fail line and the workbench note shows only the grader's neutral symptom statement — no sentence appears in both; GIVEN a Run error, THEN the bubble shows only the gloss and the strip only the label + `error_text`. GIVEN challenge mode open, THEN the bubble's request is the challenge puzzle's; a stub clear / rule-broken event `{keyword: IN}` shows `challenge.clear` / `challenge.rule_broken` with "IN".
 
 ## Open Questions

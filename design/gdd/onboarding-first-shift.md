@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -68,9 +68,9 @@ balancing rules in this system.
    **schema browser**: "Click a column to put it in your query." Clicking `name`
    then `price` inserts them at the caret, and the workbench's auto-separator
    adds the `, ` between them (workbench rule 3), giving
-   `SELECT name, price FROM products` with nothing typed. Then Run, then
-   Submit — marks appear for each only until the player has used it once on
-   their own.
+   `SELECT name, price FROM products` with nothing typed. 1-2 has **only this
+   schema mark**: Run and Submit were taught on 1-1, so no Run or Submit mark
+   appears on 1-2 (rule 7a).
 4. **1-3 Noodle Aisle Check** — the first `WHERE`. When the request opens, the
    Store Manual's "Filtering rows" page unlocks and a coach mark points at the
    **Manual button**: "New page in the binder — have a look if you need it."
@@ -107,6 +107,19 @@ balancing rules in this system.
    static under reduced motion. While a coach mark is showing, the hint and
    manual "new" indicators are suppressed; they appear once no mark is showing
    (workbench rule 6), so the player meets one new signal at a time.
+7a. **The marks.** Guided mode has exactly these four marks, in this order;
+   the mark id is the `{mark}` value of the Playtest Log's
+   `mark_shown/done/dismissed` events:
+
+| Mark id | Puzzle | Target | Tanaka's label | Done when |
+|---|---|---|---|---|
+| `1-1.run` | 1-1 | Run button | "Press Run (Ctrl+Enter) to see what's on the shelves." | Any Run on 1-1, or a later mark's target done first (rule 8) |
+| `1-1.submit` | 1-1 | Submit button | "Now hand it to me — Submit (Ctrl+Shift+Enter)." | Any Submit on 1-1 |
+| `1-2.schema` | 1-2 | Schema browser | "Click a column to put it in your query." | A column name appears in the editor by any means (Edge Cases) |
+| `1-3.manual` | 1-3 | Manual button | "New page in the binder — have a look if you need it." | The Manual panel is opened on 1-3 |
+
+   A mark whose puzzle is never opened in this game (e.g. 1-3 skipped) stays
+   `Pending` and is never shown later.
 8. Nothing in onboarding is timed; the player may type, run and experiment freely
    at any step, and doing a later step early simply skips the earlier marks.
 
@@ -122,7 +135,7 @@ Per game: `Ask` → `Guided` ("No, show me around") or `Off` ("Yes, I know SQL")
 changeable later in settings.
 
 Per coach mark (Guided only): `Pending → Shown → Done` (target action performed)
-or `→ Dismissed` ("Got it", or Esc with the mark focused). Marks run in the fixed order of rules 2–4; doing a
+or `→ Dismissed` ("Got it", or Esc with the mark focused). Marks run in the fixed order of the rule 7a table; doing a
 later target early marks the earlier ones `Done`.
 
 ### Interactions with Other Systems
@@ -143,7 +156,7 @@ later target early marks the earlier ones `Done`.
 *Drafted without specialists — Lean mode.*
 
 - **If the player edits 1-1's prefilled query before running**: allowed; Run and Submit grade whatever is there; a broken edit gets the normal error/feedback and, **in Guided mode only**, Tanaka adds "You can always start over with the ledger: `SELECT * FROM products;`" once per game, as a one-time `system` line in the **bubble** after the error reaction (Dialogue rule 2; it returns to the request like any reaction).
-- **If the player submits 1-1 before running**: allowed; the Submit mark is marked Done and the Run mark is skipped.
+- **If the player submits 1-1 before running**: allowed; `1-1.submit` is Done and `1-1.run` is marked Done too (rule 8), without being shown.
 - **If the player types in 1-2 before clicking the schema browser**: the schema mark is marked Done as soon as a column name appears in the editor by any means.
 - **If the player dismisses every coach mark**: onboarding continues silently; no re-prompts.
 - **If the player chose "Yes, I know SQL" and later struggles**: hints and the manual work as usual; coach marks can be re-enabled in settings.
@@ -247,7 +260,7 @@ retained screenshot in `production/qa/evidence/`.*
 - **OB-12 [Logic]** GIVEN 1-3 passed, THEN no further marks appear anywhere in the game.
 
 **Mark behaviour**
-- **OB-13 [Logic]** At most one mark is shown at a time, in the order of rules 2–4; doing a later target early marks earlier ones Done.
+- **OB-13 [Logic]** Guided mode defines exactly the four marks of rule 7a (`1-1.run`, `1-1.submit`, `1-2.schema`, `1-3.manual`), each logged with that id; at most one is shown at a time, in table order; doing a later target early marks earlier ones Done; on 1-2 no Run or Submit mark is ever shown.
 - **OB-14 [Logic]** A shown mark becomes Done on its target action and Dismissed on "Got it" or Esc with the mark focused; Esc with focus in the editor leaves the editor and the mark stays; a dismissed mark never reappears.
 - **OB-24 [Integration]** GIVEN a coach mark shown and a manual page or hint unlocking (1-1 "Reading the ledger"), THEN no "new" indicator is visible until no mark is showing, then it appears.
 - **OB-15 [UI]** GIVEN a mark shown, THEN typing, Run and clicks still work, the ring never overlaps editor text or result tables, and it follows its target on resize or text scaling.

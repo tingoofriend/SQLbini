@@ -2,7 +2,7 @@
 
 > **Status**: Approved (design review 2026-10-14)
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-15 (wording: `TOO_MANY_ROWS` on any visible run, from the Dialogue re-review 6c; earlier: 2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -107,7 +107,8 @@ interrupt a query — both shape the rules below. How the time limit is enforced
     (Formulas). Rows are returned as positional lists in column order.
 13. If more than `grader_row_cap` rows exist, the result is marked `truncated`;
     the grader treats that as too many rows (its `rows_ok`: `TOO_MANY_ROWS` on
-    the visible pre-check, a `generic` mismatch on a hidden dataset).
+    any visible run — pre-check, determinism or visible grading run, grader
+    rules 6 and 7a — a `generic` mismatch on a hidden dataset).
 14. Write statements in `scratch` mode run directly (no view), then report the
     number of rows changed (read with `SELECT changes()` — godot-sqlite has no
     changes method; probed). A `RETURNING` clause is ignored: only

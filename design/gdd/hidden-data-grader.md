@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (re-review fixes: rule 7a, neutral statements; earlier: cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (wording: `TOO_MANY_ROWS` on any visible run, from the Dialogue re-review 6c; earlier: re-review fixes: rule 7a, neutral statements; earlier: cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 1 — The Condition, Not the Screen; Pillar 2 — Your Query, Your Way
 
@@ -335,8 +335,8 @@ The **rows_ok** formula is defined as:
 |----------|------|-------|--------|-------------|
 | R_cap | int | 1,000–50,000 (default 5,000) | data file (registry `grader_row_cap`) | Maximum rows the grader compares |
 
-**Output Range:** boolean. A player result over the cap on the visible
-pre-check sets `e` (SUBMIT_ERROR kind `TOO_MANY_ROWS`, not counted); it stops
+**Output Range:** boolean. A player result over the cap on any visible
+run — the pre-check, the determinism run or the visible grading run (rule 7a) — sets `e` (SUBMIT_ERROR kind `TOO_MANY_ROWS`, not counted); it stops
 runaway cross joins from stalling grading. Over the cap on a hidden dataset
 only: `m_i = false`, cause `generic`, counted (rule 9). A reference over the
 cap fails puzzle validation at load.
@@ -367,7 +367,8 @@ the 2026-10-14 design review.*
 - **If the player's query errors only on a hidden dataset** (e.g. a cast that
   fails on a hidden value): `m_i = false`, cause `generic`, counted. The error
   text is **not** shown (it could describe hidden data).
-- **If the result exceeds `R_cap` rows**: on the visible pre-check, SUBMIT_ERROR
+- **If the result exceeds `R_cap` rows**: on any visible run (the pre-check, or
+  the determinism or visible grading run, rule 7a), SUBMIT_ERROR
   `TOO_MANY_ROWS`, not counted; on a hidden dataset only (sandbox `truncated`),
   `m_i = false`, cause `generic`, counted as a FAIL, with no detail shown.
 - **If the query uses `RANDOM()` or another non-deterministic construct and the

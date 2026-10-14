@@ -19,3 +19,20 @@ Findings:
 Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md 787ea01eb650554bc222fee52b41a3f89120c86a
 Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
 Revised in-session (2026-10-14, after the review; user decisions: pass line held then next request, guidance in coach-mark labels): BLOCKING PASS sequence fixed — rule 3a + `PassReaction` state: pass + offer line with Try it / Later held for `reaction_hold` (click / Enter ends early; edits and Run do not), then the next request; an unanswered offer becomes an offer ticket on the strip until it expires (RD-17); Progression rule 11 / PR-15 and Constraint Challenges rule 6 aligned. BLOCKING error templates fixed — every sandbox `error_kind` has a template incl. `NOT_ALLOWED` and `CONTENT_ERROR` (Kenji, never blames the player); `unrecognized token` replaces "unterminated string" (RD-09). Also fixed: opening question as a `system` line before 1-1, guidance never in the bubble (RD-18); edge-case grace contradiction; built-in fail lines and required content; raw text lives in the error strip; `did_you_mean` uses the puzzle's schema; RD-02 at level 1; `reaction_grace` and paged `len` in Formulas; stale statuses. Not done: request length budget at high `ui_scale`, Player Fantasy / Tuning Knobs (advisory). Re-review pending in a fresh session.
+
+## Review — 2026-10-15 (re-review after cross-GDD review fixes and 6a rule 2 change, fresh session) — Verdict: NEEDS REVISION
+Scope signal: M
+Specialists: none (lean mode; fresh session, not the authoring session — each doc reviewed by a read-only subagent, blocking items verified against the text in the main session)
+Blocking items: 1 | Recommended: 5
+Summary: Prior blockers (PASS sequence, error templates) resolved; B1 (Kenji line, no raw text, UNAVAILABLE), W1, W5 bubble/note split, W6, W11–W13, S2 queue and the Store Manual row are all in. 6a rule 2 is correct: fail.generic carries no column-content/order advice (only the grader's neutral note does). One contract gap: Progression's side-request messages and Kenji's accept line had no kind or string id.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Core Rules 2 / Interactions (Progression): side-request messages and Kenji's skip accept line have no kind, string id or placement (Progression rules 5, 7 send them)
+- [RECOMMENDED] Core Rules 6 error table: TOO_MANY_ROWS row said "visible pre-check" only; grader rule 7a/AC-29 also give it from the determinism / visible grading run (fixed in-session, with grader Formulas/Edge Case and sandbox rule 13 wording)
+- [RECOMMENDED] Core Rules 6 / UI Req 5 / RD-09: "SQLite's original message always shown" — TOO_MANY_ROWS has no SQLite text (workbench fixed text); add to the exception
+- [RECOMMENDED] Formulas len: PASS+offer timed on combined text vs "paged line timed on its last page"; buttons placement when the bubble is full at ui_scale 2.0
+- [RECOMMENDED] Acceptance Criteria: no AC asserts fail.generic contains no column advice (RD-20 only checks non-duplication)
+- [RECOMMENDED] States: fail → queued offer (S2) not modelled in the state table
+Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md fd1c405fd5510bccd9a8911dc1494f53b79f7f3b
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+Revised in-session (2026-10-15, after the review; user decision "ids + log delivery"): rule 2 kinds — `offer` gains built-in `skip.offer` / `skip.accept` (Kenji), new `side` kind; new rule 3b (skip.accept holds like a pass line, then next request or clock-out; side-request messages = message log + strip message ticket, never the bubble); PassReaction state, Progression row, RD-21. TOO_MANY_ROWS row now "any visible run — pre-check, determinism or visible grading run (grader rules 6, 7a)". Status stays In Review; re-review in a fresh session.
