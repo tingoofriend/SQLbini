@@ -1,0 +1,193 @@
+{
+ "1-1": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {}
+ },
+ "1-2": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "All columns": {
+    "visible": false,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "1-3": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Guessing by name": {
+    "visible": false,
+    "hidden_a": false,
+    "hidden_b": false
+   },
+   "Hardcoded ids": {
+    "visible": true,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "1-4": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Less than vs. at most": {
+    "visible": true,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "1-5": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Missed the boundary": {
+    "visible": true,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "1-6": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "AND/OR precedence": {
+    "visible": true,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "1-7": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Included today": {
+    "visible": true,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "1-8": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Excluded both ends": {
+    "visible": true,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "1-9": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Matched the start only": {
+    "visible": true,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "1-10": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Compared with = NULL": {
+    "visible": false,
+    "hidden_a": false,
+    "hidden_b": false
+   },
+   "Guessing by category": {
+    "visible": true,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "1-11": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Missing parentheses": {
+    "visible": true,
+    "hidden_a": false,
+    "hidden_b": false
+   },
+   "Forgot the stock rule": {
+    "visible": false,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "S-1": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Duplicates included": {
+    "visible": false,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ },
+ "S-2": {
+  "answer": {
+   "visible": true,
+   "hidden_a": true,
+   "hidden_b": true
+  },
+  "traps": {
+   "Separate columns": {
+    "visible": false,
+    "hidden_a": false,
+    "hidden_b": false
+   }
+  }
+ }
+}

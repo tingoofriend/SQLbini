@@ -1,0 +1,626 @@
+<title>SQLbini</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=IBM+Plex+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;700&display=swap">
+<style>
+/* Layout: konbini POS terminal in three columns: shift roster (puzzles) | counter (chat + editor + receipts) | ledger schema */
+:root {
+  --bg: #EEF0EA;
+  --panel: #FFFFFF;
+  --sunk: #F6F7F3;
+  --ink: #1D2327;
+  --muted: #5F6970;
+  --line: #D6DAD2;
+  --tag: #FFD23F;        /* shelf price-tag yellow */
+  --tag-ink: #1D2327;
+  --ok: #17845A;
+  --ok-bg: #E2F3EA;
+  --bad: #C8402F;
+  --bad-bg: #FBE7E3;
+  --code-bg: #1F262B;
+  --code-fg: #E6EAE3;
+  --kw: #FFD23F;
+  --str: #8FD6A8;
+  --num: #F2A27A;
+  --cmt: #7C8890;
+  --f-display: "Dela Gothic One", "Noto Sans JP", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-code: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121618; --panel: #1A1F22; --sunk: #15191B; --ink: #E7EAE4; --muted: #98A2A8; --line: #2C3438;
+  --tag: #F2C631; --tag-ink: #15191B; --ok: #4CC48C; --ok-bg: #173126; --bad: #F07A68; --bad-bg: #3A1F1B;
+  --code-bg: #0E1214; --code-fg: #E6EAE3; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #121618; --panel: #1A1F22; --sunk: #15191B; --ink: #E7EAE4; --muted: #98A2A8; --line: #2C3438;
+  --tag: #F2C631; --tag-ink: #15191B; --ok: #4CC48C; --ok-bg: #173126; --bad: #F07A68; --bad-bg: #3A1F1B;
+  --code-bg: #0E1214; --code-fg: #E6EAE3; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.55; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--tag); outline-offset: 2px; }
+
+.app { max-width: 1440px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+
+/* Store sign */
+.sign { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; background: var(--panel); border: 1px solid var(--line); border-bottom: 4px solid var(--tag); border-radius: var(--r); padding: 10px 16px; }
+.sign h1 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 26px; letter-spacing: .5px; line-height: 1; display: flex; align-items: center; gap: 10px; }
+.sign h1 .open { font-family: var(--f-code); font-size: 11px; font-weight: 600; background: var(--tag); color: var(--tag-ink); padding: 3px 6px; border-radius: 3px; letter-spacing: 1px; }
+.sign h1 .jp { font-family: "Noto Sans JP", var(--f-body); font-weight: 700; font-size: 13px; color: var(--muted); letter-spacing: 1px; }
+.sign .meta { color: var(--muted); font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; }
+.sign .meta b { color: var(--ink); font-weight: 500; }
+.sign .spacer { flex: 1; }
+.progress { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { width: 120px; height: 6px; background: var(--sunk); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ok); transition: width .4s; }
+
+.main { display: grid; grid-template-columns: 240px minmax(0, 1fr) 270px; gap: 14px; align-items: start; }
+@media (max-width: 1150px) { .main { grid-template-columns: 220px minmax(0, 1fr); } .schema { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); min-width: 0; }
+.ptitle { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 12px 14px 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+/* Shift roster */
+.stages { padding-bottom: 8px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.stages ol { list-style: none; margin: 0; padding: 0 6px; display: grid; gap: 2px; }
+.stage { width: 100%; display: grid; grid-template-columns: 38px 1fr 18px; align-items: center; gap: 6px; text-align: left; background: none; border: 0; border-radius: 4px; padding: 7px 8px; }
+.stage:hover:not(:disabled) { background: var(--sunk); }
+.stage[aria-current="true"] { background: var(--tag); color: var(--tag-ink); }
+.stage[aria-current="true"] .sid { color: var(--tag-ink); }
+.stage:disabled { opacity: .42; cursor: not-allowed; }
+.sid { font-family: var(--f-code); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sname { font-size: 13px; line-height: 1.3; }
+.smark { font-size: 12px; text-align: center; }
+.smark.done { color: var(--ok); }
+.stage[aria-current="true"] .smark.done { color: var(--tag-ink); }
+.sep { margin: 8px 14px 4px; font-size: 11px; color: var(--muted); letter-spacing: 1px; font-weight: 700; text-transform: uppercase; }
+.reset { margin: 10px 14px 4px; display: grid; gap: 6px; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
+.confirm { font-size: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.confirm button { border: 1px solid var(--line); background: var(--sunk); border-radius: 4px; padding: 2px 8px; font-size: 12px; }
+.confirm .danger { border-color: var(--bad); color: var(--bad); }
+@media (max-width: 760px) {
+  .stages { position: static; }
+  .stages ol { display: flex; overflow-x: auto; padding-bottom: 4px; }
+  .stage { grid-template-columns: auto; width: auto; white-space: nowrap; padding: 6px 10px; }
+  .stage .sname, .stage .smark { display: none; }
+  .sep { display: none; }
+}
+
+/* Counter */
+.work { display: grid; gap: 14px; min-width: 0; }
+.chat { padding: 14px 16px; display: grid; gap: 10px; }
+.chead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.chead .pid { font-family: var(--f-code); font-size: 12px; color: var(--muted); }
+.chead h2 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 22px; line-height: 1.15; text-wrap: balance; }
+.chead .badge { font-size: 11px; border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; color: var(--muted); }
+.msgs { display: grid; gap: 8px; max-height: 300px; overflow-y: auto; }
+.msg { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; }
+.av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-display); font-size: 13px; background: var(--sunk); border: 1px solid var(--line); }
+.av.boss { background: var(--tag); color: var(--tag-ink); border-color: transparent; }
+.bubble { background: var(--sunk); border: 1px solid var(--line); border-radius: 4px 12px 12px 12px; padding: 8px 12px; max-width: 64ch; }
+.bubble .who { font-size: 12px; color: var(--muted); font-weight: 500; display: block; margin-bottom: 2px; }
+.bubble.ok { background: var(--ok-bg); border-color: transparent; }
+.bubble.bad { background: var(--bad-bg); border-color: transparent; }
+.msg.me { grid-template-columns: minmax(0, 1fr); justify-items: end; }
+.msg.me .bubble { background: var(--code-bg); color: var(--code-fg); border-color: transparent; border-radius: 12px 4px 12px 12px; font-family: var(--f-code); font-size: 12.5px; white-space: pre-wrap; word-break: break-word; }
+
+/* Editor */
+.editor { overflow: hidden; }
+.ebar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.ebar .lbl { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-right: auto; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 5px; padding: 6px 12px; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--sunk); }
+.btn kbd { font-family: var(--f-code); font-size: 10.5px; color: var(--muted); }
+.btn.primary { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.btn.primary kbd { color: inherit; opacity: .6; }
+.btn.primary:hover { opacity: .88; background: var(--ink); }
+.btn.go { background: var(--tag); color: var(--tag-ink); border-color: var(--tag); font-weight: 700; }
+.btn.go:hover { filter: brightness(.96); background: var(--tag); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+@media (max-width: 520px) { .btn kbd { display: none; } }
+.code { position: relative; background: var(--code-bg); min-height: 150px; }
+.code pre, .code textarea { margin: 0; padding: 14px 16px; font-family: var(--f-code); font-size: 14px; line-height: 1.6; tab-size: 2; white-space: pre-wrap; word-break: break-word; border: 0; width: 100%; min-height: 150px; letter-spacing: 0; }
+.code pre { position: absolute; inset: 0; pointer-events: none; color: var(--code-fg); overflow: hidden; }
+.code textarea { position: relative; display: block; resize: vertical; background: transparent; color: transparent; caret-color: var(--tag); outline: none; overflow: auto; }
+.code textarea::placeholder { color: var(--cmt); }
+.code textarea::selection { background: rgba(255, 210, 63, .3); color: transparent; }
+.tk-kw { color: var(--kw); font-weight: 600; }
+.tk-str { color: var(--str); }
+.tk-num { color: var(--num); }
+.tk-cmt { color: var(--cmt); font-style: italic; }
+.efoot { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; padding: 8px 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.hintbox { padding: 10px 14px; border-top: 1px dashed var(--line); font-size: 13px; display: grid; gap: 6px; }
+.hintbox code { font-family: var(--f-code); font-size: 12.5px; background: var(--sunk); padding: 1px 6px; border-radius: 3px; white-space: pre-wrap; word-break: break-word; }
+
+/* Test strip */
+.tests { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 12px; }
+.tcell { border: 1px solid var(--line); border-radius: 5px; padding: 8px 10px; display: grid; gap: 2px; background: var(--sunk); transition: background .25s, border-color .25s; min-width: 0; }
+.tcell .tn { font-size: 12px; font-weight: 700; }
+.tcell .ts { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tcell.pass { background: var(--ok-bg); border-color: var(--ok); }
+.tcell.pass .ts { color: var(--ok); }
+.tcell.fail { background: var(--bad-bg); border-color: var(--bad); }
+.tcell.fail .ts { color: var(--bad); }
+.tcell.run { animation: blink .5s infinite alternate; }
+@keyframes blink { from { opacity: 1; } to { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .tcell.run { animation: none; } .bar i { transition: none; } }
+
+/* Results / receipts */
+.results { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; align-items: start; }
+.slip { min-width: 0; }
+.slip .ptitle .count { font-family: var(--f-code); font-size: 11px; letter-spacing: 0; text-transform: none; font-weight: 400; }
+.slip.target { border-style: dashed; }
+.match { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; letter-spacing: 0; text-transform: none; }
+.match.y { background: var(--ok-bg); color: var(--ok); }
+.match.n { background: var(--sunk); color: var(--muted); border: 1px solid var(--line); }
+.tablewrap { overflow: auto; max-height: 340px; margin: 0 8px 10px; border: 1px solid var(--line); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-family: var(--f-code); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { position: sticky; top: 0; background: var(--sunk); font-weight: 600; color: var(--muted); font-size: 11.5px; }
+td.num { text-align: right; }
+td.null { color: var(--muted); font-style: italic; }
+tr.missing td { background: var(--bad-bg); }
+tr.extra td { background: color-mix(in srgb, var(--tag) 22%, transparent); }
+td.flag { font-family: var(--f-body); font-size: 11px; font-weight: 700; }
+tr.missing td.flag { color: var(--bad); }
+.empty { margin: 0 14px 14px; padding: 18px; border: 1px dashed var(--line); border-radius: 4px; color: var(--muted); font-size: 13px; text-align: center; }
+.err { margin: 0 14px 14px; padding: 10px 12px; background: var(--bad-bg); border-radius: 4px; font-size: 13px; display: grid; gap: 4px; }
+.err .raw { font-family: var(--f-code); font-size: 11.5px; color: var(--muted); word-break: break-word; }
+
+/* Ledger schema */
+.schema { padding-bottom: 10px; }
+.tname { margin: 4px 14px 8px; font-family: var(--f-code); font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; align-items: baseline; }
+.tname span { font-family: var(--f-body); font-weight: 400; font-size: 12px; color: var(--muted); }
+.cols { list-style: none; margin: 0; padding: 0 8px; display: grid; }
+.cols li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; padding: 7px 6px; border-top: 1px solid var(--line); }
+.cols button { background: none; border: 0; padding: 0; font-family: var(--f-code); font-size: 13px; font-weight: 600; text-align: left; justify-self: start; }
+.cols button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.cols .ty { font-family: var(--f-code); font-size: 11px; color: var(--muted); }
+.cols .ds { grid-column: 1 / -1; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.cheat { margin: 12px 14px 0; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 12px; color: var(--muted); display: grid; gap: 4px; }
+.cheat b { color: var(--ink); font-weight: 500; }
+.loading { padding: 40px; text-align: center; color: var(--muted); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+
+<div class="app">
+  <header class="sign">
+    <h1><span class="open">24H</span>SQLbini <span class="jp">コンビニ · 駅前店</span></h1>
+    <div class="meta"><span>Chapter 1 <b>First Shift</b></span><span>Date <b>Mon 2026-03-02</b></span><span>Staff <b>New part-timer</b></span></div>
+    <div class="spacer"></div>
+    <div class="progress"><span id="progText">0 / 11</span><div class="bar"><i id="progBar" style="width:0%"></i></div></div>
+  </header>
+
+  <div class="main">
+    <nav class="panel stages" aria-label="Puzzles">
+      <div class="ptitle">Today's shift</div>
+      <ol id="stageList"></ol>
+      <div class="reset" id="resetArea"></div>
+    </nav>
+
+    <section class="work">
+      <div class="panel chat">
+        <div class="chead"><span class="pid" id="pid"></span><h2 id="ptitle"></h2><span class="badge" id="pbadge"></span></div>
+        <div class="msgs" id="msgs" aria-live="polite"></div>
+      </div>
+
+      <div class="panel editor">
+        <div class="ebar">
+          <span class="lbl">POS query terminal</span>
+          <button class="btn" id="hintBtn" type="button">Hint <kbd id="hintLeft">2</kbd></button>
+          <button class="btn primary" id="runBtn" type="button">Run <kbd>Ctrl+Enter</kbd></button>
+          <button class="btn go" id="submitBtn" type="button">Submit</button>
+        </div>
+        <div class="code">
+          <pre id="hl" aria-hidden="true"></pre>
+          <label class="sr" for="sql">SQL query</label>
+          <textarea id="sql" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Type your SQL here. Ctrl+Enter runs it; Submit also checks it against hidden ledgers."></textarea>
+        </div>
+        <div class="hintbox" id="hintBox" hidden></div>
+        <div class="efoot"><span id="charCount">0 chars</span><span id="bestInfo"></span></div>
+      </div>
+
+      <div class="panel" id="testPanel" hidden>
+        <div class="ptitle">Submission check <span style="text-transform:none;letter-spacing:0;font-weight:400">Must also pass on hidden ledgers</span></div>
+        <div class="tests" id="tests"></div>
+      </div>
+
+      <div class="results">
+        <div class="panel slip" id="mineSlip"></div>
+        <div class="panel slip target" id="targetSlip"></div>
+      </div>
+    </section>
+
+    <aside class="panel schema" aria-label="Ledger schema">
+      <div class="ptitle">Ledger schema</div>
+      <div class="tname">products <span id="rowCount">24 items</span></div>
+      <ul class="cols" id="cols"></ul>
+      <div class="cheat">
+        <div><b>Click a column</b> to insert it into the editor.</div>
+        <div><b>Ctrl+Enter</b> runs on the visible ledger.</div>
+        <div><b>Submit</b> checks visible + hidden ledgers A and B.</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-asm.js"></script>
+<script>
+const DATA = __DATA__;
+
+const COLS = [
+  ["id", "INTEGER", "Product number"],
+  ["name", "TEXT", "Product name"],
+  ["category", "TEXT", "Category (Noodles, Drinks, Dairy, Snacks …)"],
+  ["price", "INTEGER", "Selling price (yen, tax incl.)"],
+  ["cost", "INTEGER", "Wholesale cost (yen)"],
+  ["stock", "INTEGER", "Units on hand"],
+  ["expiry_date", "TEXT", "Expiry 'YYYY-MM-DD', NULL if none"],
+  ["shelf", "TEXT", "Shelf location (A1, C2 …)"],
+];
+const SCHEMA = "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, price INTEGER NOT NULL, cost INTEGER NOT NULL, stock INTEGER NOT NULL, expiry_date TEXT, shelf TEXT NOT NULL);";
+
+const EXTRA = {
+  "1-1": { hints: ["To get every column at once, use an asterisk (*).", "SELECT * FROM table_name"],
+    win: "Great, that's our ledger. The schema on the right explains each column, so give it a quick look." },
+  "1-2": { hints: ["List the columns you want after SELECT, separated by commas.", "SELECT column1, column2 FROM products"],
+    win: "Nice and clean. I'll print the tags from this.",
+    trapMsgs: { "All columns": "You want the wholesale cost and shelf code printed on the price tags? Just name and price!" } },
+  "1-3": { hints: ["Use WHERE to pick rows. Wrap text values in single quotes.", "SELECT name, price, stock FROM products WHERE category = '___'"],
+    win: "Noodle aisle done! Udon counts as noodles too, you know.",
+    trapMsgs: { "Guessing by name": "Not every noodle has 'Ramen' in its name. There's a category column for this.",
+                "Hardcoded ids": "The ledger changes every day. Give me an answer that's always right, not just right today. Pick rows by a condition, not by number." } },
+  "1-4": { hints: ["'Or fewer' includes the value itself. Pick your comparison operator carefully.", "WHERE stock ___ 3"],
+    win: "Perfect, I'll place the order with this list.",
+    trapMsgs: { "Less than vs. at most": "What about items with exactly 3 left? '3 or fewer' includes 3." } },
+  "1-5": { hints: ["When both conditions must hold, join them with AND.", "WHERE category = 'Drinks' AND price ___ 200"],
+    win: "Oh, the lemon soda is exactly 200 yen. I'll take that one, thanks!",
+    trapMsgs: { "Missed the boundary": "Why isn't the 200-yen drink on the list? I said 200 yen or less..." } },
+  "1-6": { hints: ["AND is evaluated before OR. Group with parentheses, or use IN.", "WHERE category IN ('___', '___') AND price >= 150"],
+    win: "Just the filling ones. Thank you!",
+    trapMsgs: { "AND/OR precedence": "Huh, there's a 40-yen snack in here. AND binds before OR, so wrap the OR part in parentheses." } },
+  "1-7": { hints: ["Dates in 'YYYY-MM-DD' form can be compared as plain text.", "WHERE expiry_date ___ '2026-03-02'"],
+    win: "Good. Let's pull those off the shelf right away.",
+    trapMsgs: { "Included today": "Items expiring today can still be sold. Only the ones already past it!" } },
+  "1-8": { hints: ["BETWEEN A AND B includes both A and B.", "WHERE expiry_date BETWEEN '____-__-__' AND '____-__-__'"],
+    win: "Let's go put the discount stickers on.",
+    trapMsgs: { "Excluded both ends": "Items expiring on the 2nd and the 8th are missing. Those are this week too." } },
+  "1-9": { hints: ["In LIKE, % means 'any characters, any number of them'.", "WHERE name LIKE '%___%'"],
+    win: "Ah, there it is! Thank you, dear. I'll go have a look at that shelf.",
+    trapMsgs: { "Matched the start only": "Mrs. Sato wanted the Choco Banana bar! 'Banana' isn't always at the start." } },
+  "1-10": { hints: ["NULL means 'no value', so = can't match it. There's special syntax.", "WHERE expiry_date IS ____"],
+    win: "Got it, so those never need expiry checks.",
+    trapMsgs: { "Compared with = NULL": "Empty result? Comparing with = NULL is always 'unknown'. Use IS NULL.",
+                "Guessing by category": "The vinyl umbrella is Misc, and it has no expiry either. Check the expiry column itself." } },
+  "1-11": { hints: ["Say it in words first: has stock AND (expired OR (Deli AND expires today)).", "WHERE stock > 0 AND ( ___ OR ( ___ AND ___ ) )"],
+    win: "Perfect. A disposal list on your first day! Tomorrow I'll need your help with stocktaking. Otsukaresama, good work today!",
+    trapMsgs: { "Missing parentheses": "Why is a bento with zero stock on the list? Without parentheses, stock > 0 doesn't apply to the second half.",
+                "Forgot the stock rule": "How do I throw away something we don't have? Only items with stock, please." } },
+  "S-1": { hints: ["There's a keyword that shows each value only once.", "SELECT ________ category FROM products"],
+    win: "Reply sent. HQ confirmed receipt.",
+    trapMsgs: { "Duplicates included": "The same category appears many times. Please list each one once." } },
+  "S-2": { hints: ["You can calculate with columns inside SELECT. Name it with AS.", "SELECT name, price - cost AS ______ FROM products"],
+    win: "Bento make good money, huh. We'll use this when we close the register in Chapter 3.",
+    trapMsgs: { "Separate columns": "If you give me price and cost separately, I have to do the math. Subtract them for me." } },
+};
+
+const PEOPLE = {
+  "Manager": { name: "Manager Tanaka", av: "T", boss: true },
+  "Customer": { name: "Customer", av: "C" },
+  "Mrs. Sato": { name: "Mrs. Sato (regular)", av: "S" },
+  "Kenji": { name: "Kenji (coworker)", av: "K" },
+  "HQ": { name: "HQ email", av: "HQ" },
+};
+const PUZ = DATA.puzzles.map(p => {
+  const i = p.ask.indexOf(": ");
+  return { ...p, who: p.ask.slice(0, i), line: p.ask.slice(i + 2), side: p.id.startsWith("S-"), ...EXTRA[p.id] };
+});
+const MAINS = PUZ.filter(p => !p.side);
+const plain = t => t.replace(/^\[(Boss|Side)\] /, "");
+
+/* ---------- Save ---------- */
+const KEY = "sqlbini-ch1-en-v1";
+let save = { solved: {}, drafts: {}, hints: {} };
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) save = { ...save, ...s }; } catch (e) {}
+function persist() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} }
+
+/* ---------- Database ---------- */
+let SQL = null;
+const ROWCOLS = ["name", "category", "price", "cost", "stock", "expiry_date", "shelf"];
+function buildDB(rows, offset) {
+  const db = new SQL.Database();
+  db.run(SCHEMA);
+  const st = db.prepare("INSERT INTO products VALUES (?,?,?,?,?,?,?,?)");
+  rows.forEach((r, i) => st.run([i + offset, ...r]));
+  st.free();
+  return db;
+}
+function hiddenB() {
+  return [...DATA.visible, ...DATA.edge].reverse().map(r => {
+    r = [...r];
+    const ch = DATA.hiddenBChanges[r[0]] || {};
+    for (const c in ch) r[ROWCOLS.indexOf(c)] = ch[c];
+    return r;
+  });
+}
+const SETS = [
+  { key: "pub", name: "Visible ledger", rows: () => DATA.visible, off: 1 },
+  { key: "a", name: "Hidden ledger A", rows: () => [...DATA.visible, ...DATA.edge], off: 1 },
+  { key: "b", name: "Hidden ledger B", rows: hiddenB, off: 101 },
+];
+function query(set, sql) {
+  const db = buildDB(set.rows(), set.off);
+  try {
+    const clean = sql.trim().replace(/;+\s*$/, "");
+    if (!clean) throw new Error("EMPTY");
+    const st = db.prepare(clean);
+    const cols = st.getColumnNames();
+    const rows = [];
+    while (st.step()) rows.push(st.get());
+    st.free();
+    return { cols, rows };
+  } finally { db.close(); }
+}
+function bag(rows) { const m = new Map(); rows.forEach(r => { const k = JSON.stringify(r); m.set(k, (m.get(k) || 0) + 1); }); return m; }
+function same(a, b) {
+  if (a.cols.length !== b.cols.length || a.rows.length !== b.rows.length) return false;
+  const A = bag(a.rows), B = bag(b.rows);
+  for (const [k, v] of A) if (B.get(k) !== v) return false;
+  return true;
+}
+function diff(exp, got) {
+  const E = bag(exp.rows), G = bag(got.rows), missing = [], extra = [];
+  for (const [k, v] of E) for (let i = 0; i < v - (G.get(k) || 0); i++) missing.push(JSON.parse(k));
+  for (const [k, v] of G) for (let i = 0; i < v - (E.get(k) || 0); i++) extra.push(JSON.parse(k));
+  return { missing, extra };
+}
+
+/* ---------- Friendly error messages ---------- */
+function lev(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+function closest(word, list) {
+  let best = null, bd = 99;
+  list.forEach(c => { const x = lev(word.toLowerCase(), c); if (x < bd) { bd = x; best = c; } });
+  return bd <= 3 ? best : null;
+}
+function explain(msg) {
+  let m;
+  if (msg === "EMPTY") return "You haven't written anything yet. Start with SELECT.";
+  if ((m = msg.match(/no such column: (\S+)/))) {
+    const name = m[1].split(".").pop(), c = closest(name, COLS.map(c => c[0]));
+    if (c) return `There's no column called '${name}'. Did you mean '${c}'?`;
+    if (/^[A-Z]/.test(name)) return `'${name}' isn't a column. If it's a text value, wrap it in single quotes: '${name}'`;
+    return `There's no column called '${name}'. Check the ledger schema on the right.`;
+  }
+  if ((m = msg.match(/no such table: (\S+)/))) return `There's no ledger called '${m[1]}'. Right now the only table is products.`;
+  if ((m = msg.match(/near "(.+?)": syntax error/))) return `Something's off near "${m[1]}". Check your commas, quotes, and keyword order.`;
+  if (/incomplete input/.test(msg)) return "The query ends too early. Make sure every quote and parenthesis is closed.";
+  if (/unrecognized token/.test(msg)) return "There's a character SQL doesn't understand. Check that your quotes are paired.";
+  return "The query couldn't run. See the original message below.";
+}
+
+/* ---------- State / rendering ---------- */
+let cur = null;
+const logs = {};
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const chars = s => s.replace(/\s+/g, "").replace(/;+$/, "").length;
+
+function unlocked(p) {
+  if (p.side) return !!save.solved["1-2"];
+  const i = MAINS.indexOf(p);
+  if (i === 0) return true;
+  if (p.id === "1-11") return MAINS.slice(0, 10).filter(q => save.solved[q.id]).length >= 8;
+  return !!(save.solved[MAINS[i - 1].id] || (i >= 2 && save.solved[MAINS[i - 2].id]));
+}
+
+function renderStages() {
+  const item = p => `<li><button class="stage" type="button" data-id="${p.id}" ${unlocked(p) ? "" : "disabled"} aria-current="${cur && cur.id === p.id}">
+      <span class="sid">${p.id}</span><span class="sname">${esc(plain(p.title))}${p.id === "1-11" ? " ★" : ""}</span>
+      <span class="smark ${save.solved[p.id] ? "done" : ""}">${save.solved[p.id] ? "✓" : unlocked(p) ? "" : "·"}</span></button></li>`;
+  $("stageList").innerHTML = MAINS.map(item).join("") + `<li class="sep">Side jobs</li>` + PUZ.filter(p => p.side).map(item).join("");
+  const n = MAINS.filter(p => save.solved[p.id]).length;
+  $("progText").textContent = `${n} / ${MAINS.length}`;
+  $("progBar").style.width = (n / MAINS.length * 100) + "%";
+  $("stageList").querySelectorAll(".stage").forEach(b => b.onclick = () => open(b.dataset.id));
+  renderReset(false);
+}
+function renderReset(asking) {
+  $("resetArea").innerHTML = asking
+    ? `<div class="confirm">Erase all progress? <button class="danger" id="rYes" type="button">Erase</button><button id="rNo" type="button">Cancel</button></div>`
+    : `<button class="linkbtn" id="rAsk" type="button">Reset progress</button>`;
+  if (asking) { $("rYes").onclick = () => { save = { solved: {}, drafts: {}, hints: {} }; persist(); for (const k in logs) delete logs[k]; open("1-1"); }; $("rNo").onclick = () => renderReset(false); }
+  else $("rAsk").onclick = () => renderReset(true);
+}
+
+function say(who, html, cls = "") { logs[cur.id].push({ who, html, cls }); renderMsgs(); }
+function renderMsgs() {
+  $("msgs").innerHTML = logs[cur.id].map(m => {
+    if (m.who === "me") return `<div class="msg me"><div class="bubble">${m.html}</div></div>`;
+    const p = PEOPLE[m.who] || { name: m.who, av: m.who[0] };
+    return `<div class="msg"><div class="av ${p.boss ? "boss" : ""}">${p.av}</div><div class="bubble ${m.cls}"><span class="who">${esc(p.name)}</span>${m.html}</div></div>`;
+  }).join("");
+  $("msgs").scrollTop = $("msgs").scrollHeight;
+}
+
+function open(id) {
+  cur = PUZ.find(p => p.id === id);
+  if (!logs[id]) {
+    logs[id] = [];
+    if (id === "1-1") logs[id].push({ who: "Manager", html: "Irasshaimase... oh, you're the new part-timer! Here at SQLbini we keep the whole ledger in a database. When a customer or I ask for something, find it with SQL and tell us.", cls: "" });
+    logs[id].push({ who: cur.who, html: esc(cur.line), cls: "" });
+    if (save.solved[id]) logs[id].push({ who: "Manager", html: "You've already solved this one. Try a shorter query if you like.", cls: "ok" });
+  }
+  $("pid").textContent = cur.id;
+  $("ptitle").textContent = plain(cur.title);
+  $("pbadge").textContent = id === "1-11" ? "Boss" : cur.side ? "Side job" : `Task ${MAINS.indexOf(cur) + 1}`;
+  $("sql").value = save.drafts[id] || "";
+  $("testPanel").hidden = true;
+  renderMsgs(); renderStages(); renderHint(); highlight(); renderBest();
+  showMine(null);
+  showTarget();
+}
+
+function renderBest() {
+  const ref = chars(cur.answer), b = save.solved[cur.id];
+  $("bestInfo").textContent = b ? `Your best ${b.chars} chars · Reference ${ref} chars` : `Reference answer ${ref} chars`;
+}
+function renderHint() {
+  const used = save.hints[cur.id] || 0;
+  $("hintLeft").textContent = 2 - used;
+  $("hintBtn").disabled = used >= 2;
+  $("hintBox").hidden = used === 0;
+  $("hintBox").innerHTML = cur.hints.slice(0, used).map((h, i) => i === 0 ? `<div><b>Hint 1</b> ${esc(h)}</div>` : `<div><b>Hint 2</b> <code>${esc(h)}</code></div>`).join("");
+}
+
+function tableHTML(res, marks) {
+  if (!res.rows.length && !(marks && (marks.missing.length || marks.extra.length))) return `<div class="empty">0 rows returned.</div>`;
+  const cell = v => v === null ? `<td class="null">NULL</td>` : typeof v === "number" ? `<td class="num">${v}</td>` : `<td>${esc(v)}</td>`;
+  let body = res.rows.map(r => `<tr>${r.map(cell).join("")}</tr>`).join("");
+  if (marks) body = marks.missing.map(r => `<tr class="missing"><td class="flag">Missing</td>${r.map(cell).join("")}</tr>`).join("")
+    + marks.extra.map(r => `<tr class="extra"><td class="flag">Extra</td>${r.map(cell).join("")}</tr>`).join("");
+  return `<div class="tablewrap"><table><thead><tr>${marks ? "<th></th>" : ""}${res.cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function showTarget() {
+  const t = query(SETS[0], cur.answer);
+  $("targetSlip").innerHTML = `<div class="ptitle">Target result <span class="count">visible ledger · ${t.rows.length} rows</span></div>` + tableHTML(t);
+}
+function showMine(res, err, raw) {
+  const el = $("mineSlip");
+  if (err) { el.innerHTML = `<div class="ptitle">Your result</div><div class="err"><div>${esc(err)}</div><div class="raw">${esc(raw)}</div></div>`; return; }
+  if (!res) { el.innerHTML = `<div class="ptitle">Your result</div><div class="empty">Run a query to see its result here.</div>`; return; }
+  const ok = same(query(SETS[0], cur.answer), res);
+  el.innerHTML = `<div class="ptitle">Your result <span class="match ${ok ? "y" : "n"}">${ok ? "Matches target" : "Differs from target"}</span></div>`
+    + `<div class="ptitle" style="padding-top:0"><span class="count">visible ledger · ${res.rows.length} rows · ${res.cols.length} columns</span></div>` + tableHTML(res);
+}
+
+function run() {
+  const sql = $("sql").value;
+  try { showMine(query(SETS[0], sql)); }
+  catch (e) { showMine(null, explain(e.message), e.message === "EMPTY" ? "" : e.message); }
+}
+
+function submit() {
+  const sql = $("sql").value;
+  $("testPanel").hidden = false;
+  say("me", esc(sql.trim() || "(empty query)"));
+  let results;
+  try {
+    results = SETS.map(s => { const exp = query(s, cur.answer), got = query(s, sql); return { s, exp, got, ok: same(exp, got) }; });
+  } catch (e) {
+    $("tests").innerHTML = SETS.map(s => `<div class="tcell fail"><span class="tn">${s.name}</span><span class="ts">Query error</span></div>`).join("");
+    say("Manager", esc(explain(e.message)), "bad");
+    showMine(null, explain(e.message), e.message === "EMPTY" ? "" : e.message);
+    return;
+  }
+  $("tests").innerHTML = SETS.map(s => `<div class="tcell" id="t-${s.key}"><span class="tn">${s.name}</span><span class="ts">Waiting</span></div>`).join("");
+  $("submitBtn").disabled = true;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let i = 0;
+  const step = () => {
+    if (i > 0) {
+      const r = results[i - 1], el = $("t-" + r.s.key);
+      el.className = "tcell " + (r.ok ? "pass" : "fail");
+      el.querySelector(".ts").textContent = r.ok ? `Passed · ${r.got.rows.length} rows` : `Failed · ${r.got.rows.length} rows (target ${r.exp.rows.length})`;
+      if (!r.ok) return finish(results, r);
+    }
+    if (i === results.length) return finish(results, null);
+    const el = $("t-" + results[i].s.key); el.className = "tcell run"; el.querySelector(".ts").textContent = "Checking…";
+    i++; setTimeout(step, reduce ? 0 : 380);
+  };
+  step();
+}
+function finish(results, failed) {
+  $("submitBtn").disabled = false;
+  const sql = $("sql").value;
+  if (!failed) {
+    const c = chars(sql), prev = save.solved[cur.id], first = !prev;
+    save.solved[cur.id] = { chars: prev ? Math.min(prev.chars, c) : c };
+    persist();
+    showMine(results[0].got);
+    say(cur.who, esc(cur.win), "ok");
+    const ref = chars(cur.answer);
+    say("Manager", `Passed! Your query is <b>${c} chars</b>; the reference answer is ${ref}.`
+      + (c < ref ? " Shorter than mine?" : c === ref ? " Spot on." : " It can be done shorter.")
+      + (!first && c < prev.chars ? ` New personal best (${prev.chars} → ${c}).` : ""), "ok");
+    renderStages(); renderBest();
+    if (first) {
+      const nxt = PUZ.find(p => !save.solved[p.id] && unlocked(p) && !p.side) || PUZ.find(p => !save.solved[p.id] && unlocked(p));
+      if (nxt) say("Manager", `Next up: <b>${esc(nxt.id)} ${esc(plain(nxt.title))}</b>. Pick it from the shift list on the left.`);
+      else say("Manager", "That's every Chapter 1 job done! Chapter 2 is still being stocked.");
+    }
+    return;
+  }
+  let trapName = null;
+  for (const t of cur.traps) {
+    try { if (results.every(r => same(query(r.s, t.sql), r.got))) { trapName = t.name; break; } } catch (e) {}
+  }
+  const d = diff(failed.exp, failed.got);
+  const colMismatch = failed.exp.cols.length !== failed.got.cols.length;
+  let text;
+  if (trapName && cur.trapMsgs && cur.trapMsgs[trapName]) text = esc(cur.trapMsgs[trapName]);
+  else if (colMismatch) text = `The column count is off. The target has ${failed.exp.cols.length} (${esc(failed.exp.cols.join(", "))}), yours has ${failed.got.cols.length}.`;
+  else text = `The result differs on the ${esc(failed.s.name.toLowerCase())}: ${d.missing.length} missing row(s), ${d.extra.length} extra row(s). Check the table below.`;
+  if (!trapName && failed.s.key !== "pub" && !colMismatch) text += `<br><span style="font-size:12px">It worked on the visible ledger but not on a hidden one. Look for a condition that's always right, not just right today.</span>`;
+  say(trapName ? cur.who : "Manager", text, "bad");
+  if (colMismatch) { showMine(results[0].got); return; }
+  $("mineSlip").innerHTML = `<div class="ptitle">${esc(failed.s.name)} comparison <span class="match n">Missing ${d.missing.length} · Extra ${d.extra.length}</span></div>` + tableHTML({ cols: failed.exp.cols, rows: [] }, d);
+}
+
+/* ---------- Editor highlighting ---------- */
+const KW = /^(SELECT|FROM|WHERE|AND|OR|NOT|IN|IS|NULL|LIKE|BETWEEN|AS|DISTINCT|ORDER|BY|ASC|DESC|LIMIT|GROUP|HAVING|JOIN|ON|INSERT|UPDATE|DELETE|INTO|VALUES|SET|COUNT|SUM|AVG|MIN|MAX|CASE|WHEN|THEN|ELSE|END)$/i;
+function highlight() {
+  const src = $("sql").value;
+  let out = "", re = /(--[^\n]*)|('(?:[^']|'')*'?)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]+)|([\s\S])/g, m;
+  while ((m = re.exec(src))) {
+    if (m[1]) out += `<span class="tk-cmt">${esc(m[1])}</span>`;
+    else if (m[2]) out += `<span class="tk-str">${esc(m[2])}</span>`;
+    else if (m[3]) out += `<span class="tk-num">${m[3]}</span>`;
+    else if (m[4]) out += KW.test(m[4]) ? `<span class="tk-kw">${m[4]}</span>` : m[4];
+    else out += esc(m[5]);
+  }
+  $("hl").innerHTML = out + "\n";
+  $("charCount").textContent = `${chars(src)} chars (no spaces)`;
+}
+
+/* ---------- Events ---------- */
+function bind() {
+  const ta = $("sql");
+  ta.addEventListener("input", () => { highlight(); save.drafts[cur.id] = ta.value; persist(); });
+  ta.addEventListener("scroll", () => { $("hl").scrollTop = ta.scrollTop; });
+  ta.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); e.shiftKey ? submit() : run(); }
+    if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); const s = ta.selectionStart; ta.setRangeText("  ", s, ta.selectionEnd, "end"); highlight(); }
+  });
+  $("runBtn").onclick = run;
+  $("submitBtn").onclick = submit;
+  $("hintBtn").onclick = () => { save.hints[cur.id] = Math.min(2, (save.hints[cur.id] || 0) + 1); persist(); renderHint(); };
+  $("cols").innerHTML = COLS.map(([n, t, d]) => `<li><button type="button" data-col="${n}">${n}</button><span class="ty">${t}</span><span class="ds">${esc(d)}</span></li>`).join("");
+  $("cols").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const s = ta.selectionStart; ta.setRangeText(b.dataset.col, s, ta.selectionEnd, "end"); ta.focus(); highlight();
+    save.drafts[cur.id] = ta.value; persist();
+  });
+}
+
+function failBoot() { document.querySelector(".work").innerHTML = `<div class="panel loading">The SQL engine didn't load. Please refresh the page.</div>`; }
+async function boot() {
+  try { SQL = await initSqlJs(); } catch (e) { failBoot(); return; }
+  $("rowCount").textContent = `${DATA.visible.length} items`;
+  bind();
+  const first = PUZ.find(p => !p.side && !save.solved[p.id] && unlocked(p)) || PUZ[0];
+  open(first.id);
+}
+if (typeof initSqlJs === "function") boot();
+else window.addEventListener("load", () => typeof initSqlJs === "function" ? boot() : failBoot());
+</script>
