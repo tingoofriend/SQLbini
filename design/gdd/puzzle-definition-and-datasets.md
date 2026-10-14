@@ -69,7 +69,7 @@ are not specified here → they become an ADR.
 | `hints` | yes | Hint System | Two hint texts, step 1 and step 2; optional per-puzzle unlock overrides (`hint1_fails`, `hint1_minutes`, …) |
 | `pass_reaction` | yes | Request & Reaction Dialogue | The requester's line on PASS |
 | `manual_keywords` | yes | Store Manual | SQL keywords this puzzle first needs (may be empty) |
-| `constraint` | no | Constraint Challenges | `{type: max_chars / forbid / require, value, offer_line, witness_sql}` — validated by `constraint-challenges.md` rule 12 |
+| `constraint` | no | Constraint Challenges | `{type: max_chars / forbid / require, value, offer_line, witness_sql, unlock_after?}` — `unlock_after` optional (a later main puzzle id, `constraint-challenges.md` rule 2a); validated by `constraint-challenges.md` rule 12 |
 | `datasets_override` | no | this system | Puzzle-specific dataset changes (rule 5) |
 | `content_status` | yes | this system | `draft` / `verified` / `playtested` / `locked` (States) |
 

@@ -1,6 +1,6 @@
 # Constraint Challenges
 
-> **Status**: In Design
+> **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
 > **Last Updated**: 2026-10-14
 > **Last Verified**: 2026-10-14
@@ -27,7 +27,8 @@ that `IN`, `OR` and `BETWEEN` overlap, or that a shorter condition says the same
 thing. It is where Pillar 2's "any query that meets the condition counts" turns
 into play, and where players who are ahead find a ceiling without blocking
 anyone behind them. It is also one of the MVP's measured signals: the concept's
-playtest table asks whether players start a challenge unprompted. The rules are
+playtest table asks whether players start a challenge "unprompted when offered"
+— i.e. accept the offer without the observer suggesting it (rule 6). The rules are
 judged on the query text with a tokenizer that ignores string literals and
 comments, so `'COLOR'` never counts as `OR`.
 
@@ -42,15 +43,26 @@ comments, so `'COLOR'` never counts as `OR`.
    (Formulas → Chapter 1 set): 1-4 `require(BETWEEN)`, 1-6 `forbid(IN)`,
    1-8 `forbid(BETWEEN)`. Puzzles without one are unaffected.
 2. A constraint has a **type**, its **parameter**, a requester **offer line**,
-   and a **witness query** — a query that passes the puzzle and obeys the rule,
-   proving the challenge is solvable (rule 12).
+   an optional **`unlock_after`** puzzle id (rule 2a), and a **witness query** —
+   a query that passes the puzzle and obeys the rule, proving the challenge is
+   solvable (rule 12).
+2a. A constraint may name an `unlock_after` puzzle: the challenge stays hidden
+   until that puzzle is PASSED as well, and then becomes `Available` **silently**
+   (chapter-list mark only, no offer line). Use it when the rule needs a keyword
+   taught later. 1-4's `require(BETWEEN)` has `unlock_after: 1-8`, the puzzle
+   that teaches `BETWEEN` — offering it at 1-4 would dare the player to use a
+   keyword they have not met.
 
 **Rule types (MVP)**
 
 3. `max_chars(N)` — the query's **canonical length** (Formulas) is at most N.
    Canonical length ignores spacing, so squeezing whitespace never helps. Not
    used in Chapter 1, whose queries can only be shortened by spacing; reserved
-   for later chapters where a shorter *form* exists.
+   for later chapters where a shorter *form* exists. **Implementation deferred
+   to Alpha** (user decision 2026-10-14, scope): the MVP build implements
+   `forbid` and `require` only; the content verifier rejects a `max_chars`
+   constraint until the type is implemented. The rule and its formula stay
+   specified here.
 4. `forbid(K…)` — none of the listed SQL keywords appears as a keyword token
    (e.g. `forbid(OR)`, `forbid(IN, OR)`).
 5. `require(K…)` — every listed keyword appears as a keyword token (e.g.
@@ -61,23 +73,37 @@ comments, so `'COLOR'` never counts as `OR`.
 
 **Offering and attempting**
 
-6. The challenge becomes available when the base puzzle is **PASSED**. Right
-   after the pass, the requester (or Kenji) offers it in one line ("Bet you
-   can't do it without OR.") with two choices: **Try it** / **Later**. It never
-   blocks progress; the shift continues either way. Choosing **Try it** counts
-   as starting a challenge for the MVP playtest threshold ("starts a constraint
-   challenge … when offered"); the log records whether the start came from the
-   offer or the chapter list.
+6. The challenge becomes available when the base puzzle is **PASSED** (and its
+   `unlock_after` puzzle, if any — rule 2a). Without `unlock_after`, the offer is
+   **attached to the PASS reaction** in the message log: the requester (or Kenji)
+   adds one line ("Bet you can't do it without OR.") with two inline buttons,
+   **Try it** / **Later**. It is not a menu and never blocks: the next request
+   arrives at once as usual (Progression rule 11). The buttons stay answerable
+   until the player's first Submit on the next request, until another request
+   is opened, or until the shift clocks out; then the offer counts as **Later**. Choosing **Try it** counts as
+   starting a challenge for the MVP playtest threshold ("starts a constraint
+   challenge … unprompted when offered"); the log records whether the start
+   came from the offer or the chapter list.
+6a. **Try it** switches the workbench to challenge mode on the cleared puzzle;
+   the newly arrived request keeps its draft and state. When the challenge is
+   **cleared** or the player **leaves** challenge mode, the workbench returns to
+   the open main request of the shift (or, when started from the chapter list
+   with no main request open, to the shift screen). The shift never advances
+   while challenge mode is open.
 7. A challenge can also be started any time later from the puzzle in the chapter
    list (a "challenge" mark shows which puzzles have one).
 8. In challenge mode the workbench shows the rule and a **live check** under the
-   editor: for `max_chars`, the current canonical count ("54 / 60"); for
+   editor: for `max_chars` (Alpha), the current canonical count ("54 / 60"); for
    `forbid`/`require`, which listed keywords are present. The live check reads
    the text only — it is not a verdict.
 9. On **Submit** in challenge mode:
    1. The query is graded by the Hidden-Data Grader exactly as a normal submit.
    2. If the grader says FAIL or SUBMIT_ERROR, that verdict is shown as usual
-      (feedback, counters) and the challenge is not cleared.
+      and the challenge is not cleared. Challenge FAILs are counted in a
+      separate per-challenge counter set (reset when challenge mode is left), so
+      they never escalate the base puzzle's feedback (levels 2–3, Vertical
+      Slice) and never change hint state (`hint-system.md` rule 12). The base
+      puzzle stays PASSED (grader: further submits cannot un-clear it).
    3. If the grader says PASS, the rule is checked. Met → **challenge cleared**.
       Broken → "Right answer, but not within the challenge" with which part of
       the rule was broken (e.g. "uses OR"); not cleared, no fail counted.
@@ -94,22 +120,25 @@ comments, so `'COLOR'` never counts as `OR`.
     `reference_sql` must **not** obey it (otherwise the challenge is no different
     from the puzzle). A constraint failing either check makes the puzzle invalid.
     The verifier also rejects `forbid` of `SELECT`, `FROM`, `WHERE` or `AND`, an
-    empty keyword list, and `max_chars` with N < 1.
+    empty keyword list, `max_chars` with N < 1, and an `unlock_after` that is not
+   a main puzzle of the same chapter placed **after** this one.
 
 ### States and Transitions
 
-Per puzzle with a constraint, per save:
+Per puzzle with a constraint, per session at MVP (per save from Vertical Slice):
 
 | State | Meaning | Event | To |
 |---|---|---|---|
-| `Hidden` | Base puzzle not yet PASSED | Base PASS | `Offered` |
+| `Hidden` | Base puzzle (or its `unlock_after` puzzle) not yet PASSED | Base PASS, no `unlock_after` | `Offered` |
+| `Hidden` | | Base and `unlock_after` both PASSED | `Available` (silent) |
 | `Offered` | Offer line shown | Try it | `Attempting` |
-| `Offered` | | Later | `Available` |
+| `Offered` | | Later, or first Submit on the next request / another request opened | `Available` |
 | `Available` | Mark in the chapter list | Start from chapter list | `Attempting` |
 | `Attempting` | Challenge mode in the workbench | Submit → PASS + rule met | `Cleared` |
 | `Attempting` | | Submit → PASS + rule broken, or FAIL / SUBMIT_ERROR | `Attempting` |
 | `Attempting` | | Leave the puzzle | `Available` |
-| `Cleared` | Challenge stamp in the chapter list | Replay (optional) | `Cleared` |
+| `Cleared` | Challenge stamp in the chapter list | Start from chapter list | `Cleared` (replaying in challenge mode) |
+| `Cleared` (replaying) | | Any submit outcome, or leave | `Cleared` |
 
 Cross-session persistence of `Available`/`Cleared` belongs to Save/Load (Vertical
 Slice); at MVP the state lasts for the session.
@@ -118,11 +147,11 @@ Slice); at MVP the state lasts for the session.
 
 | System | Direction | Data | Owner |
 |---|---|---|---|
-| Puzzle Definition & Datasets | Puzzle → Challenges | `constraint` (type, parameter, offer line, witness query) | Puzzle Definition |
+| Puzzle Definition & Datasets | Puzzle → Challenges | `constraint` (type, parameter, offer line, witness query, optional `unlock_after`) | Puzzle Definition |
 | Hidden-Data Grader | Challenges → Grader → Challenges | Normal grading of the challenge submit; rule check only after PASS | Grader |
 | SQL Execution Sandbox | Challenges → Sandbox lexer | Tokens (keywords; literals/comments skipped) | Sandbox |
 | Query Workbench | Workbench hosts | Rule banner, live check, challenge-mode submit outcome | Workbench |
-| Shift & Chapter Progression | Progression → Challenges | Base PASS event; chapter-list marks | Progression |
+| Shift & Chapter Progression | Progression → Challenges | Base PASS event; chapter-list marks; return target after challenge mode (rule 6a) | Progression |
 | Request & Reaction Dialogue | Dialogue → Challenges | Offer line, clear reaction | Dialogue |
 | Achievements (VS) | Challenges → Achievements | Clear events | Achievements |
 | Playtest Log | Challenges → Log | Offer shown, Try/Later, attempts, clears (MVP threshold "starts a challenge unprompted") | Challenges |
@@ -215,7 +244,7 @@ The **content_valid** formula is defined as:
 
 | Puzzle | Rule | Witness (passes all datasets) | Reference breaks the rule because |
 |---|---|---|---|
-| 1-4 | `require(BETWEEN)` | `SELECT name, stock FROM products WHERE stock BETWEEN 0 AND 3` | it uses `stock <= 3` |
+| 1-4 (`unlock_after: 1-8`) | `require(BETWEEN)` | `SELECT name, stock FROM products WHERE stock BETWEEN 0 AND 3` | it uses `stock <= 3` |
 | 1-6 | `forbid(IN)` | `SELECT name, price FROM products WHERE (category = 'Snacks' OR category = 'Ice Cream') AND price >= 150` | it uses `IN`; the witness also revisits 1-6's AND/OR parentheses trap |
 | 1-8 | `forbid(BETWEEN)` | `SELECT name, expiry_date FROM products WHERE expiry_date >= '2026-03-02' AND expiry_date <= '2026-03-08'` | it uses `BETWEEN` |
 
@@ -236,6 +265,9 @@ breaks Pillar 1); S-1 `forbid(DISTINCT)` (needs `GROUP BY`, not taught yet).
 - **If whitespace or comments are added to shorten or pad the text**: they do not count (`canonical_length`).
 - **If the player clears the challenge, then replays it**: allowed; state stays `Cleared`.
 - **If a puzzle's witness query does not pass, or the reference already obeys the rule**: the puzzle is invalid in content verification (rule 12); at runtime the challenge is not offered.
+- **If 1-4 is passed long before 1-8**: no offer at 1-4; when 1-8 is passed, only 1-8's own challenge is offered, and 1-4's mark appears in the chapter list silently.
+- **If the player ignores the offer and starts typing the next request**: the offer stays answerable until that request's first Submit, then counts as Later.
+- **If the player leaves challenge mode mid-attempt**: the challenge returns to `Available` (or stays `Cleared`), its counters reset, and the workbench returns to the open main request with its draft.
 - **If the player chooses "Later"**: the challenge stays `Available` in the chapter list with no further prompts — re-passing the base puzzle does not show the offer again.
 
 ## Dependencies
@@ -244,17 +276,27 @@ breaks Pillar 1); S-1 `forbid(DISTINCT)` (needs `GROUP BY`, not taught yet).
 
 | System | GDD | What this system needs | Status |
 |---|---|---|---|
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Verdict on the challenge submit; "constraint runs only after a PASS" (grader rule 17) | Designed (pending review) |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Verdict on the challenge submit; "constraint runs only after a PASS" (grader rule 17) | In Review |
 | Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `constraint` field; verifier hook for rule 12 | Designed (pending review) — field extended by this GDD |
-| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | Lexer tokens | Designed (pending review) |
-| Query Workbench | `design/gdd/query-workbench.md` | Rule banner, live check, outcome display | Designed (pending review) |
+| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | Lexer tokens | In Review |
+| Query Workbench | `design/gdd/query-workbench.md` | Rule banner, live check, outcome display | In Review |
 
 **Soft:** Shift & Chapter Progression (base PASS event, chapter-list marks),
 Request & Reaction Dialogue (offer and reaction lines), Achievements (VS),
 Playtest Log.
 
-**Bidirectionality:** grader, puzzle definition and workbench list Constraint
-Challenges ✓.
+**Bidirectionality:** grader, puzzle definition, workbench, hint system,
+progression and dialogue list Constraint Challenges ✓.
+
+## Tuning Knobs
+
+| Knob | Default | Safe range | Affects |
+|---|---|---|---|
+| `max_chars` slack over the witness | +4 code points | +0 – +15 | How many solutions besides the witness fit (0 = only the witness's form; large = no challenge) |
+| Offer answer window | until the next request's first Submit | — | How long the inline offer stays clickable before counting as Later |
+
+Per-puzzle rule choice (`forbid` / `require` keywords, `unlock_after`) is
+content, governed by the authoring guidance in Formulas.
 
 ## Visual/Audio Requirements
 
@@ -285,7 +327,7 @@ the dare"), never a fail.
 
 ## UI Requirements
 
-1. Offer prompt after PASS with **Try it** / **Later**, keyboard reachable.
+1. Offer attached to the PASS reaction in the message log, with inline **Try it** / **Later** buttons, keyboard reachable; never a modal.
 2. Challenge mode banner and live check in the workbench (glyph + word, ≥ 4.5:1).
 3. Chapter list marks: available / cleared.
 4. Leaving challenge mode returns the workbench to the base puzzle view.
@@ -298,10 +340,12 @@ the dare"), never a fail.
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/hidden-data-grader.md` | Core Rule 9 | Grading first; rule 17 "constraint rules run after a PASS" | Designed (pending review) |
-| `design/gdd/sql-execution-sandbox.md` | Core Rules 4–5 | Lexer (literals, identifiers, comments) | Designed (pending review) |
-| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–2, 12 | `constraint` field; content verifier | Designed (pending review) |
-| `design/gdd/query-workbench.md` | Core Rule 8, UI | Banner and live check host | Designed (pending review) |
+| `design/gdd/hidden-data-grader.md` | Core Rule 9 | Grading first; rule 17 "constraint rules run after a PASS" | In Review |
+| `design/gdd/sql-execution-sandbox.md` | Core Rules 4–5 | Lexer (literals, identifiers, comments) | In Review |
+| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–2, 12 | `constraint` field; content verifier | In Review |
+| `design/gdd/query-workbench.md` | Core Rule 8, UI | Banner and live check host | In Review |
+| `design/gdd/shift-and-chapter-progression.md` | Core Rules 6, 6a | No-menu flow; return to the open main request | In Review |
+| `design/gdd/hint-system.md` | Core Rule 9 | Challenge submits leave hint state unchanged (hint rule 12) | In Review |
 | `design/gdd/game-concept.md` | Overview | Pillar 2; MVP threshold "starts a constraint challenge unprompted" | Source of intent |
 
 ## Acceptance Criteria
@@ -311,18 +355,21 @@ dataset checks are covered in their own GDDs. Fixtures from
 `prototypes/sqlbini-web/ch1.py`. [UI] = retained screenshot in
 `production/qa/evidence/`.*
 
-- **CC-01 [Integration]** GIVEN 1-6 not yet passed, WHEN Submit returns PASS, THEN the offer line appears once with **Try it** / **Later**, both keyboard reachable; **Later** lets the shift continue with no further prompt and the chapter list shows the challenge mark; **Try it** opens challenge mode. GIVEN 1-5 (no constraint), WHEN it passes, THEN no offer appears.
+- **CC-01 [Integration]** GIVEN 1-6 not yet passed, WHEN Submit returns PASS, THEN the offer line is attached to the PASS reaction once with inline **Try it** / **Later**, both keyboard reachable, no modal, and 1-7 arrives at once; **Later** leaves the chapter-list mark and no further prompt; ignoring the offer and submitting on 1-7 counts as Later; **Try it** opens challenge mode. GIVEN 1-5 (no constraint), WHEN it passes, THEN no offer appears.
+- **CC-15 [Integration]** GIVEN 1-4 passed and 1-8 not passed, THEN 1-4's challenge is `Hidden` (no offer at 1-4's PASS, no mark); WHEN 1-8 is passed, THEN 1-4's mark appears with no offer line, and only 1-8's own offer is shown.
+- **CC-16 [Integration]** GIVEN 1-6's offer accepted while 1-7 is open with a draft, WHEN the challenge is cleared — or left without clearing — THEN the workbench returns to 1-7 with its draft intact, and 1-7's state is unchanged.
+- **CC-17 [Logic]** GIVEN 1-6 in challenge mode, WHEN 3 FAILs with the same cause occur, THEN the base puzzle's grader counters and hint state are unchanged; WHEN challenge mode is left and re-entered, THEN the challenge counters are 0.
 - **CC-02 [Integration]** GIVEN `Available`, WHEN started from the chapter list, THEN `Attempting` with the banner; leaving returns to `Available` and the base workbench view. GIVEN `Hidden`, THEN no mark and no way to start. GIVEN **Later** and then a re-pass of the base puzzle, THEN no second offer.
 - **CC-03 [Logic]** `has_keyword(q, OR)` is false for `name = 'COLOR'`, `-- or`, `[OR]`, `ORDER BY`, `color`; `has_keyword(q, IN)` is false for `INTEGER`; `has_keyword(q, OR)` is true for lower-case `or` used as an operator; `NOT IN (…)` is true for `IN`.
-- **CC-04 [Logic]** For the 1-6 reference, `canonical_length` is unchanged by squeezed whitespace, added tabs/newlines, CRLF, lower-case keywords, `price>=150` vs `price >= 150`, an added `-- x` or `/* x */`, and one trailing `;`; comment-only text gives 0; adding `AS p` makes it longer; changing the case of a string literal is counted.
-- **CC-05 [Logic]** `max_chars(N)` is true at canonical length N and false at N + 1; `forbid(IN, OR)` is false if either is present; `require(BETWEEN)` is false for `>= … <=` and true for `BETWEEN`.
+- **CC-04 [Logic] [Alpha]** For the 1-6 reference, `canonical_length` is unchanged by squeezed whitespace, added tabs/newlines, CRLF, lower-case keywords, `price>=150` vs `price >= 150`, an added `-- x` or `/* x */`, and one trailing `;`; comment-only text gives 0; adding `AS p` makes it longer; changing the case of a string literal is counted.
+- **CC-05 [Logic]** [Alpha part] `max_chars(N)` is true at canonical length N and false at N + 1. [MVP part] `forbid(IN, OR)` is false if either is present; `require(BETWEEN)` is false for `>= … <=` and true for `BETWEEN`.
 - **CC-06 [Logic]** GIVEN a corpus of ≥ 20 queries, THEN the live check's per-keyword result and count equal the `rule_met` inputs at submit.
 - **CC-07 [Integration]** GIVEN 1-6 under `forbid(IN)`: (a) the AND/OR precedence-trap query → normal FAIL with counter and feedback, the live check still shows "IN — not used", and the rule check is not called; (b) `SELEC …` → normal SUBMIT_ERROR; (c) the reference → "Right answer, but not within the challenge — uses IN", grader and hint counters unchanged, base stays PASSED, state stays `Attempting`; (d) the witness → `Cleared`.
 - **CC-08 [Logic]** GIVEN 1-4 under `require(BETWEEN)`, WHEN the reference is submitted, THEN the message names the missing `BETWEEN`.
 - **CC-09 [Integration]** GIVEN `Cleared`, WHEN replayed and the rule is broken, THEN the state stays `Cleared`.
 - **CC-10 [UI]** Retained screenshots for 1-4, 1-6 and 1-8 show: banner and live check as glyph + word at ≥ 4.5:1; the rule-broken message in sticky-note style, not a fail stamp; a cleared puzzle with the smaller challenge stamp beside the PASS stamp; chapter-list marks for available vs cleared distinguishable without colour.
 - **CC-11 [Content-CI]** For each Chapter 1 witness (1-4, 1-6, 1-8), THEN it passes on visible, hidden A and hidden B and obeys its rule, and the reference breaks the rule.
-- **CC-12 [Content-CI]** Each of these makes the puzzle invalid and the challenge is not offered at runtime: a witness failing one dataset; a reference that obeys the rule; empty keyword list; `max_chars(0)`; `forbid(AND)` on 1-6.
+- **CC-12 [Content-CI]** Each of these makes the puzzle invalid and the challenge is not offered at runtime: a witness failing one dataset; a reference that obeys the rule; empty keyword list; `max_chars(0)` (Alpha) — and at MVP any `max_chars` constraint; `forbid(AND)` on 1-6; `unlock_after` naming a missing puzzle, a side puzzle, or a puzzle ordered before the base puzzle (e.g. 1-4 with `unlock_after: 1-3`).
 - **CC-13 [Integration]** The Playtest Log records `offer_shown`, `try` / `later`, `challenge_start {source: offer | chapter_list}`, each attempt `{verdict, rule_met}`, and `cleared`, with puzzle id and timestamp.
 - **CC-14 [Audio]** The challenge-clear stamp sound's peak is ≥ 6 dB below the PASS stamp's peak (measured on the exported audio assets; audio lead signs off).
 
