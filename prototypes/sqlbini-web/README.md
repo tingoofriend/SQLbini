@@ -8,7 +8,7 @@
 loop with hidden-data grading satisfying enough to finish Chapter 1 and want a
 constraint challenge afterwards (`design/gdd/game-concept.md` → MVP).
 
-**Status**: Built; **playtest pending**.
+**Status**: Concluded — **PROCEED (conditional)**. See `REPORT.md`.
 
 ## How to run
 - Open `prototype.html` in a browser (sql.js loads from a CDN).
@@ -30,4 +30,6 @@ Chapter 1 puzzle design: `design/levels/chapter-1-puzzles.md`.
 ask only: "What was confusing?"
 
 ## Findings
-_Pending playtest._
+2–3 testers with some SQL finished Chapter 1, got stuck nowhere, and wanted
+more — but none ever failed a hidden-data check, and no zero-SQL player was
+tested. Details and conditions: `REPORT.md`.

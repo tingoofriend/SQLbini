@@ -30,7 +30,7 @@ CREATE TABLE products (
 | Hidden A | Visible + 10 edge-case rows | No |
 | Hidden B | Hidden A reversed, new ids, a few values changed (Shoyu Cup Ramen stock 3, Potato Chips ¥140, Cola ¥200) | No |
 
-**Design principle**: most trap answers **pass on the visible data and fail on hidden data**. The game teaches the difference between "matching what you see" and "understanding the condition". On failure the game shows which rows were missing or extra, and the requester reacts.
+**Design principle**: most trap answers **pass on the visible data and fail on hidden data**. The game teaches the difference between "matching what you see" and "understanding the condition". On failure the requester reacts with a cause hint naming the kind of mistake — hidden rows are never shown, since a displayed row could be special-cased in the query (see `design/gdd/game-concept.md`, Core Mechanics #2). The prototype currently displays rows; that is a known prototype shortcut.
 
 ### Hidden A edge rows
 | Product | Trap it targets |

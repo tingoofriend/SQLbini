@@ -25,7 +25,7 @@
 - **Primary Input**: Keyboard/Mouse (typing SQL is the core action)
 - **Gamepad Support**: None — overrides the PC default of Partial: the core action is typing SQL
 - **Touch Support**: None
-- **Platform Notes**: Keyboard-first UI — every action reachable without the mouse (run/submit shortcuts); text editor must handle IME-free ASCII SQL input. Steam Deck is not a target (no physical keyboard).
+- **Platform Notes**: Keyboard-first UI — every action reachable without the mouse (run/submit shortcuts); text editor must accept SQL typed with an IME active (Korean/Japanese layouts) — test with the IME on. Steam Deck is not a target (no physical keyboard).
 
 ## Naming Conventions
 
