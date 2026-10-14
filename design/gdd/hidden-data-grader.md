@@ -45,16 +45,22 @@ shaped) are not specified here → they become ADRs.
    two or more hidden datasets. The visible dataset is the one the player sees
    and runs against; hidden datasets are never shown.
 2. Every puzzle with at least one tagged trap declares a **key column** (e.g.
-   `name` in `products`) that identifies a source row, and at least one hidden
-   dataset must be **disjoint**: it carries tags, and the key value of every
-   trap-tagged row in it is absent from the visible dataset. (Traps whose cause
-   is a built-in one — `columns`, `order`, `generic` — need no tags; see
-   `puzzle-definition-and-datasets.md` rule 4.) This is what makes hardcoding by name fail — a query listing the
-   visible names cannot match rows whose names it has never seen. The loader
-   checks this (Edge Cases).
-3. Every row that a trap depends on is **tagged** in the puzzle data with that
-   trap's id (e.g. the ¥200 Lemon Soda row carries `trap: boundary_200`). Tags
-   are content, owned by Puzzle Definition & Datasets; the grader only reads them.
+   `name` in `products`) that identifies a source row. The reference result
+   must contain exactly one output column with that name; its index is the
+   puzzle's **key position**, fixed at load from the sandbox's column names.
+   The player's result is read at the same position (column names are ignored,
+   column order is significant — rule 16). At least one hidden dataset must be
+   **hardcode-proof**: the set of key values in the reference result on it
+   differs from the visible answer's key values that exist in it
+   (`hardcode_proof`, `puzzle-definition-and-datasets.md` Formulas). A query that lists the visible answer's names therefore
+   fails on that dataset — it misses a row it has never seen, or keeps a row
+   whose data changed. (Traps whose cause is a built-in one — `columns`,
+   `order`, `generic` — need no tags; see `puzzle-definition-and-datasets.md`
+   rule 4.) The loader checks this (Edge Cases).
+3. Every row that a trap's mistake gets wrong is **tagged** in the puzzle data
+   with that trap's id, on every dataset where it is wrong — visible included
+   (e.g. the ¥200 Lemon Soda row carries `trap: boundary_200`). Tags are
+   content, owned by Puzzle Definition & Datasets; the grader only reads them.
 4. The grader validates a puzzle when it is loaded (see Edge Cases) and refuses
    to grade a puzzle that breaks rules 2–3.
 
@@ -95,13 +101,19 @@ shaped) are not specified here → they become ADRs.
     3. `order` — the puzzle is ordered (Formulas) and the rows match as a
        multiset but not as a list.
     4. **trap** — compute the rows that are missing from or extra in the
-       player's result on each failing dataset (internally only). A missing or
-       extra result row **inherits the trap tags of every source row whose key
-       value appears in it** (missing rows come from the reference result, which
-       always includes the key column when the puzzle has traps). Collect those
-       tags. If any is found, the cause is the tag that appears first in the
-       puzzle's **trap priority list**. If the player's result does not contain
-       the key column, extra rows inherit nothing.
+       player's result on each failing dataset (internally only). Each such row
+       has a **key**: its value at the key position (rule 2). A row
+       **inherits the trap tags** that the puzzle puts on that key in that
+       dataset; a row whose key is not a tagged key value — for example because
+       the player's column at the key position holds something else — inherits
+       nothing. The cause is a trap only if the differences are **fully
+       explained**: (a) every missing and extra row on every failing dataset
+       inherits at least one tag, and (b) no key appears among both the missing
+       and the extra rows of the same dataset (that is a row whose *values*
+       are wrong, not a row wrongly kept or dropped). Then the cause is the
+       collected tag that appears first in the puzzle's **trap priority
+       list**. Otherwise the cause is `generic`: naming a trap the player did
+       not fall into would mislead them more than the generic line.
     5. `generic` — anything else: the result differs on rows no trap anticipated.
 11. The missing/extra row lists are used only for rule 10.4 and for the Playtest
     Log (which is developer-facing). **Nothing derived from them reaches the
@@ -164,7 +176,7 @@ Failure counters reset only when the puzzle is restarted from the chapter menu.
 | System | Direction | Data | Owner of the interface |
 |---|---|---|---|
 | SQL Execution Sandbox | Grader → Sandbox → Grader | In: SQL text, dataset id, mode (read-only). Out: ok/error, **column count (also for zero rows)**, rows as positional value lists, error text, timed-out flag | Grader states the contract; Sandbox GDD implements it |
-| Puzzle Definition & Datasets | Puzzle → Grader | Reference SQL, key column, ordered flag, datasets (visible + ≥2 hidden, ≥1 disjoint), row trap tags, trap priority list, per-trap feedback texts (levels 1–3), puzzle kind (query / modify) | Grader states required fields; Puzzle Definition GDD implements them |
+| Puzzle Definition & Datasets | Puzzle → Grader | Reference SQL, key column (key position = the reference output column of that name), ordered flag, datasets (visible + ≥2 hidden, ≥1 hardcode-proof), row trap tags per dataset (visible included), trap priority list, per-trap feedback texts (levels 1–3), puzzle kind (query / modify) | Grader states required fields; Puzzle Definition GDD implements them |
 | Query Workbench | Workbench → Grader | Submit (SQL text); Run match bit (visible only) | Workbench |
 | Hint System | Grader → Hints | Last verdict, cause, level, per-cause counters | Grader |
 | Request & Reaction Dialogue | Grader → Dialogue | Verdict + feedback key (cause, level) or sandbox error; **never row data** | Grader |
@@ -238,7 +250,7 @@ The **submit_verdict** formula is defined as:
 |----------|------|-------|--------|-------------|
 | e | bool | true / false | calculated | Pre-check on visible failed: sandbox error, timeout, more than one statement, not read-only, or rows over `R_cap` |
 | det | bool | true / false | calculated | `result_match(P_run1, P_run2)` on visible, under the puzzle's `ordered` flag |
-| D | list | 3–6 datasets | data file | Visible plus ≥ 2 hidden (≥ 1 disjoint) |
+| D | list | 3–6 datasets | data file | Visible plus ≥ 2 hidden (≥ 1 hardcode-proof) |
 | m_i | bool | true / false | calculated | `result_match` on dataset i; an error or timeout of the player's query on a hidden dataset gives `m_i = false` (cause `generic`) |
 | cause | enum | see Core Rules 10 | calculated | First applicable of `columns`, `order`, trap tag, `generic` |
 
@@ -257,7 +269,7 @@ The **feedback_level** formula is defined as:
 |----------|------|-------|--------|-------------|
 | n | int | 1–∞ | calculated | Failed submits on this puzzle with this cause, including the current one |
 | k | int | 1–4 (default 2) | data file | Fails per feedback level |
-| L_max | int | 1–3 | constant | Highest level shipped: 1 at MVP, 3 at Vertical Slice |
+| L_max | int | 1–3 | config (registry `feedback_max_level`) | Highest level shipped: 1 at MVP, 3 at Vertical Slice |
 
 **Output Range:** 1 to `L_max`. At `L_max = 3, k = 2`: level 1 for fails 1–2,
 level 2 for 3–4, level 3 from 5. At MVP (`L_max = 1`) always 1. `k ≤ 0` is
@@ -330,18 +342,35 @@ the 2026-10-14 design review.*
   comes first in the puzzle's trap priority list; only that trap's counter
   increases. Fixing it surfaces the next one on the following submit.
 - **If a tagged trap row appears in the diff on one dataset and the other
-  datasets fail on untagged rows**: the tag wins (a tagged cause is always more
-  specific than `generic`).
+  datasets fail on untagged rows**: `generic` — the difference is not fully
+  explained by tags (rule 10.4), so the player made a mistake no trap names.
+  E.g. 1-5 with `category = 'Snacks'`: Lemon Soda (tagged) is missing, but so
+  are untagged drinks and untagged snacks are extra → `generic`, never "a
+  customer at exactly ¥200 got turned away".
+- **If a key appears among both the missing and the extra rows of a dataset**
+  (the row is there but a value is wrong, e.g. 1-10 with `SELECT name, shelf`
+  instead of `name, category`): `generic`, even when that key is tagged. A
+  trap names a row wrongly kept or dropped; a wrong value is a different
+  mistake. Puzzle authors use `expected_cause: generic` for such mistakes.
+- **If the player's column at the key position does not hold keys** (e.g.
+  `SELECT category, price` where the reference is `name, price`): the extra
+  rows inherit nothing, so the cause is `generic`.
 - **If the cause changes between submits**: each cause has its own counter, so a
   new mistake starts at level 1 even after repeated fails of another cause.
 
 **Puzzle data (validated when the puzzle is loaded; a failing puzzle is
 withheld from play and reported in the content verifier)**
 - **If a puzzle has fewer than two hidden datasets, or has tagged traps but no
-  hidden dataset that carries tags with every tagged key absent from the visible
-  dataset**: invalid.
-- **If a puzzle has traps but its reference result does not include the key
-  column**: invalid (missing rows could not inherit tags).
+  hardcode-proof hidden dataset** (rule 2): invalid.
+- **If a puzzle has tagged traps but its reference result does not have exactly
+  one output column named like the key column**: invalid (no key position, so
+  rows could not inherit tags).
+- **If the sandbox reports `CONTENT_ERROR` for a dataset during a submit** (the
+  dataset itself failed to build): not a verdict on the player — the submit is
+  abandoned with no state or counter change, the player sees a fixed
+  "can't check this one right now" line (no hidden-data detail), and the
+  error is reported as a content bug. The content
+  verifier should have caught it first.
 - **If the reference query errors, times out, exceeds `R_cap`, or gives different
   results on two runs on any dataset**: invalid.
 - **If `ordered` is true but the reference has no top-level `ORDER BY`, or
@@ -363,8 +392,8 @@ withheld from play and reported in the content verifier)**
 
 | System | GDD | What the grader needs | Status |
 |---|---|---|---|
-| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | Run one read-only statement on a named dataset in a fresh database; return ok/error, **column count even for zero rows**, rows as positional value lists (duplicate column names preserved), error text, timed-out flag | **Not yet designed — provisional contract stated here** |
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Reference SQL; key column; ordered flag; visible + ≥2 hidden datasets with ≥1 disjoint set; trap tags on rows; trap priority list; per-trap feedback texts for levels 1–3; puzzle kind | **Not yet designed — provisional contract stated here** |
+| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | Run one read-only statement on a named dataset in a fresh database; return ok/error, **column count even for zero rows**, rows as positional value lists (duplicate column names preserved), error text, timed-out flag | Designed — `sql-execution-sandbox.md` rule 16 implements it (`column_count`, `columns`, `truncated`, `CONTENT_ERROR`) |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Reference SQL; key column; ordered flag; visible + ≥2 hidden datasets with ≥1 hardcode-proof set; trap tags per dataset (`tagged_keys`, visible included); trap priority list; per-trap feedback texts for levels 1–3; puzzle kind | Designed — `puzzle-definition-and-datasets.md` implements it |
 
 **Downstream — systems that depend on this one:**
 
@@ -380,9 +409,23 @@ withheld from play and reported in the content verifier)**
 | Audio (VS) | soft | Verdict events |
 | Modify Puzzle Grading (Alpha) | hard | Extends this grader for `UPDATE`/`DELETE` puzzles |
 
-**Bidirectionality:** none of the systems above has a GDD yet. Each one's GDD
-must list *Hidden-Data Grader* in its own Dependencies with the interface
-stated here; `/design-review` of those GDDs should check it.
+**Bidirectionality:** verified 2026-10-14 (design review) — the Sandbox, Puzzle
+Definition, Query Workbench, Hint System, Constraint Challenges, Shift & Chapter
+Progression, Request & Reaction Dialogue and Playtest Log GDDs all list
+*Hidden-Data Grader* with the interface stated here. Efficiency Stats, Audio and
+Modify Puzzle Grading have no GDD yet; each must list it when written.
+
+## Tuning Knobs
+
+All values are data-driven; none is hardcoded in the grader.
+
+| Knob | Default | Safe range | Affects | Source |
+|---|---|---|---|---|
+| `feedback_fails_per_level` (`k`) | 2 | 1–4 | How fast feedback escalates per cause; above 4, level 3 is effectively unreachable | `feedback_level`; registry |
+| `feedback_max_level` (`L_max`) | 1 (MVP) / 3 (VS) | 1–3 | Highest feedback level shown; raising it requires level-2/3 texts in every puzzle | `feedback_level`; registry |
+| `grader_row_cap` (`R_cap`) | 5,000 | 1,000–50,000 | Largest result graded; protects grading time from cross joins | `rows_ok`; registry |
+| `D_real` | 6 | 4–9 | REAL precision in `canon`; lower hides real differences, higher exposes float noise | `value_equal` |
+| Submit / Run budget | 300 / 200 ms p95 | — (fixed targets) | Responsiveness (Game Feel) | Game Feel; AC-26 |
 
 ## Visual/Audio Requirements
 
@@ -461,8 +504,8 @@ Workbench renders. The workbench must:
 | This document references | Where | What | Status |
 |---|---|---|---|
 | `design/gdd/game-concept.md` | Pillars 1–4, Core Mechanics #2, MVP Definition | Hidden-data grading, "no hidden rows" rule, escalating feedback, MVP level-1 scope | Source of truth for intent |
-| `design/gdd/sql-execution-sandbox.md` | Dependencies, Core Rules 6–8 | Sandbox contract (one read-only statement, fresh DB, column count for zero rows, no collapsed duplicate names, timeout, error text) | GDD not yet written — contract is provisional |
-| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–4, 10, 12; Formulas (`ordered`, `order_cols`, `k`, `R_cap`) | Required puzzle fields | GDD not yet written — contract is provisional |
+| `design/gdd/sql-execution-sandbox.md` | Dependencies, Core Rules 6–8 | Sandbox contract (one read-only statement, fresh DB, column count for zero rows, no collapsed duplicate names, timeout, error text) | Designed (pending review) |
+| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–4, 10, 12; Formulas (`ordered`, `order_cols`, `k`, `R_cap`) | Required puzzle fields; `hardcode_proof` | Designed (reviewed 2026-10-14) |
 | `design/levels/chapter-1-puzzles.md` | Formulas examples | Puzzle 1-5 and S-1 data | Requests 1-4/1-5/1-7/1-8 to be rewritten (trap philosophy) |
 | `prototypes/sqlbini-web/ch1.py` | Formulas examples | Datasets used to verify worked examples | Prototype — reference only |
 | `prototypes/sqlbini-spike-2026-10-14/SPIKE-NOTE.md` | Dependencies | Zero-row column count and duplicate-name limitations of godot-sqlite | Drives the sandbox contract |
@@ -474,14 +517,15 @@ Workbench renders. The workbench must:
 -10 and -14 and the row counts in AC-04 were re-checked against that file.
 Trap tags and key columns are not authored yet, so tests add them (provisional,
 Open Question 8): key column `name`; 1-5 Lemon Soda (hidden A/B) and Cola
-(hidden B) → `boundary_200`; 1-10 NULL-expiry rows → `null_compare`; 1-11 Fried
-Rice Bento → `parens`, Strawberry Yogurt and Salmon Onigiri → `stock_rule`.
+(hidden B) → `boundary_200`; 1-10 NULL-expiry rows on every dataset (visible included) → `null_compare`;
+1-11 Fried Rice Bento → `parens` and `stock_rule`, Strawberry Yogurt and Salmon
+Onigiri → `stock_rule`.
 Logic tests use a stub sandbox where noted. Config: `R_cap = 5000`, `k = 2`,
 `L_max = 1` unless stated.*
 
 **Datasets and validation**
 - **AC-01 [Logic]** GIVEN puzzle 1-5 with only `visible` + `hidden_a`, WHEN it loads, THEN it is marked invalid and withheld from play; with `hidden_b` added, it loads.
-- **AC-02 [Logic]** GIVEN puzzle data where (a) the reference returns more than 5,000 rows, (b) a stub returns two different results for the reference, (c) a trap tag has no level-1 text, or (d) no hidden dataset has all trap-tagged key values absent from `visible`, WHEN it loads, THEN each is invalid.
+- **AC-02 [Logic]** GIVEN puzzle data where (a) the reference returns more than 5,000 rows, (b) a stub returns two different results for the reference, (c) a trap tag has no level-1 text, or (d) no hidden dataset is hardcode-proof (1-5 with Lemon Soda removed from A and B and Cola left at ¥216 in B), or (e) the reference has no output column named `name`, WHEN it loads, THEN each is invalid.
 
 **Pre-check**
 - **AC-03 [Logic]** GIVEN 1-5, WHEN the player submits (a) empty text, (b) `SELEC name FROM products`, (c) `SELECT name FROM products; DROP TABLE products`, or (d) `UPDATE products SET price = 0`, THEN the verdict is SUBMIT_ERROR carrying the raw SQLite text, every per-cause counter stays 0, and `products` still has 24 rows on `visible`.
@@ -508,7 +552,8 @@ Logic tests use a stub sandbox where noted. Config: `R_cap = 5000`, `k = 2`,
 - **AC-14 [Logic]** GIVEN 1-10, WHEN the player submits `… WHERE expiry_date = NULL`, THEN FAIL(`null_compare`).
 - **AC-15 [Logic]** GIVEN 1-11 and a player query whose differing rows carry both `parens` and `stock_rule`, WHEN the priority list is `[parens, stock_rule]` THEN FAIL(`parens`) and only that counter increases; WHEN the list is reversed THEN FAIL(`stock_rule`).
 - **AC-16 [Logic]** GIVEN a synthetic ordered puzzle, WHEN the player returns the same rows in a different order THEN FAIL(`order`); WHEN only rows with equal sort keys are swapped THEN PASS.
-- **AC-17 [Logic]** GIVEN 1-5 and a player query with the right column count but without the key column (`SELECT category, price FROM products WHERE category = 'Drinks' AND price < 200`), WHEN submitted, THEN the player's rows inherit no tag, the missing reference rows (which contain `name`) still carry their tags, and the verdict is FAIL(`boundary_200`).
+- **AC-17 [Logic]** GIVEN 1-5, WHEN the player submits (a) `SELECT category, price FROM products WHERE category = 'Drinks' AND price < 200` (no keys at the key position), or (b) `SELECT name, price FROM products WHERE category = 'Snacks'` (tagged Lemon Soda missing, untagged rows also differ), THEN each verdict is FAIL(`generic`), not FAIL(`boundary_200`).
+- **AC-27 [Logic]** GIVEN 1-10, WHEN the player submits `SELECT name, shelf FROM products WHERE expiry_date IS NULL` (every key is both missing and extra), THEN FAIL(`generic`); WHEN they submit `… WHERE expiry_date = NULL`, THEN FAIL(`null_compare`) (AC-14).
 
 **No hidden-row leakage**
 - **AC-18 [Integration]** GIVEN AC-06, WHEN the verdict reaches Request & Reaction Dialogue, THEN the payload keys are exactly `{verdict, cause, level}` — no rows, names, counts or per-dataset flags.
@@ -533,11 +578,11 @@ Logic tests use a stub sandbox where noted. Config: `R_cap = 5000`, `k = 2`,
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | Can godot-sqlite return a column count for zero-row results and keep duplicate column names, or does the sandbox need a wrapper (e.g. `PRAGMA`/statement metadata, or wrapping the query)? | SQL Execution Sandbox GDD + ADR | Before sandbox implementation |
-| 2 | Does godot-sqlite expose a way to interrupt a long query (progress handler / interrupt) for the time limit? | SQL Execution Sandbox GDD + ADR | Before sandbox implementation |
+| 1 | ~~Zero-row column count and duplicate names~~ — answered by `sql-execution-sandbox.md` rules 10–11 (temp view + `PRAGMA table_info`, spike-probed). | — | Resolved 2026-10-14 |
+| 2 | Time-limit enforcement: godot-sqlite v4.9 has no interrupt API (`sql-execution-sandbox.md` rule 15); the mechanism is an open ADR. | technical-director → ADR | Before sandbox implementation |
 | 3 | Does the Chapter 1 trap rewrite (natural-language requests) actually make players fail on first submit? Thresholds are in `game-concept.md` → MVP Definition. | Developer (playtest) | Zero-SQL + some-SQL playtest, before Chapter 1 content locks |
 | 4 | Is level-1 feedback alone enough for zero-SQL players at MVP, given levels 2–3 are deferred? | Developer (playtest) | Same playtest; fallback: pull level 2 into MVP |
 | 5 | Should feedback text ever name the dataset as "another day"? (Currently: no per-dataset information at all.) | game-designer | Puzzle Definition GDD |
 | 6 | Default `k` (fails per level) = 2 is a guess; tune from playtest logs once levels 2–3 exist. | systems-designer | Vertical Slice |
-| 7 | Which machine is the "target PC" for the 300 ms / 200 ms p95 budgets? Until named, AC-25 cannot be checked. | technical-director | Technical Setup (performance ADR) |
+| 7 | Which machine is the "target PC" for the 300 ms / 200 ms p95 budgets? Until named, AC-26 cannot be checked. | technical-director | Technical Setup (performance ADR) |
 | 8 | Trap tags, key columns and priority lists for Chapter 1 are not yet authored (the AC fixtures are provisional). Wording for hidden-only runtime errors is not authored. | Puzzle Definition GDD / level design | Before Chapter 1 content locks |

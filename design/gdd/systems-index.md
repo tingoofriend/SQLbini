@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-14
-> **Last Updated**: 2026-10-14 (Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
+> **Last Updated**: 2026-10-14 (design review: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -22,7 +22,7 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 
 **Systems, briefly**
 - **Hidden-Data Grader** — compares the player's result to the reference on every hidden dataset and chooses the escalating failure feedback (symptom → clause highlight → synthetic counter-example), never revealing hidden rows. MVP ships level 1 (symptom + generic fallback); levels 2–3 are Vertical Slice (scope-check 2026-10-14). The heart of Pillars 1 and 2; designed first because it fixes the feedback design, the back room's scope and the content cost of every puzzle.
-- **Puzzle Definition & Datasets** — the data format for a puzzle: request, schema, visible and hidden datasets (incl. a disjoint-name set), reference answer, traps with per-level feedback, alternative valid answers, constraint rules. Everything else reads it; the `ch1.py` verifier pattern becomes its validation pipeline.
+- **Puzzle Definition & Datasets** — the data format for a puzzle: request, schema, visible and hidden datasets (incl. a hardcode-proof set), reference answer, traps with per-level feedback, alternative valid answers, constraint rules. Everything else reads it; the `ch1.py` verifier pattern becomes its validation pipeline.
 - **SQL Execution Sandbox** *(inferred)* — runs any SQL safely: fresh in-memory database per run, one statement, read-only for query puzzles, timeout, captured SQLite errors, and a result shape that keeps column count for zero-row results (the spike's open limitation).
 - **Query Workbench** — the screen the player lives in: editor (`CodeEdit`), instant run, result vs. target, schema browser; Run never shows a pass state.
 - **Back Room** — a per-puzzle scratch copy of the visible data where the player inserts test rows; never graded, reset per puzzle. **Alpha (Chapter 2+)** — Chapter 1 players cannot yet write `INSERT` (decision 2026-10-14).
@@ -42,8 +42,8 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
-| 1 | Hidden-Data Grader | Gameplay | MVP | Designed | design/gdd/hidden-data-grader.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
-| 2 | Puzzle Definition & Datasets | Core | MVP | Designed | design/gdd/puzzle-definition-and-datasets.md | — |
+| 1 | Hidden-Data Grader | Gameplay | MVP | In Review | design/gdd/hidden-data-grader.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
+| 2 | Puzzle Definition & Datasets | Core | MVP | In Review | design/gdd/puzzle-definition-and-datasets.md | — |
 | 3 | SQL Execution Sandbox (inferred) | Core | MVP | Designed | design/gdd/sql-execution-sandbox.md | — |
 | 4 | Query Workbench | Gameplay | MVP | Designed | design/gdd/query-workbench.md | SQL Execution Sandbox, Puzzle Definition & Datasets |
 | 5 | Back Room | Gameplay | Alpha | Not Started | — | SQL Execution Sandbox, Puzzle Definition & Datasets, Query Workbench |
@@ -159,7 +159,7 @@ Achievements, Audio, Modify Puzzle Grading.
 ## Recommended Design Order
 
 The Grader is designed **before** its two foundation dependencies, deliberately:
-it decides what a puzzle must contain (traps, per-level feedback, disjoint-name
+it decides what a puzzle must contain (traps, per-level feedback, hardcode-proof
 datasets, alternative answers) and what the sandbox must return (column count for
 zero rows, error capture). Puzzle Definition and the Sandbox are then written
 against the Grader's stated contract. This is the order the gate re-run's
@@ -206,7 +206,7 @@ accepted risks call for.
 | System | Risk Type | Risk Description | Mitigation |
 |--------|-----------|-----------------|------------|
 | Hidden-Data Grader | Design | The core "aha" is unproven (zero hidden-data failures in the first playtest); hint selection for combined or unanticipated mistakes is undefined | Design first; validate against the MVP thresholds playtest; generic fallback feedback |
-| Puzzle Definition & Datasets | Scope | Each puzzle needs hand-built hidden datasets (incl. disjoint names), traps, 3 feedback levels, synthetic counter-examples and alternative answers — × ~50 puzzles | Per-puzzle Definition of Done; extend the `ch1.py` verifier into a CI gate; `/scope-check` |
+| Puzzle Definition & Datasets | Scope | Each puzzle needs hand-built hidden datasets (incl. a hardcode-proof set), traps, 3 feedback levels, synthetic counter-examples and alternative answers — × ~50 puzzles | Per-puzzle Definition of Done; extend the `ch1.py` verifier into a CI gate; `/scope-check` |
 | SQL Execution Sandbox | Technical | godot-sqlite returns rows as dictionaries (zero-row column count lost, duplicate names collapse); Windows binary untested; runaway queries need a timeout | Spike follow-up: test the Windows .dll; prototype a column-preserving result path early |
 | Onboarding: First Shift | Design | Zero-SQL players untested; "bounce in the first minute" is the concept's top design risk | Zero-SQL playtest (dated before Chapter 1 content locks) |
 | Back Room | Scope | New in the 2026-10-14 revision; moved to Alpha (Chapter 2) | Keep to insert/edit/delete on a copy of visible rows |
@@ -219,7 +219,7 @@ accepted risks call for.
 |--------|-------|
 | Total systems identified | 19 |
 | Design docs started | 11 |
-| Design docs reviewed | 0 |
+| Design docs reviewed | 2 (both NEEDS REVISION → revised, In Review) |
 | Design docs approved | 0 |
 | MVP systems designed | 11/11 |
 | Vertical Slice systems designed | 0/6 |

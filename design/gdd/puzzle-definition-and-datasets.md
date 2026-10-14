@@ -61,7 +61,7 @@ are not specified here → they become an ADR.
 | `title` | yes | Workbench | Short, store-flavoured |
 | `request` | yes | Request & Reaction Dialogue | `speaker` id + `line`; written to the trap philosophy (rule 9) |
 | `reference_sql` | yes | Grader | The canonical answer; must be deterministic |
-| `key_column` | yes when tagged traps exist | Grader | `table.column` that identifies a source row, e.g. `products.name` |
+| `key_column` | yes when tagged traps exist | Grader | `table.column` that identifies a source row, e.g. `products.name`; values unique per table. The reference result must have exactly one output column with this column's name — its index is the **key position** (grader rule 2) |
 | `ordered`, `order_cols` | yes | Grader | `ordered` true only if `reference_sql` has a top-level `ORDER BY`; each `order_cols` entry is a column of the reference result and appears in that `ORDER BY`, in the same order |
 | `traps` | yes (≥ 1 unless `tutorial`) | Grader | List of traps — rule 4 |
 | `trap_priority` | yes when traps exist | Grader | Ordered list of trap ids for cause selection |
@@ -86,8 +86,12 @@ are not specified here → they become an ADR.
    cause the grader should report for `trap_sql` (defaults to the trap's own
    `id`; may be a built-in cause — `columns`, `order` or `generic` — for traps
    such as "selected every column" or "kept duplicates", which need no tags);
-   `tagged_keys` — per dataset, the key values of the rows the mistake gets
-   wrong (required only when `expected_cause` is the trap id); `caught_by` —
+   `tagged_keys` — per dataset, **visible included**, the key values of *every*
+   row the mistake wrongly keeps or drops on that dataset (required only when
+   `expected_cause` is the trap id; the grader names a trap only when the
+   differences are fully explained by tags — grader rule 10.4). A mistake that
+   changes a row's *values* rather than its membership cannot be tagged; its
+   `expected_cause` is `generic`; `caught_by` —
    the hidden datasets expected to fail `trap_sql`; and `feedback` — for a
    tagged trap, level-1 text (required), level-2 and level-3 texts (optional
    until Vertical Slice; level 3 is a synthetic counter-example row the player
@@ -103,10 +107,11 @@ are not specified here → they become an ADR.
    operations for its own needs; it never edits the chapter's base.
 6. Every puzzle grades on **visible + ≥ 2 hidden datasets**. If the puzzle has
    at least one **tagged trap** (`expected_cause` = its own id), at least one
-   hidden dataset must be **disjoint**: it carries tags, and every tagged key in
-   it is absent from the visible dataset (Hidden-Data Grader, rule 2). In the
-   disjoint set, tag only edge rows — a tag on a visible row (e.g. Strawberry
-   Yogurt) makes that set non-disjoint.
+   hidden dataset must be **hardcode-proof** (Formulas; Hidden-Data Grader,
+   rule 2): the reference answer on it is not just the visible answer's names —
+   it adds a row the visible data lacks (Lemon Soda) or drops a visible answer
+   whose data changed (Potato Chips at ¥140 in B). Tags may sit on any row,
+   visible-origin rows included (1-11 tags Strawberry Yogurt).
 
 **Data realism (Pillar 4)**
 
@@ -155,9 +160,15 @@ are not specified here → they become an ADR.
 ### States and Transitions
 
 **Content lifecycle** (per puzzle, stored in `content_status`). When a puzzle
-reaches `verified`, its **content hash** (the puzzle plus its resolved datasets)
-is stored with the status. CI and the game loader recompute it; a different
-hash means the puzzle was edited and is treated as `draft` until re-verified.
+reaches `verified`, its **content hash** is stored with the status. The hash
+covers every field of the puzzle definition **except `content_status` and the
+stored hash itself**, plus the puzzle's resolved datasets (chapter schema, base
+datasets and the puzzle's overrides) — so changing the status never changes
+the hash, and any edit to content or data does. Field order and whitespace in
+the file do not count (the hash is taken over a canonical serialisation; format
+→ ADR, Open Question 1). CI and the game loader recompute it; a different hash
+means the puzzle was edited and is treated as `draft` until re-verified. The
+Playtest Log records this same hash.
 
 | State | Meaning | To | When |
 |---|---|---|---|
@@ -168,8 +179,11 @@ hash means the puzzle was edited and is treated as `draft` until re-verified.
 | `locked` | Shipping content | `draft` | Only by an explicit unlock (any edit) |
 
 **Runtime load state** (per puzzle, per launch): `loaded` if the puzzle passes
-the grader's validation rules at load; `withheld` otherwise — it does not appear
-in play and the failure is reported.
+the grader's validation rules at load **and** its effective status is allowed
+in this build; `withheld` otherwise — it does not appear in play and the reason
+is reported. Developer builds allow every status; playtest and release builds
+allow only `verified` or later with a matching hash (a `draft` puzzle never
+reaches a tester).
 
 ### Interactions with Other Systems
 
@@ -192,34 +206,36 @@ in play and the failure is reported.
 *Proposed by `systems-designer` (2026-10-14). Grader formulas (`result_match`,
 `rows_ok`, `R_cap`) are referenced, not redefined — see `hidden-data-grader.md`.*
 
-The **disjoint** formula is defined as:
+The **hardcode_proof** formula is defined as:
 
-`disjoint(d) = (T_d ≠ ∅) ∧ (T_d ∩ K_vis = ∅)`, where `T_d = ⋃ (tagged traps t) t.tagged_keys[d]`
+`hardcode_proof(d) = keys(ref(d)) ≠ (keys(ref(visible)) ∩ K_d)`
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | d | dataset id | the puzzle's hidden datasets | data file | Hidden dataset under test |
-| T_d | set of text | 0 – rows in d | data file | All tagged key values in d, over traps whose `expected_cause` is their own id |
-| K_vis | set of text | ≤ `visible_rows_max` values | calculated | `key_column` values in the visible dataset |
+| keys(ref(x)) | set of text | 0 – rows in x | calculated | Values at the key position in the reference result on dataset x |
+| K_d | set of text | rows in d | calculated | `key_column` values present in dataset d |
 
-**Output Range:** boolean. A set with no tags is never disjoint (an untagged set
-cannot carry the hardcoding defence). Only evaluated when the puzzle has tagged
-traps (rule 6).
-**Example (1-5, key `name`):** hidden A tags {Lemon Soda}, absent from visible →
-disjoint. Hidden B tags {Lemon Soda, Cola 500ml}; Cola 500ml is a visible key →
-not disjoint. The puzzle is valid because A is.
+**Output Range:** boolean. `true` means a query that lists the visible answer's
+names (`WHERE name IN (…)`) fails on d. Independent of tags. Only evaluated
+when the puzzle has tagged traps (rule 6).
+**Example (1-5, key `name`):** visible answer {Mineral Water 500ml, Green Tea
+500ml, Canned Coffee}; reference on A adds Lemon Soda → proof. **1-6:** A adds
+no snack ≥ ¥150, but in B Potato Chips (Salted) costs ¥140 and drops out of the
+reference → B is proof. **1-10:** A adds Vinyl Umbrella → proof, although its
+`null_compare` tags include visible rows.
 
 The **puzzle_valid** formula is defined as:
 
 `puzzle_valid(p) = H ∧ R ∧ A ∧ T ∧ F ∧ K ∧ O ∧ V ∧ C`
 
-- `H = |hidden| ≥ 2 ∧ (no tagged traps ∨ ∃h ∈ hidden: disjoint(h))`
+- `H = |hidden| ≥ 2 ∧ (no tagged traps ∨ ∃h ∈ hidden: hardcode_proof(h))`
 - `R = ∀d ∈ D: ref runs without error ∧ ref is deterministic on d ∧ rows_ok(ref(d))`
 - `A = ∀a ∈ alt_valid: ∀d ∈ D: result_match(a(d), ref(d))`
 - `T = ∀t ∈ traps: fails(t.trap_sql) ∧ cause(t.trap_sql) = t.expected_cause ∧ caught(t) = t.caught_by ∧ t.caught_by ≠ ∅`
 - `F = ∀t ∈ traps: t.id ∈ trap_priority ∧ (t untagged ∨ (t.tagged_keys ≠ ∅ ∧ t.feedback[1..feedback_max_level] all ≠ ""))`
-- `K = no tagged traps ∨ key_column ∈ columns(ref)`
+- `K = no tagged traps ∨ (exactly one output column of ref is named like key_column)`
 - `O = ordered ⇒ (ref has a top-level ORDER BY ∧ order_cols valid)`
 - `V = ∀ table: |visible rows| ≤ visible_rows_max`
 - `C = tutorial ∈ flags ∨ (|traps| ≥ traps_min ∧ |alt_valid| ≥ alt_min)`
@@ -237,7 +253,7 @@ The **puzzle_valid** formula is defined as:
 at runtime. Warnings (an `ORDER BY` with `ordered = false`; a REAL near a
 rounding boundary; a zero-row reference; a hidden set equal to visible) never
 enter the conjunction.
-**Example (1-5):** H — A is disjoint ✓. R — reference returns 3 / 4 / 5 rows on
+**Example (1-5):** H — A is hardcode-proof ✓. R — reference returns 3 / 4 / 5 rows on
 visible / A / B ✓. T — `price < 200` passes visible, fails A and B, cause
 `boundary_200`, `caught_by = {A, B}` ✓. K — `name` is selected ✓. Valid once tags,
 feedback and `alt_valid` are authored.
@@ -251,10 +267,12 @@ The **visible_rows_max** constant is defined as:
 |----------|------|-------|--------|-------------|
 | visible_rows_max | int | 24–40 (default 30) | data file | Maximum rows per visible table |
 
-**Output Range:** At about 24 px per row a 1280×720 result panel shows roughly
-10–12 rows (assumption — confirm in the Query Workbench UX spec), so 30 is about
-three screens. Below 24, all of Chapter 1 (24 visible rows) is withheld; above
-40, the player scrolls through data they are meant to read, against Pillar 3.
+**Output Range:** The Query Workbench shows `rows_visible = 7` rows at the
+default 24 px row height (`query-workbench.md`, with the 120 px counter scene),
+so 30 rows is about four screens of scrolling and Chapter 1's 24 rows about
+three and a half. Below 24, all of Chapter 1 is withheld; above 40, the player
+scrolls through data they are meant to read, against Pillar 3. Whether 24–30
+rows read comfortably in a 7-row panel is a playtest question (Open Question 6).
 **Example:** Chapter 1 has 24 ≤ 30 → V holds with 6 rows to spare.
 
 The **authoring_effort** formula is defined as (*informational — for scope
@@ -296,7 +314,7 @@ section).*
   build fails. SQLite's type affinity would accept it silently; the verifier
   must not.
 - **If a hidden dataset is identical to the visible one**: valid but useless —
-  the verifier reports it (rule 14) and the disjoint rule normally fails anyway.
+  the verifier reports it (rule 14) and that set can never be hardcode-proof.
 
 **Traps and answers**
 - **If `trap_sql` passes every dataset**: the trap is not caught → puzzle invalid
@@ -306,7 +324,7 @@ section).*
   are wrong.
 - **If a puzzle's only traps are untagged** (`expected_cause` is `columns`,
   `order` or `generic` — e.g. S-1 "kept duplicates"): no `key_column` and no
-  disjoint set are required; ≥ 2 hidden datasets still are. Hardcoding is still
+  hardcode-proof set are required; ≥ 2 hidden datasets still are. Hardcoding is still
   caught when a hidden set adds values the visible set lacks (S-1: the Misc
   category exists only in hidden A).
 - **If `trap_sql` fails on a different set of datasets than `caught_by`**: invalid
@@ -337,7 +355,7 @@ stated by other systems:
 
 | Contract from | GDD | What this system must provide | Status |
 |---|---|---|---|
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | `reference_sql`, `key_column`, `ordered`/`order_cols`, visible + ≥2 hidden datasets with ≥1 disjoint, trap tags (as `tagged_keys`), `trap_priority`, feedback levels 1–3, `kind` | Designed — this GDD implements it |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | `reference_sql`, `key_column`, `ordered`/`order_cols`, visible + ≥2 hidden datasets with ≥1 hardcode-proof, trap tags (as `tagged_keys`, per dataset incl. visible), key position, `trap_priority`, feedback levels 1–3, `kind` | Designed — this GDD implements it |
 
 **Downstream — systems that read puzzle data:**
 
@@ -355,9 +373,21 @@ stated by other systems:
 | Playtest Log | soft | id + content version |
 | Modify Puzzle Grading (Alpha) | hard | future `target_state` |
 
-**Bidirectionality:** `hidden-data-grader.md` lists this system as a hard
-upstream dependency ✓. The other downstream systems have no GDD yet; each must
-list *Puzzle Definition & Datasets* in its own Dependencies.
+**Bidirectionality:** verified 2026-10-14 (design review) — the grader, sandbox,
+workbench, hint, constraint, progression, dialogue, store manual and playtest
+log GDDs list *Puzzle Definition & Datasets*. Back Room and Modify Puzzle
+Grading (Alpha) have no GDD yet; each must list it when written.
+
+## Tuning Knobs
+
+All values live in the content config, not in code.
+
+| Knob | Default | Safe range | Affects | Source |
+|---|---|---|---|---|
+| `visible_rows_max` | 30 | 24–40 | How much visible data a puzzle may show; below 24 withholds Chapter 1 | Formulas; registry |
+| `traps_min` | 1 | 1–3 | Minimum traps per non-tutorial puzzle (`C`); higher raises authoring cost (`authoring_effort`) | Formulas |
+| `alt_min` | 1 (2 for bosses recommended) | 1–3 | Minimum `alt_valid` answers (`C`); the Pillar 2 fairness proof | Formulas |
+| `feedback_max_level` | 1 (MVP) / 3 (VS) | 1–3 | Which feedback levels every tagged trap must author (`F`) | Grader `feedback_level`; registry |
 
 ## Visual/Audio Requirements
 
@@ -415,7 +445,7 @@ and names the failing check.
 - **D-06 [Logic]** GIVEN 1-5, WHEN the target is computed, THEN it has 3 rows (Mineral Water 500ml, Green Tea 500ml, Canned Coffee); WHEN only the visible dataset's Cola price is set to 200, THEN it has 4 rows including Cola; the puzzle file holds no target field, and a file that does is rejected at load.
 
 **puzzle_valid** (1-5 as given is valid; each case changes one thing)
-- **V-H [Logic]** GIVEN 1-5, THEN valid (A disjoint, B not); WHEN A's tags also include Strawberry Yogurt, THEN invalid on H.
+- **V-H [Logic]** GIVEN 1-5, THEN valid (A and B hardcode-proof); WHEN Lemon Soda is removed from A and B and Cola stays ¥216 in B, THEN invalid on H. GIVEN 1-10 with `null_compare` tagging the visible NULL-expiry rows, THEN valid (tags on visible rows do not affect H).
 - **V-R [Logic]** WHEN the reference is `… FROM product` (typo), THEN invalid on R.
 - **V-A [Logic]** WHEN `alt_valid` is `… price < 200`, THEN invalid on A and the report names that query and {hidden A, hidden B}.
 - **V-T [Logic]** WHEN (a) `trap_sql` equals the reference, (b) `expected_cause` is `columns`, (c) `caught_by` is {A}, or (d) `caught_by` is {}, THEN each is invalid on T.
@@ -429,6 +459,8 @@ and names the failing check.
 
 **Lifecycle and load**
 - **L-01 [Logic]** GIVEN 1-5 `verified` with a stored content hash, WHEN its step-2 hint text is edited, THEN its recomputed hash differs and it is treated as `draft`; WHEN the chapter's visible dataset is edited, THEN all 13 Chapter 1 puzzles are `draft`; an invalid puzzle never becomes `verified`.
+- **L-06 [Logic]** GIVEN 1-5 `verified`, WHEN only `content_status` changes to `playtested`, or the file's field order / whitespace changes, THEN the recomputed hash is unchanged; WHEN a dataset override is added, THEN it changes.
+- **L-07 [Integration]** GIVEN 1-5 valid but `draft`, WHEN a playtest build launches, THEN 1-5 is withheld with reason "draft"; WHEN a developer build launches, THEN it is playable.
 - **L-02 [Integration]** GIVEN 1-5 with `caught_by` {A} (invalid), WHEN the game launches, THEN 1-5 is absent from its shift, the other 12 puzzles are playable, and the log names `1-5` and check `T`.
 - **L-03 [Integration]** GIVEN two puzzles with id `1-5`, WHEN the chapter loads, THEN the chapter fails to load with a duplicate-id error.
 - **L-04 [Integration]** GIVEN the same content, WHEN the CI verifier and the game loader both run, THEN every puzzle's valid / withheld result is identical. *(Depends on Open Question 2.)*
@@ -448,3 +480,4 @@ and names the failing check.
 | 3 | Chapter 1 migration: author trap tags, key column, `trap_priority`, level-1 feedback, `alt_valid` and the rewritten requests for all 13 puzzles. Who checks the rewritten 1-4/1-5/1-7/1-8 make players fail on first submit? | level design + zero-SQL playtest | Before Chapter 1 content locks |
 | 4 | Should a later chapter's schema (e.g. `sales`, `customers`) be a superset of Chapter 1's `products`, or a fresh store database per chapter? | game-designer | Chapter 2 design |
 | 5 | `ch1.py` has 15 traps while `chapter-1-puzzles.md` says 16 — reconcile during migration. | level design | Chapter 1 migration |
+| 6 | Do 24–30 visible rows read comfortably in the workbench's 7-row result panel, or should `visible_rows_max` drop (or the panel grow)? | ux-designer + playtest | Query Workbench UX spec / first playtest |
