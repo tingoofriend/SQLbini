@@ -1,8 +1,8 @@
 # Query Workbench
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-14 (re-review 6b: TOO_MANY_ROWS strip text; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 2 — Your Query, Your Way
 
@@ -119,7 +119,10 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
     (`no such column: prise`), or the sandbox's fixed message. The voiced line
     from Request & Reaction Dialogue is in the bubble only (Run → Kenji,
     Submit → the requester), never repeated in the strip. `CONTENT_ERROR` shows
-    "Content error — reported" and no raw text (rule 12). If the message names a token
+    "Content error — reported" and no raw text (rule 12). The grader's
+    `TOO_MANY_ROWS` SUBMIT_ERROR (no sandbox text; grader rules 6, 7a) shows its
+    label and "{grader_row_cap}+ rows — too many to compare" — the same string
+    as the Run count line (Formulas `display_rows_max`). If the message names a token
     (`near "FORM"`, `no such column: prise`) and that token appears in the
     editor, its first occurrence is underlined.
 
@@ -507,7 +510,7 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 - **QW-14 [Integration]** GIVEN the editor text, WHEN Submit is pressed, THEN the grader is called (separately from Run); a second press while `Submitting` is ignored; never-run text is accepted; Submit and Run are not adjacent such that one mis-click hits the other.
 - **QW-15 [Integration]** GIVEN a fresh profile with onboarding **Guided**, THEN the manager's Run-vs-Submit line does not appear on 1-1 and appears once, skippable, on the first submit of 1-2; GIVEN onboarding **Off**, THEN it appears once on the first submit (1-1). It never appears on later submits.
 - **QW-16 [Integration]** GIVEN the player edits while `Submitting`, WHEN the verdict arrives, THEN it is shown labelled "for the previous text" and clears on the next edit.
-- **QW-17 [Integration]** GIVEN `SELECT prise FROM products`, WHEN Run is pressed, THEN a strip beside the editor shows the error label and `no such column: prise` in monospace (the voiced line only in the bubble, not the strip), and the first `prise` is underlined; GIVEN an error naming no token, THEN no underline; a SUBMIT_ERROR uses the same strip, never the result area.
+- **QW-17 [Integration]** GIVEN `SELECT prise FROM products`, WHEN Run is pressed, THEN a strip beside the editor shows the error label and `no such column: prise` in monospace (the voiced line only in the bubble, not the strip), and the first `prise` is underlined; GIVEN an error naming no token, THEN no underline; a SUBMIT_ERROR uses the same strip, never the result area; GIVEN a stub grader returning SUBMIT_ERROR `TOO_MANY_ROWS`, THEN the strip shows the label and "5,000+ rows — too many to compare" at the default `grader_row_cap` (formatted from the knob, QW-29).
 - **QW-27 [Integration]** GIVEN a stub grader returning `UNAVAILABLE`, WHEN Submit is pressed, THEN the state returns to `Editing`, the strip shows "Content error — reported" with no raw or build text, and no verdict, counter or puzzle state changes.
 - **QW-28 [Integration]** GIVEN a coach mark shown and focus in the editor, WHEN Esc is pressed, THEN focus leaves the editor and the mark stays; GIVEN focus on the mark, Esc dismisses it; GIVEN a coach mark shown and a new manual page or hint unlocked, THEN no "new" indicator shows until the mark is gone.
 - **QW-29 [Logic]** GIVEN `grader_row_cap` set to 1,000 and a truncated result, THEN the strings read "1,000+ rows — too many to compare"; no workbench string contains a hardcoded 5000 / 5,000.

@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-14 (re-review 6b fixes: rule 4b `hint_counted`, tokenize normalization, `shown(p)`; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 1 — The Condition, Not the Screen
 
@@ -53,7 +53,8 @@ top design risk) and quit.
 
 **Unlocking**
 
-3. The **Hint** button is always visible on the workbench. Before step 1 is
+3. The **Hint** button is always visible on the workbench (except in
+   challenge mode — rule 12). Before step 1 is
    unlocked it shows how to unlock it ("Hint available after 2 wrong answers
    or 3 minutes" at defaults — a wrong answer is a FAIL verdict; SUBMIT_ERRORs
    do not count), never a lock with no explanation.
@@ -64,12 +65,22 @@ top design risk) and quit.
    (e.g. 1-3 unlocks sooner — Formulas; 1-1 and 1-2 are `tutorial`).
 4a. **Counted FAILs (distinct-query rule).** A FAIL counts toward hint unlocking
    (rules 4, 5) and `exhausted` (rule 11) only if its normalized query text
-   differs from the previous **counted** FAIL on that puzzle. Normalization:
-   collapse whitespace, case-insensitive outside string literals, ignore a
-   trailing `;`. The query text comes from the Grader with each verdict.
+   differs from the previous **counted** FAIL on that puzzle. Normalization
+   works on the SQL Execution Sandbox's `tokenize(sql)` tokens: `COMMENT`
+   tokens are dropped, `WORD` tokens compare case-insensitively, all other tokens (`STRING`,
+   `QUOTED_IDENT`, `NUMBER`, `PUNCT`) verbatim, and one trailing `;` is ignored — so
+   whitespace, keyword case and comments never make a query "different". The
+   query text comes from the Grader with each verdict.
    Resubmitting the same failing query therefore never advances a step. The
    grader's own escalation counters are unaffected, and the time paths are
    unchanged. "Fails" in this document means counted FAILs.
+4b. **`hint_counted` (returned to the Grader).** For every submit verdict the
+   Grader passes in, the Hint System returns `hint_counted: bool` — **true**
+   only for a FAIL outside challenge mode that counted under rule 4a; **false** for
+   a FAIL that did not count, and for every PASS, SUBMIT_ERROR, UNAVAILABLE and
+   challenge-mode submit (rule 12). The Grader writes it into the Playtest
+   Log's `submit` event (`hidden-data-grader.md` Interactions;
+   `playtest-log.md` rule 4a); the Hint System emits no `submit` event itself.
 5. **Step 2 unlocks** when step 1 has been *viewed* and then either another
    `hint2_fails` failed submits occur or `hint2_minutes` more active time passes.
    On tutorial puzzles both steps are available from the start.
@@ -136,12 +147,12 @@ Per puzzle, per session:
 | System | Direction | Data | Owner |
 |---|---|---|---|
 | Puzzle Definition & Datasets | Puzzle → Hints | `hints` (step 1, step 2), `flags.tutorial` | Puzzle Definition |
-| Hidden-Data Grader | Grader → Hints | Each submit's verdict + the submitted query text (FAIL counts if distinct, rule 4a; SUBMIT_ERROR does not) | Grader |
+| Hidden-Data Grader | Grader ↔ Hints | Grader → Hints: each submit's verdict + the submitted query text (challenge mode is known from Constraint Challenges' open/closed event, rule 12; FAIL counts if distinct, rule 4a; SUBMIT_ERROR does not). Hints → Grader: `hint_counted` for that submit (rule 4b), which the Grader writes into the `submit` log event | Grader (call); Hint System (`hint_counted` value) |
 | Query Workbench | Workbench hosts | Hint button, Ctrl+H, hint panel, "new step" indicator | Workbench |
 | Store Manual | Hints → Manual | Optional manual page link in a step | Store Manual |
 | Shift & Chapter Progression | Hints ↔ Progression | `exhausted` event per puzzle (Hints → Progression); Restart event (rule 12a) broadcast by Progression, subscribed to by the Hint System (Progression → Hints); challenge-mode open/closed | Progression decides what to offer |
 | Onboarding: First Shift | Onboarding → Hints | Coach-mark showing flag: while a coach mark is showing (Guided mode), the "new step" indicator is suppressed; it appears when no coach mark is showing | Onboarding |
-| Playtest Log | Hints → Log | Unlock, open and exhausted events with timestamps | Hint System |
+| Playtest Log | Hints → Log | `hint_unlock {step}`, `hint_open {step}`, `hint_exhausted` with timestamps; `submit.hint_counted` reaches the log via the Grader (rule 4b) | Hint System |
 | Request & Reaction Dialogue | Dialogue → Hints | Helper character's portrait/name | Dialogue |
 
 ## Formulas
@@ -152,13 +163,14 @@ global-only).*
 
 The **active_time** formula is defined as:
 
-`active_time = Σ(frames) dt × focused × [now − last_input_t ≤ idle_cutoff_s]`
+`active_time(p) = Σ(frames) dt × focused × shown(p) × [now − last_input_t ≤ idle_cutoff_s]`
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | dt | float (s) | 0–0.25 (clamped) | calculated | Frame delta |
 | focused | bool | 0 / 1 | calculated | Game window focused and not paused |
+| shown(p) | bool | 0 / 1 | calculated | Puzzle p is the one open in the workbench **and** challenge mode is not open (rule 12). Only one puzzle accrues at a time; in challenge mode none does |
 | last_input_t | float (s) | ≥ 0 | calculated | Last key, click or scroll in the workbench, manual or hint panel |
 | idle_cutoff_s | int (s) | 30–300 (default 90) | data file (global only, not per-puzzle overridable) | Idle time after which the clock stops |
 
@@ -261,9 +273,9 @@ outside the stated ranges (e.g. `hint1_fails = 5` → 4, `idle_cutoff_s = 20` �
 
 | System | GDD | What the Hint System needs | Status |
 |---|---|---|---|
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `hints` (step 1, step 2), `flags.tutorial` | In Review |
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Submit verdicts (FAIL vs SUBMIT_ERROR) + submitted query text (rule 4a) | In Review |
-| Query Workbench | `design/gdd/query-workbench.md` | Host: button, shortcut, panel, indicator | In Review |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `hints` (step 1, step 2), `flags.tutorial` | Approved |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Submit verdicts (FAIL vs SUBMIT_ERROR) + submitted query text (rule 4a); consumes `hint_counted` (rule 4b) | Approved |
+| Query Workbench | `design/gdd/query-workbench.md` | Host: button, shortcut, panel, indicator | Approved |
 
 **Downstream:** Shift & Chapter Progression (consumes `exhausted`), Playtest Log
 (events). **Soft:** Store Manual (page links in hint text), Request & Reaction
@@ -271,8 +283,13 @@ Dialogue (helper character identity), Onboarding: First Shift (coach-mark flag
 suppresses the "new step" indicator), Shift & Chapter Progression (Restart event,
 challenge-mode open/closed — the Hint↔Progression coupling is a runtime cycle).
 
+**Soft (lexer):** SQL Execution Sandbox — `tokenize(sql)` for rule 4a
+normalization (the contract Constraint Challenges also uses).
+
 **Bidirectionality:** the grader, puzzle definition, workbench, progression,
-constraint challenge and onboarding GDDs list the Hint System ✓.
+constraint challenge and onboarding GDDs list the Hint System ✓. The sandbox
+lists Constraint Challenges as its lexer consumer but not yet the Hint System —
+add it at the next sandbox edit (cross-review 6d).
 
 ## Tuning Knobs
 
@@ -317,7 +334,7 @@ never has a reason to quit instead of asking.
 
 ## UI Requirements
 
-1. Hint button always visible on the workbench, with its unlock condition shown
+1. Hint button visible on the workbench (hidden in challenge mode, rule 12), with its unlock condition shown
    while locked ("Available after 2 wrong answers or 3 minutes" — from the puzzle's
    actual thresholds).
 2. Ctrl+H opens/closes the hint panel; reachable by keyboard focus.
@@ -331,9 +348,10 @@ never has a reason to quit instead of asking.
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/puzzle-definition-and-datasets.md` | Core Rule 1 | `hints` field, tutorial flag | In Review |
-| `design/gdd/hidden-data-grader.md` | Core Rules 4–5, 9 | FAIL vs SUBMIT_ERROR counting; feedback vs hint separation; counter reset on restart | In Review |
-| `design/gdd/query-workbench.md` | UI Requirements | Hint button, Ctrl+H, panel placement | In Review |
+| `design/gdd/puzzle-definition-and-datasets.md` | Core Rule 1 | `hints` field, tutorial flag | Approved |
+| `design/gdd/hidden-data-grader.md` | Core Rules 4–5, 4b, 9 | FAIL vs SUBMIT_ERROR counting; `hint_counted` in the `submit` event; feedback vs hint separation; counter reset on restart | Approved |
+| `design/gdd/sql-execution-sandbox.md` | Core Rule 4a | `tokenize(sql)` token kinds | Approved |
+| `design/gdd/query-workbench.md` | UI Requirements | Hint button, Ctrl+H, panel placement | Approved |
 | `design/gdd/shift-and-chapter-progression.md` | Core Rules 8, 11, 12 | Restart action and event (rule 12a); consumer of `exhausted` (rule 7); challenge mode keeps the main request Open | In Review |
 | `design/gdd/onboarding-first-shift.md` | Interactions | Indicator suppressed while a coach mark shows | In Review |
 | `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1 | Kenji is the hint voice (cast) | In Review |
@@ -360,7 +378,7 @@ opening the panel is covered by workbench QW-19. [UI] = retained screenshot in
 - **HS-11 [Logic]** GIVEN step 2 first opened at 6 fails, THEN fails 7–8 do not trigger `exhausted`, fail 9 does, and the Progression fake receives exactly one event, still one after fails 10–12; GIVEN the puzzle already PASSED, THEN further fails or time never trigger it.
 - **HS-17 [Logic]** GIVEN 1-5 at defaults, an input every 10 s, only SUBMIT_ERRORs (0 FAILs) and each step opened as soon as it unlocks, THEN step 1 unlocks at 180.0 s, step 2 at 360.0 s, `exhausted` is false at 659.9 s and true at 660.0 s with exactly one Progression event; GIVEN the same with no submits at all, THEN the same times.
 - **HS-18 [Integration]** GIVEN 1-6 PASSED and challenge mode active, WHEN 5 challenge FAILs occur over 10 active minutes, THEN hint state, `fails` and the snapshots are unchanged; the Hint button is hidden and the hint area reads "No hints for dares."; GIVEN 1-7 open with `active_time` = 100 s when challenge mode opens, WHEN 10 active minutes pass in challenge mode and it is left, THEN 1-7's `active_time` is still 100 s and its hint state unchanged.
-- **HS-19 [Logic]** GIVEN 1-5 at defaults, WHEN FAILs are submitted with texts `SELECT 1`, `select  1;`, `SELECT 1` THEN `fails` = 1 and the state is `Locked`; WHEN a FAIL `SELECT 2` follows THEN `fails` = 2 and `Step1Ready`; GIVEN `SELECT * FROM t WHERE name = 'A'` then `… = 'a'` (both FAIL) THEN both count (case inside string literals is kept); the grader received and counted all 4 FAILs of the first sequence regardless.
+- **HS-19 [Logic]** GIVEN 1-5 at defaults, WHEN FAILs are submitted with texts `SELECT 1`, `select  1;`, `SELECT 1` THEN `fails` = 1 and the state is `Locked`; WHEN a FAIL `SELECT 2` follows THEN `fails` = 2 and `Step1Ready`; GIVEN `SELECT * FROM t WHERE name = 'A'` then `… = 'a'` (both FAIL) THEN both count (case inside string literals is kept); GIVEN `SELECT 2 -- try` after `SELECT 2` (both FAIL) THEN the second does not count (comments dropped); the grader received and counted all 4 FAILs of the first sequence regardless. For each submit the returned `hint_counted` is true exactly for the counted FAILs (first sequence: true, false, false, true), false for every PASS, SUBMIT_ERROR and UNAVAILABLE, and false for every challenge-mode submit (HS-18).
 - **HS-12 [Content-CI]** GIVEN a puzzle with step 1 or step 2 empty or missing, THEN content validation marks it invalid; GIVEN a fixture that bypasses validation, THEN the missing step shows "No hint for this one" and the other step still works.
 - **HS-13 [Content-CI]** For every puzzle: (a) no hint contains the reference query (whitespace and case normalised); (b) no code span in a hint, run as the player's query, **passes** the puzzle (matches the reference on every dataset); (c) step 1 names no value that appears only in hidden datasets.
 - **HS-14 [Logic]** GIVEN `hint1_fails` 0 or 1.5, `stuck_fails` "3", `hint2_minutes` 0 or −1, or `exhausted_minutes` 0, WHEN loaded, THEN each is rejected and the error names the key; GIVEN `hint1_fails = 5`, `idle_cutoff_s = 20` or `exhausted_minutes = 30`, THEN clamped to 4 / 30 / 15 with a warning.

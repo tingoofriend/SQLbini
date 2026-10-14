@@ -18,3 +18,20 @@ Findings:
 Reviewed-Content-Hash: design/gdd/hint-system.md 375ea4b799bee5e440b9487a128f97c24cc76604
 Reviewed-Content-Hash: design/registry/entities.yaml 4d2eb289795d0ce9b9f686786ff036a3aa6c5e83
 Revised in-session (2026-10-14, after the review; user decisions: time path for `exhausted`): BLOCKING exhausted fixed — `exhausted_minutes` (default 5, range 2–15) after step 2, so SUBMIT_ERROR-only and never-submitting players reach the skip at 11 active minutes at defaults (rule 11, Formulas, HS-17, OQ 4 resolved). BLOCKING tutorial 1-2 fixed — override is 1-3 only; HS-01 uses 1-3, HS-07 covers 1-1/1-2 as tutorial. Also fixed: Overview wording, "wrong answers" label, MVP note on grader levels, challenge mode never changes hint state (rule 12, HS-18), restart via Progression rule 12a, stale statuses, Tuning Knobs section added. Not done: Player Fantasy (advisory). Re-review pending in a fresh session.
+
+## Review — 2026-10-14 (re-review, session 6b, fresh session) — Verdict: NEEDS REVISION
+Scope signal: M
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 1 | Recommended: 5
+Summary: Both prior blockers are resolved: `exhausted` has the `exhausted_minutes` time path (HS-17: 180/360/660 s checks out) and the per-puzzle override is 1-3 only with 1-1/1-2 tutorial (HS-01, HS-07). Rule 4a (distinct-query counting) matches the grader and Playtest Log, and challenge-mode rules (hidden button, paused main-request clock) match Constraint Challenges and Progression. One blocker: the grader and Playtest Log say the Hint System returns `hint_counted` for the `submit` event, but the Hint GDD — the owner of the value — never defines it (cross-review resolution not carried into the owning doc).
+Prior verdict resolved: Yes (2026-10-14 blockers 1–2)
+Findings:
+- [BLOCKING] Core Rules 4a / Interactions / Acceptance Criteria: `hint_counted` contract missing — grader Interactions and `playtest-log.md` rule 4a rely on Hints returning it; Hint doc has no rule, no Grader ← Hints direction, no AC
+- [RECOMMENDED] Core Rule 4a: normalization undefined for comments and quoted identifiers — base it on the sandbox `tokenize`
+- [RECOMMENDED] Formulas `active_time`: no "this puzzle is shown" term — per-puzzle accrual and the challenge-mode pause are stated only in prose
+- [RECOMMENDED] Core Rule 3 / UI Req 1: "always visible" without the challenge-mode exception
+- [RECOMMENDED] Dependencies / Cross-References: upstream statuses "In Review" — Puzzle Def, Grader, Workbench Approved
+- [RECOMMENDED] Player Fantasy absent (advisory at `standard`)
+Reviewed-Content-Hash: design/gdd/hint-system.md 394a085cd717f2725d70f437ec75e408a349ce90
+Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+Revised in-session (2026-10-14, after the review; user decisions: define `hint_counted` in the Hint doc, apply the recommended items too): BLOCKING fixed — new rule 4b (`hint_counted` true only for a counted FAIL outside challenge mode; false for uncounted FAILs, PASS, SUBMIT_ERROR, UNAVAILABLE, challenge submits), Grader row now Grader ↔ Hints, Playtest Log row names the events, HS-19 checks the returned values. Also fixed: rule 4a normalization on `tokenize` tokens (comments dropped, WORD case-insensitive, others verbatim; HS-19 comment case), `active_time(p)` gains `shown(p)`, rule 3 / UI Req 1 challenge exception, statuses → Approved, Sandbox listed as soft lexer dependency. Grader and Playtest Log unchanged. Not done: Player Fantasy (advisory); sandbox doc does not yet list the Hint System as a `tokenize` consumer (add at 6d). Status stays In Review; re-review in a fresh session.
