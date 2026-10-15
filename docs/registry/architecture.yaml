@@ -66,6 +66,18 @@ state_ownership:
     added: 2026-10-15
     revised: ""
 
+  - state: build_flavour
+    status: active
+    owner_system: foundation-build-flavour
+    adr: docs/architecture/adr-0004-event-bus-and-playtest-log.md
+    interface: "BuildFlavour.current() -> &\"dev\" | &\"playtest\" | &\"release\" (resolved once at boot from feature tags)"
+    write_access: foundation-build-flavour-only
+    referenced_by:
+      - docs/architecture/adr-0004-event-bus-and-playtest-log.md
+      - docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    added: 2026-10-15
+    revised: ""
+
 # Example:
 #
 # state_ownership:
@@ -138,6 +150,19 @@ interfaces:
     signal_signature: "await PuzzleRepository.verify_all() -> ContentReport; same ContentVerifier for CI (tools/ci/verify_content.gd) and game load"
     referenced_by:
       - docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    added: 2026-10-15
+    revised: ""
+
+  - contract: playtest_event_recording
+    status: active
+    pattern: event_bus
+    producer: all-mvp-systems
+    consumers:
+      - playtest-log
+    adr: docs/architecture/adr-0004-event-bus-and-playtest-log.md
+    signal_signature: "EventBus.emit_event(name: StringName, puzzle_id: Variant, data: Dictionary) -> void; validated against EventCatalog (= playtest-log.md rule 4); event_recorded(record: Dictionary)"
+    referenced_by:
+      - docs/architecture/adr-0004-event-bus-and-playtest-log.md
     added: 2026-10-15
     revised: ""
 
@@ -242,6 +267,17 @@ api_decisions:
     added: 2026-10-15
     revised: ""
 
+  - purpose: playtest_log_writer
+    status: active
+    api: "FileAccess WRITE once; store_line + flush per event; get_error() after each write is the failure signal"
+    not: "Relying on the store_* bool alone; background writer thread (fallback only)"
+    adr: docs/architecture/adr-0004-event-bus-and-playtest-log.md
+    reason: "Crash keeps every flushed line (PL-07); store_line returned true on a real write error (probed 4.7.2)"
+    referenced_by:
+      - docs/architecture/adr-0004-event-bus-and-playtest-log.md
+    added: 2026-10-15
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -314,6 +350,27 @@ forbidden_patterns:
     description: "Never pass a RefCounted/Object to JSON.stringify for hashing; use to_canonical() Dictionaries with String keys."
     why: "Objects print as instance ids, so the hash changes every run."
     adr: docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    added: 2026-10-15
+
+  - pattern: gameplay_on_event_recorded
+    status: active
+    description: "Gameplay logic must never subscribe to EventBus.event_recorded; systems control each other through their own typed signals."
+    why: "The recorder is absent in release builds and stops on write failure; gameplay must not change with it (events record, signals control)."
+    adr: docs/architecture/adr-0004-event-bus-and-playtest-log.md
+    added: 2026-10-15
+
+  - pattern: feature_tag_checks_outside_build_flavour
+    status: active
+    description: "No code may call OS.has_feature for dev/playtest/release decisions except BuildFlavour."
+    why: "Content withholding and logging must agree on the build flavour."
+    adr: docs/architecture/adr-0004-event-bus-and-playtest-log.md
+    added: 2026-10-15
+
+  - pattern: direct_log_file_writes
+    status: active
+    description: "No system writes playtest log lines directly; all events go through EventBus.emit_event."
+    why: "Catalogue validation, stamping and undeclared counting happen only in the bus."
+    adr: docs/architecture/adr-0004-event-bus-and-playtest-log.md
     added: 2026-10-15
 
 # Example:

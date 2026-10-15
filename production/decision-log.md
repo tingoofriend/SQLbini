@@ -62,3 +62,6 @@ gate reports and GDD review logs; earlier entries are reconstructed from those.
 | 2026-10-15 | Puzzle content in JSON (chapter file + one file per puzzle); verifier in GDScript on the game's own sandbox for CI and load; Python `ch1.py` retired | No game impact; avoids duplicate verifier work | Claude | ADR-0003 |
 | 2026-10-15 | Register ADR stances in `docs/registry/architecture.yaml` | Bookkeeping | User | — |
 | 2026-10-15 | Start a decision log (this file) | Bookkeeping | User | — |
+| 2026-10-15 | `/estimate` accepted; `game-concept.md` / `systems-index.md` schedule wording updated | Docs | User | — |
+| 2026-10-15 | Build flavours dev / playtest / release from feature tags; EventBus validates the catalogue; JSONL recorder flushes per event; report tool in Python | Code structure only | Claude | ADR-0004 |
+| 2026-10-15 | F9 facilitator note recorded as a separate `help_note {note}` event (GDD gap: `help_given` is written at once, the note comes later) | Playtest log format only | User (rec.) | ADR-0004, `playtest-log.md` rule 7 |

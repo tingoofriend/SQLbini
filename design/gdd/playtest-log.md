@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (cross-review 6d: request_restart, request_unavailable {source}; {mark}/{page}/hint_counted citations; statuses; earlier: 2026-10-14: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (architecture ADR-0004, user decision: F9 note is a separate `help_note {note}` event, `help_given` carries no note; earlier: cross-review 6d: request_restart, request_unavailable {source}; {mark}/{page}/hint_counted citations; statuses; earlier: 2026-10-14: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Supports all pillars by measuring them (MVP Definition thresholds in `game-concept.md`)
 
@@ -60,7 +60,7 @@ prints the threshold table. Players of the released game never meet this system.
 
 | Source | Events (data) |
 |---|---|
-| Session | `session_start {tester, group, build}`, `session_end`, `help_given {note}` (facilitator key) |
+| Session | `session_start {tester, group, build}`, `session_end`, `help_given` (facilitator key, written at once), `help_note {note}` (the optional note, written when the note field closes with text) |
 | Query Workbench | `run {sql, dataset: visible/scratch, ok, error_kind, rows, match: bool, build_message?}`, `edit_burst {chars_changed}` (edits between actions, coalesced) |
 | Hidden-Data Grader | `submit {sql, verdict, cause, level, per_dataset, missing_count, extra_count, hint_counted: bool, build_message?}` |
 | Hint System | `hint_unlock {step}`, `hint_open {step}`, `hint_exhausted` |
@@ -105,8 +105,11 @@ prints the threshold table. Players of the released game never meet this system.
    question, point at something). The log writes `help_given` for the current
    puzzle at once. F9 also opens a small one-line note field; typing a note is
    optional, and Enter or Esc closes it and returns keyboard focus to the editor
-   (if no key is pressed within 5 s it closes by itself). This is how "without
-   outside help" is measured.
+   (if no key is pressed within 5 s it closes by itself). A non-empty note is
+   written on close as a separate `help_note {note}` event for the same puzzle
+   (so `help_given` is never delayed and line order stays monotonic in `t_ms`);
+   an empty note writes nothing. This is how "without outside help" is measured;
+   only `help_given` counts as help in the Formulas.
 
 **Writing safely**
 
@@ -345,7 +348,7 @@ sent; these cover the log and the report tool. [UI] = retained screenshot in
 - **PL-08 [Integration]** GIVEN the log folder made read-only mid-session, THEN the label reads "Recording stopped", nothing more is written, Run and Submit still work, no error dialog, and frame time stays within the 16.6 ms budget.
 - **PL-09 [Integration]** GIVEN a full session, THEN the only file written is `playtest-logs/<session>.jsonl` and no network socket is opened.
 - **PL-17 [Integration]** GIVEN 1-5 open, WHEN the tester submits FAIL `SELECT 1`, then FAIL `select 1;`, then FAIL `SELECT 2`, THEN three `submit` lines (all from the grader, none from the workbench) carry `hint_counted` true, false, true; GIVEN a visible Run whose result matches, THEN `run.dataset = "visible"` and `run.match = true`; GIVEN a dataset that fails to build, THEN the `run` (error_kind CONTENT_ERROR) or `submit` (verdict UNAVAILABLE) line carries `build_message`, and no other line, and no in-game text, contains it; no `first_run` / `first_pass` lines are ever written.
-- **PL-10 [Integration]** GIVEN 1-4 open, F9 writes `help_given {puzzle: 1-4}` at once; with no puzzle open, `puzzle: null`; after Enter, Esc or 5 s idle in the note field, the editor has keyboard focus again.
+- **PL-10 [Integration]** GIVEN 1-4 open, F9 writes `help_given {puzzle: 1-4}` at once; with no puzzle open, `puzzle: null`; after Enter, Esc or 5 s idle in the note field, the editor has keyboard focus again; a typed note `x` adds one `help_note {note: "x"}` line after the `help_given` line, an empty note adds none.
 
 **Report tool** (`tools/playtest-report <folder>`, fixture logs)
 - **PL-11 [Tool]** THEN `time_to_first_run` = 35.0 s; `puzzle_active_time` = 170.0 s (events 0, 20, 50, 200, 230 s; cap 90); `first_submit_failed(1-6)` = true for SUBMIT_ERROR, FAIL, PASS; `cleared_without_help` = true when the only help is on 1-4; `finished_chapter_without_help` = true with 1 skip and no help (printed with "1 skip, boss skipped" when the skip is 1-11), false with help on 1-5 before its pass; `started_challenge_when_offered` = true for offer → Try with no help, null when never offered; `boss_skip_rate` = 0.50; `run_then_fail` = 0.67; an empty denominator prints "no data", never 0%.
