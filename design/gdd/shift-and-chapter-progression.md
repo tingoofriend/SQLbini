@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (re-review 6e: NEEDS REVISION → revised — `Unavailable` resolves a main request in rules 4, 6, States, PR-02/PR-04, payslip mark; first main opens when the briefing ends; side messages after the briefing; earlier: cross-review 6d: rule 7a UNAVAILABLE → Kenji's offer / Unavailable state, request_restart logged, briefing opens the first request, PR-22 (rule changes); OQ1 G2 note, statuses; earlier: 2026-10-15: re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6f: NEEDS REVISION → revised — side requests become `Open` when the briefing ends (States, PR-03); PR-19 briefing wording; Onboarding → Progression answer signal (Interactions); earlier: re-review 6e: NEEDS REVISION → revised — `Unavailable` resolves a main request in rules 4, 6, States, PR-02/PR-04, payslip mark; first main opens when the briefing ends; side messages after the briefing; earlier: cross-review 6d: rule 7a UNAVAILABLE → Kenji's offer / Unavailable state, request_restart logged, briefing opens the first request, PR-22 (rule changes); OQ1 G2 note, statuses; earlier: 2026-10-15: re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -195,7 +195,9 @@ amounts are content values.
 | `Passed` | Done | Replay | `Passed` |
 | `Open` / `Skipped` / `Passed` | | Restart (rule 12a) | unchanged (working state reset) |
 
-Side requests start `Open` when their shift starts and are never `Skipped`.
+Side requests become `Open` when their shift's briefing ends (rule 5) — never
+during the briefing, so none can be opened (from its ticket or the chapter list)
+before the shift's first main request — and are never `Skipped`.
 
 **Per shift:** `NotStarted → InProgress` (first request opened) `→ ClockedOut`
 (all main requests passed, skipped or unavailable; payslip shown). From
@@ -219,7 +221,7 @@ passed, unavailable ones excluded).
 | Query Workbench | Progression ↔ Workbench | Progression → Workbench: which request is open; the Restart event (rule 12a — the Workbench resets that puzzle's draft to empty or `prefill_sql` and clears its last Run result and verdict). Workbench → Progression: whether a puzzle's draft is empty (for the Restart confirmation) | Progression (event); Workbench (draft state) |
 | Request & Reaction Dialogue | Progression → Dialogue | Shift briefing, Kenji's skip offer and accept line (`skip.offer`, `skip.accept`), side-request messages when the briefing ends (`side` kind) — all Dialogue rule 3b; Dialogue → Progression: end of the briefing (Dialogue rule 3c — opens the shift's first main request) and end of the `skip.accept` hold | Progression owns timing; Dialogue owns the lines |
 | Store Manual | Progression → Manual | Request opened (manual pages unlock by the request's `manual_pages`) | Store Manual |
-| Onboarding: First Shift | Progression → Onboarding | Request opened for 1-1 to 1-3 (Morning shift of Day One); Restart returns 1-1's `prefill_sql` (coach marks do not replay) | Onboarding |
+| Onboarding: First Shift | Progression ↔ Onboarding | Progression → Onboarding: request opened for 1-1 to 1-3 (Morning shift of Day One); Restart returns 1-1's `prefill_sql` (coach marks do not replay). Onboarding → Progression: on a new game, the "Ever used SQL before?" answer — Day One's first main request (1-1) opens on it, not on the briefing end (rule 11; `onboarding-first-shift.md` rule 1) | Onboarding |
 | Save/Load & Settings (VS) | Progression → Save | Request, shift, chapter states | Save/Load |
 | Game Shell & Screen Flow (VS) | Shell → Progression | Start / continue chapter | Game Shell |
 | Achievements (VS) | Progression → Achievements | Chapter complete / starred events | Achievements |
@@ -345,7 +347,7 @@ GDDs. [UI] = retained screenshot in `production/qa/evidence/`.*
 **Structure and flow**
 - **PR-01 [Integration]** GIVEN Chapter 1 data, WHEN the chapter loads, THEN Morning = 1-1…1-3, Afternoon = 1-4…1-7 + S-1, Closing = 1-8…1-11 (1-11 boss) + S-2, and 1-1/1-2 are tutorial; GIVEN `order` or `shift` changed in data, THEN the new order is used with no code change.
 - **PR-02 [Logic]** GIVEN a shift with ≥ 3 main requests, WHEN one is `Open`, THEN later mains are `Locked`; WHEN it becomes passed, skipped or unavailable (rule 7a), THEN the next becomes `Open`. GIVEN *Next shift* chosen, THEN the new shift's first main stays `Locked` while its briefing shows and becomes `Open` when the briefing ends.
-- **PR-03 [Logic]** GIVEN a shift's side request is unopened, WHEN all its mains are passed/skipped, THEN the shift still clocks out; side requests are `Open` from shift start, can be opened any time, and are never `Skipped`.
+- **PR-03 [Logic]** GIVEN a shift's side request is unopened, WHEN all its mains are passed/skipped, THEN the shift still clocks out; side requests are not `Open` while the shift's briefing shows, become `Open` when it ends, can then be opened any time, and are never `Skipped`.
 - **PR-04 [Logic]** GIVEN every main in a shift passed, skipped or unavailable, WHEN the last one resolves, THEN the shift is `ClockedOut` — also when all were skipped, with no scolding line, and when the last main was left as unavailable (rule 7a).
 
 **Skip and reopen**
@@ -366,7 +368,7 @@ GDDs. [UI] = retained screenshot in `production/qa/evidence/`.*
 - **PR-15 [UI]** GIVEN each shift start THEN a briefing line is shown; GIVEN a PASS THEN the next request arrives when the PASS reaction ends (`reaction_hold`, or a click) with no intervening menu — also on 1-6, where the constraint offer is inline in the PASS reaction (no modal) and the next request arrives whether or not it was answered.
 - **PR-16 [UI]** GIVEN the chapter list, THEN each request shows glyph + word for locked / open / passed / left for later / unavailable, plus a challenge mark and a replay/reopen action, at ≥ 4.5:1, never colour alone.
 - **PR-18 [Integration]** GIVEN 1-5 `Open` with 2 FAILs, step 1 read and a draft, WHEN Restart is chosen and confirmed, THEN grader counters are 0, hints `Locked`, the draft empty, the result panel and last verdict cleared, and the request still `Open`; GIVEN a `Passed` or `Skipped` request, WHEN restarted, THEN its progress state is unchanged; GIVEN 1-1, WHEN restarted, THEN the prefill returns; GIVEN an empty draft, THEN no confirmation is asked; **Cancel** changes nothing.
-- **PR-19 [Logic]** GIVEN the Morning shift `ClockedOut`, THEN 1-4 is `Locked` until *Next shift* (or continue after *Stop for today*), then `Open`; GIVEN *Stop for today* at MVP, THEN the shift screen shows the "Progress is kept until you close the game" note and progress is intact.
+- **PR-19 [Logic]** GIVEN the Morning shift `ClockedOut`, THEN 1-4 is `Locked` until *Next shift* (or continue after *Stop for today*) starts the Afternoon briefing, and `Open` when that briefing ends; GIVEN *Stop for today* at MVP, THEN the shift screen shows the "Progress is kept until you close the game" note and progress is intact.
 - **PR-20 [Integration]** GIVEN 1-6's challenge in challenge mode while 1-7 is `Open`, THEN 1-7 stays `Open` (its `request_open` logged once, before challenge mode), its hint `active_time` does not grow, and no shift advances until challenge mode is left, after which 1-7 is shown.
 - **PR-21 [Integration]** GIVEN boss 1-11 exhausted, WHEN the player accepts Kenji's offer, THEN Kenji's `skip.accept` line is shown for its `reaction_hold` (an edit or Run does not end it), then the Closing shift clocks out, the payslip lists 1-11 as left for later, and End of day follows.
 - **PR-17 [Integration]** GIVEN opens, passes, skips, unavailable requests, clock-outs and chapter completion, THEN each is written to the Playtest Log with a timestamp as `request_open`, `request_pass`, `request_skip`, `request_unavailable {source}`, `shift_clockout`, `chapter_complete` (`playtest-log.md` rule 4); GIVEN a confirmed Restart, THEN `request_restart {state, draft_was_empty}` is written; a cancelled Restart writes nothing.

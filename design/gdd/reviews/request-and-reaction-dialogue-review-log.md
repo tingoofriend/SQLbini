@@ -65,3 +65,16 @@ Findings:
 Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md 57152491bdd8e8ec0d2484f8b7d48bc1e528b91d
 Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
 Revised in-session (2026-10-15, after the review; user decision "tickets after the briefing ends"): rule 3b — side messages arrive when the shift's briefing ends, never during it; rule 3c — Dialogue tells Progression when the briefing ends (first main opens, side messages arrive); Progression Interactions row; RD-21 (briefing end), RD-22 (Afternoon/S-1 case); wording: TOO_MANY_ROWS exception in rule 2 and UI Req 5. Status → In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (re-review 6f of the 6e fixes, fresh session) — Verdict: NEEDS REVISION
+Scope signal: M
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 1 | Recommended: 1
+Summary: The 6e blocker is resolved in the rules: rule 3b (side messages and tickets only after the briefing ends), rule 3c (briefing-end signal to Progression → first main opens, side messages arrive), the Progression Interactions row, RD-21 and RD-22 match Progression rules 5 and 11, Onboarding rule 1 and CC rule 6c; the TOO_MANY_ROWS exception reads the same in rule 2, rule 6 and UI Req 5, and the Guided suppression window wording agrees across store manual, workbench, hint and onboarding. One ripple was missed: the `side` kind row still delivered side messages "at shift start" (with Progression's States note / PR-03), contradicting rule 3b and RD-22.
+Prior verdict resolved: Yes (6e blocker)
+Findings:
+- [BLOCKING] Core Rule 2 (`side` kind row): "delivered as a message at shift start" vs rule 3b / RD-22 (when the briefing ends) — shared with Progression States / PR-03
+- [RECOMMENDED] Cross-References: Progression status "Approved" stale (In Review)
+Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md 43771228e4b558d9b04a7755f7f8a77ca6209ceb
+Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
+Revised in-session (2026-10-15, after the review; user decision "Open when the briefing ends"): `side` kind row — delivered when the shift's briefing ends (rules 3b, 3c); Progression cross-reference row (rules 2, 3b, 3c; In Review). With the Progression 6f fix (States note, PR-03, PR-19, Onboarding row). Status stays In Review; re-review in a fresh session.

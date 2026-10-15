@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (re-review 6e: NEEDS REVISION → revised — side messages arrive when the briefing ends, briefing-end signal to Progression, RD-21/RD-22; TOO_MANY_ROWS exception wording in rule 2 / UI Req 5; earlier: cross-review 6d: rule 3c shift briefing + Briefing state, dimmed tickets in challenge mode, UNAVAILABLE offer queue, RD-22 (rule changes); TOO_MANY_ROWS strip exception, statuses; earlier: 2026-10-15: re-review 6c fixes: `skip.offer` / `skip.accept` lines, side-request messages, `TOO_MANY_ROWS` on any visible run; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6f: NEEDS REVISION → revised — `side` kind row: side messages arrive when the briefing ends; Progression cross-reference; earlier: re-review 6e: NEEDS REVISION → revised — side messages arrive when the briefing ends, briefing-end signal to Progression, RD-21/RD-22; TOO_MANY_ROWS exception wording in rule 2 / UI Req 5; earlier: cross-review 6d: rule 3c shift briefing + Briefing state, dimmed tickets in challenge mode, UNAVAILABLE offer queue, RD-22 (rule changes); TOO_MANY_ROWS strip exception, statuses; earlier: 2026-10-15: re-review 6c fixes: `skip.offer` / `skip.accept` lines, side-request messages, `TOO_MANY_ROWS` on any visible run; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -61,7 +61,7 @@ is set in `/art-bible`.
 | `error` | Sandbox `error_kind` + `error_text` (or the grader's `TOO_MANY_ROWS`, which has no `error_text`) → an error template (rule 6, string id `error.<KIND>`) | On **Run**: Kenji (looking over your shoulder); on **Submit**: the requester (puzzled); `CONTENT_ERROR` / `UNAVAILABLE`: always Kenji |
 | `briefing` | Shift briefing (chapter definition) | Manager Tanaka |
 | `offer` | Constraint offer line (appended to the pass line in the bubble, with **Try it** / **Later** buttons — rule 3a; offer ticket if unanswered; also recorded in the message log); Kenji's skip offer (built-in `skip.offer`, with **Leave it for Kenji** / **Keep trying**) and accept line (built-in `skip.accept`) — rule 3b | Requester / Kenji |
-| `side` | A side request's `request` text (Puzzle Definition), delivered as a message at shift start (rule 3b) — message log + strip ticket, never the bubble | The side puzzle's requester (HQ email, the manager) |
+| `side` | A side request's `request` text (Puzzle Definition), delivered as a message when the shift's briefing ends (rules 3b, 3c) — message log + strip ticket, never the bubble | The side puzzle's requester (HQ email, the manager) |
 | `challenge` | Built-in `challenge.clear` and `challenge.rule_broken` (slot `{keyword}`), reported by Constraint Challenges | Requester (pleased / puzzled) |
 | `system` | One-time explainers (first Submit); the new-game "Ever used SQL before?" question, shown once **before** 1-1's request with two choice buttons (`onboarding-first-shift.md` rule 1); Tanaka's one-time "start over" line (Guided only, `onboarding-first-shift.md` Edge Cases) | Manager Tanaka |
 
@@ -495,7 +495,7 @@ blocked.
 | `design/gdd/hidden-data-grader.md` | Rules 2, 8 | Feedback key; never row data (grader rule 11) | Approved |
 | `design/gdd/sql-execution-sandbox.md` | Rule 6 | `error_kind` set and `error_text` | Approved |
 | `design/gdd/query-workbench.md` | Overview, UI | Counter scene replaces the 56 px request bar; Ctrl+L; error strip | Approved, updated for this GDD |
-| `design/gdd/shift-and-chapter-progression.md` | Rule 2 | Briefings; Kenji's skip offer | Approved |
+| `design/gdd/shift-and-chapter-progression.md` | Rules 2, 3b, 3c | Briefings and the briefing-end signal; Kenji's skip offer; side messages | In Review (6f) |
 | `design/gdd/constraint-challenges.md` | Rule 2 | Offer / clear / not-within-challenge lines | Approved |
 | `design/ideas-backlog.md` | Overview | #1 aesthetic/cozy mood; #2 pixel-art NPCs + speech bubbles (applied) | Developer ideas |
 

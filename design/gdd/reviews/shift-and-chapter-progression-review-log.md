@@ -65,3 +65,17 @@ Findings:
 Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md fe2e0afccffb0b512d85ef06a5da0e6eb5ff1d4f
 Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
 Revised in-session (2026-10-15, after the review; user decision "resolve like Skipped + payslip mark"): rules 4, 6 and 7a, rule 10 payslip marks (passed / left for later / unavailable), States Locked row (previous main passed / skipped / unavailable; first main opens when the shift's briefing ends), per-shift and per-chapter lines, Visual "– unavailable" in `ink_muted`, PR-02, PR-04, PR-11; rule 5 + Dialogue row — side messages arrive when the briefing ends, Dialogue → Progression briefing-end signal (with the Dialogue 6e fix). Status → In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (re-review 6f of the 6e fixes, fresh session) — Verdict: NEEDS REVISION
+Scope signal: M
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 1 | Recommended: 2
+Summary: The 6e blocker is resolved: `Unavailable` (rule 7a) resolves a main request in rules 4, 6, 9, 10, the States Locked row, per-shift and per-chapter lines, PR-02, PR-04, PR-11 and PR-22, with the "– unavailable" payslip mark; a shift's first main opens when its briefing ends (rule 11, States, PR-02), matching Dialogue rule 3c / RD-22, Onboarding rule 1 / OB-04 and Playtest Log `request_unavailable {source}`. One ripple of the 6e side-message change was missed: the States note and PR-03 still made side requests `Open` at shift start (openable from the chapter list during the briefing — the 6e hard stop), contradicting rule 5 and RD-22.
+Prior verdict resolved: Yes (6e blocker)
+Findings:
+- [BLOCKING] States (side-request note) / PR-03: side requests `Open` from shift start vs rule 5 / Dialogue rule 3b and RD-22 (arrive when the briefing ends)
+- [RECOMMENDED] PR-19: "Locked until *Next shift* …, then `Open`" ignores the briefing gate (PR-02, rule 11)
+- [RECOMMENDED] Interactions (Onboarding): no Onboarding → Progression signal for the Day One answer that opens 1-1 (rule 11 states the order)
+Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md 571a081f2023bb55aec8690bae8fa8979a1d6d88
+Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
+Revised in-session (2026-10-15, after the review; user decisions "Open when the briefing ends" + "fix the recommendations too"): States note — side requests become `Open` when the shift's briefing ends, never during it (ticket or chapter list); PR-03 updated; PR-19 — 1-4 `Open` when the Afternoon briefing ends; Onboarding Interactions row → bidirectional (the "Ever used SQL before?" answer opens 1-1). With the Dialogue 6f fix (`side` kind row). Status stays In Review; re-review in a fresh session.

@@ -1,8 +1,8 @@
 # 다음 세션 프롬프트 모음
 
 > 작성: 2026-10-14 (갱신 2026-10-15) · 프로젝트: SQLbini (Godot 4.7.2 / GDScript)
-> 현재 단계: **Systems Design** — 세션 6a~6d 완료: **MVP GDD 11개 모두 Approved**, 6d 교차 검토 CONCERNS → 모두 반영 → (선택) 6e → 세션 7
-> 마지막 커밋: `c5ce5a0` (6d 교차 검토와 수정)
+> 현재 단계: **Systems Design** — 세션 6a~6f 완료: 6f 재검토에서 Progression·Dialogue NEEDS REVISION(사이드 요청 Open 시점) → 수정 → In Review (**MVP GDD 11개 중 9개 Approved**) → 세션 7(0단계에서 두 문서 6f 수정분 확인 후 게이트)
+> 마지막 커밋: `3bcd868` (6e 재검토와 수정)
 
 > 세션별 문서(공통 프롬프트 포함, 블록 하나만 복사): `production/session-prompts/session-N-*.md`
 
@@ -234,7 +234,7 @@ GDD 11개가 모두 Approved인지도 확인해서, 아니면 어떤 문서가 �
 끝나면 active.md를 갱신하고, 결과를 표로 요약하고, 커밋할지 물어봐줘.
 ```
 
-## 세션 6e — 6d 규칙 변경 확인 재검토 (선택, 권장)
+## 세션 6e — 6d 규칙 변경 확인 재검토 — ✅ 완료 2026-10-15 (CC·Onboarding APPROVED; Progression·Dialogue NEEDS REVISION → 수정, In Review)
 
 > 건너뛰어도 됩니다: 6d 수정은 사용자 결정에 따른 작은 규칙 명시이고 상태는 Approved로 유지됐습니다.
 
@@ -265,14 +265,59 @@ In Review로 바꾸고 다음 새 세션에서 다시 검토하도록 active.md�
 끝나면 결과를 표로 요약하고, GDD 11개 중 몇 개가 Approved인지 알려주고, 커밋할지 물어봐줘.
 ```
 
-## 세션 7 — Technical Setup 게이트
+## 세션 6f — 6e 수정 확인 재검토 — ✅ 완료 2026-10-15 (Progression·Dialogue NEEDS REVISION → 수정, In Review)
 
 ```
-이번 세션 작업: /gate-check technical-setup 을 실행해줘.
+SQLbini 프로젝트를 이어서 진행할게.
+먼저 production/session-state/active.md, design/gdd/systems-index.md,
+design/ideas-backlog.md를 읽고 현재 상태를 한국어로 짧게 요약해줘.
+진행 규칙:
+- 모든 답변과 질문(AskUserQuestion 포함)은 한국어로 해줘. 프로젝트 문서는 영어로 유지.
+- 내가 게임 아이디어를 말하면 design/ideas-backlog.md에 바로 기록하고 적절한 단계에서 반영해줘.
+- 범위가 늘어나는 결정은 반영 전에 일정 영향을 알려주고 나에게 물어봐줘.
+- 커밋/푸시는 내가 요청할 때만 해줘.
+요약이 끝나면 아래 이번 세션 작업을 진행해줘.
+
+이번 세션 작업: 6e 재검토(커밋 3bcd868)에서 NEEDS REVISION을 받고 수정된 GDD 2개를 독립 재검토해줘.
+범위는 6e 수정분과 그 파급만이야. 각 review-log의 마지막 항목(6e)에 차단 항목과 수정 내용이 있어.
+1. /design-review design/gdd/shift-and-chapter-progression.md — Unavailable(rule 7a)이 메인 요청을
+   해결된 상태로 치는지: rule 4·6·10(급여 명세서 "– unavailable"), States 표(Locked 행, Per shift,
+   Per chapter), PR-02·PR-04·PR-11; 시프트 첫 요청이 브리핑이 끝나야 열리는지(rule 11, States 표);
+   rule 5(사이드 메시지는 브리핑이 끝난 뒤)와 Dialogue 행(브리핑 종료 신호)
+2. /design-review design/gdd/request-and-reaction-dialogue.md — rule 3b(사이드 메시지·티켓은 브리핑이
+   끝난 뒤, 브리핑 중에는 없음), rule 3c(브리핑 종료를 Progression에 알림 → 첫 메인 요청 열림 + 사이드
+   메시지 도착), Progression 행, RD-21·RD-22; rule 2·UI Req 5의 TOO_MANY_ROWS 예외 문구
+두 문서가 서로 맞는지, 그리고 onboarding-first-shift.md(rule 1: 브리핑 → "Ever used SQL?" → 1-1),
+playtest-log.md(request_unavailable {source}), store-manual.md·query-workbench.md·hint-system.md
+(6e에서 고친 Guided suppression window 문구)와 맞는지도 확인해줘. 이 문서들은 따로 /design-review
+하지 말고 교차 확인만 해.
+6e review-log에 이미 기록된 권고(RECOMMENDED), 6d 보고서의 Info(이월) 항목,
+/ux-design·플레이테스트로 미룬 항목은 새 차단 항목으로 올리지 마.
+결과는 각 review-log에 남겨줘. APPROVED면 systems-index와 헤더 상태를 Approved로 바꾸고
+헤더 Last Updated에 6f를 남겨줘.
+NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 뒤 고치고, 상태는 In Review로 두고
+다음 새 세션에서 다시 검토하도록 active.md에 적어줘.
+끝나면 active.md를 갱신하고, 결과를 표로 요약하고, GDD 11개 중 몇 개가 Approved인지 알려주고,
+커밋할지 물어봐줘.
+```
+
+## 세션 7 — 6f 수정 확인 + Technical Setup 게이트
+
+```
+이번 세션 작업은 두 단계야.
+0단계 — 6f 수정 확인(세션 6을 여기서 끝냄): Progression·Dialogue는 6f에서 문구 수정만 받고 In Review야.
+전체 /design-review는 하지 말고, 각 review-log의 마지막 항목(6f)에 적힌 수정분만 확인해줘:
+사이드 요청이 브리핑이 끝날 때 Open/도착하는지(Progression States 표 아래 문장·PR-03·rule 5,
+Dialogue rule 2 `side` 행·rule 3b·3c·RD-22), PR-19, Progression의 Onboarding 행(답변 → 1-1 열림).
+확인 기준: 규칙끼리 충돌하거나 구현이 막히는 것만 차단이고, 문구만 어긋난 것은 그 자리에서 고친 뒤 권고로 기록해.
+고칠 때는 바뀐 용어를 design/gdd/ 전체에서 grep해서 남은 곳까지 같이 고쳐줘.
+차단이 없으면 두 문서의 systems-index·헤더 상태를 Approved로 바꾸고(헤더 Last Updated에 6g 확인),
+각 review-log에 6g 항목을 남긴 뒤 1단계로 넘어가. 차단이 있으면 고칠 방법을 나에게 물어봐줘.
+1단계 — /gate-check technical-setup 을 실행해줘.
 Concept 게이트에서 받아들인 위험(production/gate-checks/2026-10-14-concept-to-systems-design-rerun.md)이
 해결됐는지도 함께 확인해줘.
-시작 전에 MVP GDD 11개가 모두 Approved인지 먼저 확인하고(systems-index와 각 문서 헤더),
-아니면 게이트를 돌리지 말고 남은 문서를 알려줘. 6e를 진행했다면 그 결과도 반영해서 봐줘.
+게이트 전에 MVP GDD 11개가 모두 Approved인지 확인하고(systems-index와 각 문서 헤더),
+아니면 게이트를 돌리지 말고 남은 문서를 알려줘. 6e·6f·6g 재검토 결과(각 review-log)도 반영해서 봐줘.
 최신 교차 검토는 design/gdd/gdd-cross-review-2026-10-15.md(6d, CONCERNS → 모두 반영)야.
 거기 남은 Info(이월) 항목과 /ux-design으로 미룬 항목은 게이트 차단 항목인지 판단만 해주고,
 고칠 필요가 있으면 고치기 전에 나에게 물어봐줘.
