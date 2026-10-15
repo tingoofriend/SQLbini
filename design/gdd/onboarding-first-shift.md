@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (cross-review 6d: Guided suppression window (rule 7), 1-3.manual Done when the Manual is already open, question after the briefing, OB-24/OB-25 (rule changes); submit-before-run wording, statuses; earlier: 2026-10-15: re-review 6c-3: APPROVED; earlier: re-review 6c-2 fix: coach-mark Done conditions scoped to their own puzzle; earlier: re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6e: APPROVED; earlier: cross-review 6d: Guided suppression window (rule 7), 1-3.manual Done when the Manual is already open, question after the briefing, OB-24/OB-25 (rule changes); submit-before-run wording, statuses; earlier: 2026-10-15: re-review 6c-3: APPROVED; earlier: re-review 6c-2 fix: coach-mark Done conditions scoped to their own puzzle; earlier: re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -155,7 +155,7 @@ later target of the **same puzzle** early marks that puzzle's earlier ones `Done
 
 | System | Direction | Data | Owner |
 |---|---|---|---|
-| Query Workbench | Onboarding → Workbench | Ghost text; coach-mark anchors (Run, Submit, schema browser, Manual button); the Guided suppression window (rule 7 — the workbench suppresses hint / manual "new" indicators while it is open); Esc precedence) | Workbench renders; Onboarding decides |
+| Query Workbench | Onboarding → Workbench | Ghost text; coach-mark anchors (Run, Submit, schema browser, Manual button); the Guided suppression window (rule 7 — the workbench suppresses hint / manual "new" indicators while it is open); Esc precedence | Workbench renders; Onboarding decides |
 | Request & Reaction Dialogue | Onboarding → Dialogue | The "Ever used SQL before?" `system` line and its two choices (before 1-1's request); Tanaka's one-time "start over" `system` line (Guided only); guidance lines are rendered in coach-mark labels by Onboarding, never in the bubble | Dialogue renders the lines |
 | Store Manual | Manual → Onboarding | "Filtering rows" unlocked on 1-3 → coach mark on the Manual button | Store Manual |
 | Hint System | — | `tutorial` puzzles 1-1/1-2 (both steps at once) and the 1-3 override (Hint System Formulas) | Hint System |

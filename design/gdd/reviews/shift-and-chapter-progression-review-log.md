@@ -50,3 +50,18 @@ Findings:
 - [RECOMMENDED] Earlier 6c recommendations still open (repeated UNAVAILABLE, "Try it" on a shift's last main, empty-chapter star, Restart not logged — queued for 6d); not escalated
 Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md 9558b1a078e366f42f6a4c097e4f64070fec5cdd
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+
+## Review — 2026-10-15 (re-review 6e of the 6d rule changes, fresh session) — Verdict: NEEDS REVISION
+Scope signal: M
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 1 | Recommended: 3
+Summary: The 6d changes are in and agree with Dialogue, Hint, Workbench and Playtest Log: rule 7a (UNAVAILABLE → Kenji's offer queued after `error.CONTENT_ERROR`, `Unavailable` excluded from completion and star, reopenable, `request_unavailable {source: submit}`), rule 9, rule 11 (briefing gates the first request), rule 12a `request_restart`, PR-17, PR-22. One gap: the state machine and rules 4/6 still resolve a main request only on passed/skipped, so a rule 7a accept would leave the next request `Locked` and never clock out; the payslip had no unavailable mark; the States table still opened a shift's first main on *Next shift* instead of at the end of the briefing.
+Prior verdict resolved: Yes (6c-2 APPROVED; 6d recommendations — repeated UNAVAILABLE, Restart logging — applied)
+Findings:
+- [BLOCKING] Core Rules 4, 6, 10 / States (Locked row, per shift, per chapter) / PR-02, PR-04, PR-11: `Unavailable` (rule 7a) not a resolving state; payslip mark undefined; first main of a shift opens on *Next shift*, not at briefing end (rule 11)
+- [RECOMMENDED] Core Rule 12a / States: Restart scope omits `Unavailable` (a reopened unavailable request cannot be restarted)
+- [RECOMMENDED] Core Rule 7a: when the "Leave it for Kenji" button disappears after a declined UNAVAILABLE offer (e.g. after Restart) is unstated
+- [RECOMMENDED] Playtest Log (cross-check): `puzzle_active_time` ends at `request_pass` / `request_skip` only — `request_unavailable {source: submit}` not an end event
+Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md fe2e0afccffb0b512d85ef06a5da0e6eb5ff1d4f
+Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
+Revised in-session (2026-10-15, after the review; user decision "resolve like Skipped + payslip mark"): rules 4, 6 and 7a, rule 10 payslip marks (passed / left for later / unavailable), States Locked row (previous main passed / skipped / unavailable; first main opens when the shift's briefing ends), per-shift and per-chapter lines, Visual "– unavailable" in `ink_muted`, PR-02, PR-04, PR-11; rule 5 + Dialogue row — side messages arrive when the briefing ends, Dialogue → Progression briefing-end signal (with the Dialogue 6e fix). Status → In Review; re-review in a fresh session.

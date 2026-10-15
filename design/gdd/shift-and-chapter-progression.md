@@ -1,8 +1,8 @@
 # Shift & Chapter Progression
 
-> **Status**: Approved
+> **Status**: In Review
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (cross-review 6d: rule 7a UNAVAILABLE → Kenji's offer / Unavailable state, request_restart logged, briefing opens the first request, PR-22 (rule changes); OQ1 G2 note, statuses; earlier: 2026-10-15: re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6e: NEEDS REVISION → revised — `Unavailable` resolves a main request in rules 4, 6, States, PR-02/PR-04, payslip mark; first main opens when the briefing ends; side messages after the briefing; earlier: cross-review 6d: rule 7a UNAVAILABLE → Kenji's offer / Unavailable state, request_restart logged, briefing opens the first request, PR-22 (rule changes); OQ1 G2 note, statuses; earlier: 2026-10-15: re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -60,13 +60,15 @@ amounts are content values.
 **Moving through a shift**
 
 4. Main requests arrive one at a time, in order. The next main request becomes
-   available when the current one is **passed** or **left for later** (rule 7).
+   available when the current one is **passed**, **left for later** (rule 7) or
+   left as **unavailable** (rule 7a).
 5. Side requests are offered as messages (HQ email, a question from the manager)
-   when their shift starts — a `side` line in the message log plus a message
+   when their shift's briefing ends (rule 11) — a `side` line in the message log plus a message
    ticket on the counter strip, never replacing the bubble's request
    (`request-and-reaction-dialogue.md` rule 3b). They are optional, can be opened any time during the
    chapter, and never block anything.
-6. A shift **ends** when all its main requests are passed or left for later. The
+6. A shift **ends** when all its main requests are passed, left for later or
+   left as unavailable (rule 7a; withheld ones are passed over). The
    player then **clocks out**: the payslip screen (rule 10) is shown and the
    game offers *Next shift* or *Stop for today*. Stopping is the natural session
    end. At MVP (no saving) *Stop for today* returns to the shift screen and
@@ -100,7 +102,8 @@ amounts are content values.
     `error.CONTENT_ERROR` line (Dialogue Edge Cases, queue) — without
     `exhausted` and without hints. Accepting marks the request
     **unavailable**: like a withheld request it is excluded from completion and
-    the star and shows "unavailable" on the chapter list, never `Skipped`;
+    the star and shows "unavailable" on the chapter list and the payslip
+    (rule 10), never `Skipped`;
     the Playtest Log records `request_unavailable {source: submit}`;
     `skip.accept` and the move to the next request (or clock-out) follow as in
     rule 7. It can still be reopened from the chapter list, and a later PASS
@@ -127,7 +130,7 @@ amounts are content values.
 **The payslip**
 
 10. At clock-out the payslip lists the shift's requests with their marks
-    (passed / left for later), constraint challenges cleared during that shift
+    (passed / left for later / unavailable — rule 7a), constraint challenges cleared during that shift
     (a clear after the final clock-out shows on the End of day screen only —
     `constraint-challenges.md` rule 6b), and a fixed
     **wage** in yen for the shift (a content value per shift — Chapter 1: ¥3,000
@@ -183,7 +186,7 @@ amounts are content values.
 
 | State | Meaning | Event | To |
 |---|---|---|---|
-| `Locked` | An earlier main request in the shift is not yet passed/skipped, or (first main of a shift) the previous shift has not clocked out | Previous main request passed or skipped; for the first main of a shift, *Next shift* chosen (or the shift screen's continue after *Stop for today*) | `Open` |
+| `Locked` | An earlier main request in the shift is not yet passed / skipped / unavailable, or (first main of a shift) the shift's briefing has not ended | Previous main request passed, skipped or unavailable (rule 7a); for the first main of a shift, its briefing ends (rule 11) — after *Next shift* (or the shift screen's continue after *Stop for today*; on a new game, after Onboarding's question) | `Open` |
 | `Open` | Available in the workbench | Grader PASS | `Passed` |
 | `Open` | | Hint `exhausted` → player accepts Kenji's offer | `Skipped` |
 | `Open` | | Grader UNAVAILABLE → player accepts Kenji's offer (rule 7a) | `Unavailable` |
@@ -195,13 +198,15 @@ amounts are content values.
 Side requests start `Open` when their shift starts and are never `Skipped`.
 
 **Per shift:** `NotStarted → InProgress` (first request opened) `→ ClockedOut`
-(all main requests passed or skipped; payslip shown). From `ClockedOut`, *Next
-shift* moves the next shift to `InProgress` and opens its first main request;
+(all main requests passed, skipped or unavailable; payslip shown). From
+`ClockedOut`, *Next shift* starts the next shift's briefing, and its first main
+request opens when the briefing ends (rule 11), moving it to `InProgress`;
 *Stop for today* returns to the shift screen, whose continue action does the
 same later in the session.
 
-**Per chapter:** `Locked → InProgress → Complete` (all main passed/skipped) and,
-independently, `Starred` (all main passed).
+**Per chapter:** `Locked → InProgress → Complete` (all main passed/skipped;
+unavailable ones excluded — rule 9) and, independently, `Starred` (all main
+passed, unavailable ones excluded).
 
 ### Interactions with Other Systems
 
@@ -212,7 +217,7 @@ independently, `Starred` (all main passed).
 | Hint System | Hints ↔ Progression | `exhausted` per request (Hints → Progression); Restart event broadcast by Progression, subscribed to by the Hint System (Progression → Hints) — a runtime cycle | Hint System (`exhausted`); Progression (Restart) |
 | Constraint Challenges | both | Base PASS triggers the offer; challenge marks on the chapter list; a clear shows on the payslip of the shift in which it is cleared (after the final clock-out: End of day screen only — `constraint-challenges.md` rule 6b) | Constraint Challenges |
 | Query Workbench | Progression ↔ Workbench | Progression → Workbench: which request is open; the Restart event (rule 12a — the Workbench resets that puzzle's draft to empty or `prefill_sql` and clears its last Run result and verdict). Workbench → Progression: whether a puzzle's draft is empty (for the Restart confirmation) | Progression (event); Workbench (draft state) |
-| Request & Reaction Dialogue | Progression → Dialogue | Shift briefing, Kenji's skip offer and accept line (`skip.offer`, `skip.accept`), side-request messages at shift start (`side` kind) — all Dialogue rule 3b; Dialogue → Progression: end of the `skip.accept` hold | Progression owns timing; Dialogue owns the lines |
+| Request & Reaction Dialogue | Progression → Dialogue | Shift briefing, Kenji's skip offer and accept line (`skip.offer`, `skip.accept`), side-request messages when the briefing ends (`side` kind) — all Dialogue rule 3b; Dialogue → Progression: end of the briefing (Dialogue rule 3c — opens the shift's first main request) and end of the `skip.accept` hold | Progression owns timing; Dialogue owns the lines |
 | Store Manual | Progression → Manual | Request opened (manual pages unlock by the request's `manual_pages`) | Store Manual |
 | Onboarding: First Shift | Progression → Onboarding | Request opened for 1-1 to 1-3 (Morning shift of Day One); Restart returns 1-1's `prefill_sql` (coach marks do not replay) | Onboarding |
 | Save/Load & Settings (VS) | Progression → Save | Request, shift, chapter states | Save/Load |
@@ -289,7 +294,7 @@ authoritative for visuals where they differ.*
   2.1, 7.6).
 - **Payslip:** a printed receipt (store paper as UI) listing the shift's requests
   with glyph + word marks (✓ passed in pass green `#245A30`, ↷ left for later in
-  `ink_muted` `#5E544B`, ★ challenge cleared in vermilion `#C23B18`; art bible
+  `ink_muted` `#5E544B`, – unavailable in `ink_muted`, ★ challenge cleared in vermilion `#C23B18`; art bible
   4.2, 4.5) and the wage line under a dashed tear rule; a soft receipt-printer
   sound.
 - **End of day:** after the Closing shift the strip's sign flips to "Closed" (a
@@ -339,9 +344,9 @@ GDDs. [UI] = retained screenshot in `production/qa/evidence/`.*
 
 **Structure and flow**
 - **PR-01 [Integration]** GIVEN Chapter 1 data, WHEN the chapter loads, THEN Morning = 1-1…1-3, Afternoon = 1-4…1-7 + S-1, Closing = 1-8…1-11 (1-11 boss) + S-2, and 1-1/1-2 are tutorial; GIVEN `order` or `shift` changed in data, THEN the new order is used with no code change.
-- **PR-02 [Logic]** GIVEN a shift with ≥ 3 main requests, WHEN one is `Open`, THEN later mains are `Locked`; WHEN it becomes passed or skipped, THEN the next becomes `Open`.
+- **PR-02 [Logic]** GIVEN a shift with ≥ 3 main requests, WHEN one is `Open`, THEN later mains are `Locked`; WHEN it becomes passed, skipped or unavailable (rule 7a), THEN the next becomes `Open`. GIVEN *Next shift* chosen, THEN the new shift's first main stays `Locked` while its briefing shows and becomes `Open` when the briefing ends.
 - **PR-03 [Logic]** GIVEN a shift's side request is unopened, WHEN all its mains are passed/skipped, THEN the shift still clocks out; side requests are `Open` from shift start, can be opened any time, and are never `Skipped`.
-- **PR-04 [Logic]** GIVEN every main in a shift passed or skipped, WHEN the last one resolves, THEN the shift is `ClockedOut` — also when all were skipped, with no scolding line.
+- **PR-04 [Logic]** GIVEN every main in a shift passed, skipped or unavailable, WHEN the last one resolves, THEN the shift is `ClockedOut` — also when all were skipped, with no scolding line, and when the last main was left as unavailable (rule 7a).
 
 **Skip and reopen**
 - **PR-05 [Integration]** GIVEN a request `exhausted`, WHEN Kenji's offer appears, THEN "Leave it for Kenji" sets `Skipped` and opens the next main; "Keep trying" keeps it `Open` and the "Leave it for Kenji" button stays on it; before exhaustion, neither offer nor button appears.
@@ -352,7 +357,7 @@ GDDs. [UI] = retained screenshot in `production/qa/evidence/`.*
 - **PR-08 [Logic]** GIVEN all mains passed or skipped THEN `Complete`; all passed THEN also `Starred`; ≥ 1 skipped THEN not starred; a skipped boss still allows `Complete`.
 - **PR-09 [Logic]** GIVEN `Complete` with one skipped main, WHEN it is passed, THEN `Starred` is set immediately; once set, no later event revokes it.
 - **PR-10 [Logic]** GIVEN any combination of side requests and challenges cleared, THEN completion, star and wage are unchanged.
-- **PR-11 [UI]** GIVEN clock-out, THEN the payslip lists each request with glyph + word (✓ passed, ↷ left for later), ★ for challenges cleared, and a ¥3,000 wage line (Chapter 1), with Next shift / Stop for today keyboard reachable; after the last shift, End of day replaces Next shift.
+- **PR-11 [UI]** GIVEN clock-out, THEN the payslip lists each request with glyph + word (✓ passed, ↷ left for later, – unavailable), ★ for challenges cleared, and a ¥3,000 wage line (Chapter 1), with Next shift / Stop for today keyboard reachable; after the last shift, End of day replaces Next shift.
 - **PR-12 [Logic / code review]** GIVEN any state, THEN the wage value is read only by the payslip display (no spend, save or unlock reads).
 
 **Invalid data, persistence, UI, log**

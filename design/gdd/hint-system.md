@@ -354,7 +354,7 @@ never has a reason to quit instead of asking.
 | `design/gdd/sql-execution-sandbox.md` | Core Rule 4a | `tokenize(sql)` token kinds | Approved |
 | `design/gdd/query-workbench.md` | UI Requirements | Hint button, Ctrl+H, panel placement | Approved |
 | `design/gdd/shift-and-chapter-progression.md` | Core Rules 8, 11, 12 | Restart action and event (rule 12a); consumer of `exhausted` (rule 7); challenge mode keeps the main request Open | Approved |
-| `design/gdd/onboarding-first-shift.md` | Interactions | Indicator suppressed while a coach mark shows | Approved |
+| `design/gdd/onboarding-first-shift.md` | Interactions | Indicator suppressed during the Guided suppression window (onboarding rule 7) | Approved |
 | `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1 | Kenji is the hint voice (cast) | Approved |
 | `design/gdd/constraint-challenges.md` | Core Rule 12 | Challenge-mode submits leave hint state unchanged | Approved |
 | `design/gdd/game-concept.md` | Overview | Zero-SQL risk; "hints and skippable puzzles prevent hard stops" | Source of intent |

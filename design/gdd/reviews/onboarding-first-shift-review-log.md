@@ -65,3 +65,15 @@ Findings:
 - [RECOMMENDED] Carried: Dependencies / Cross-References stale statuses and bidirectionality note; rule 7 "workbench rule 15"; 6c recommendations (start-over line queue, OB-07 trigger, 1-3 Tab result, Interactions directions, OB-19 wording) — for 6d
 Reviewed-Content-Hash: design/gdd/onboarding-first-shift.md bc88a71f8ee063db020bd858af6034430b8d24c6
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+
+## Review — 2026-10-15 (re-review 6e of the 6d rule changes, fresh session) — Verdict: APPROVED
+Scope signal: S
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 0 | Recommended: 2
+Summary: Rule 1 order (briefing → question → 1-1, `request_open` after the answer) matches Dialogue rule 3c; the Guided suppression window (rule 7) closes on `1-3.manual` Done/Dismissed, Morning clock-out or coach marks off — a skipped, unavailable or withheld 1-3 still closes it via the Morning clock-out; rule 7a `1-3.manual` Done when the Manual is already open; OB-24/OB-25 testable. Workbench rule 6, store manual rule 6 / States / Edge Case and hint Interactions agree (three stale "coach-mark visibility" phrases in workbench / store manual / hint fixed in-session).
+Prior verdict resolved: Yes (6c-3 APPROVED)
+Findings:
+- [RECOMMENDED] Core Rule 7: on 1-3 the hint "new step" indicator waits for `1-3.manual` Done/Dismissed (pre-6d behaviour too) — watch in the zero-SQL playtest
+- [RECOMMENDED] Core Rule 7: whether turning coach marks back on reopens the window is unstated
+Reviewed-Content-Hash: design/gdd/onboarding-first-shift.md 70e55a6cbe1d6b32f74827718fe59f260b23100a
+Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2

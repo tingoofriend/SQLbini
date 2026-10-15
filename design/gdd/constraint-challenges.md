@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (cross-review 6d: rules 6c challenge draft + dimmed tickets, rule 9 UNAVAILABLE, CC-18 (rule changes); OQ2 and statuses; earlier: 2026-10-14: re-review 6b: Approved; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (re-review 6e: APPROVED; Hint row owner = Constraint Challenges (event); earlier: cross-review 6d: rules 6c challenge draft + dimmed tickets, rule 9 UNAVAILABLE, CC-18 (rule changes); OQ2 and statuses; earlier: 2026-10-14: re-review 6b: Approved; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 2 — Your Query, Your Way; Pillar 1 — The Condition, Not the Screen
 
@@ -185,7 +185,7 @@ Slice); at MVP the state lasts for the session.
 | Query Workbench | Workbench hosts | Rule banner, live check, challenge-mode submit outcome | Workbench |
 | Shift & Chapter Progression | Progression → Challenges | Base PASS event; chapter-list marks; return target after challenge mode (rule 6a); payslip / End of day line for a clear (rule 6b) | Progression |
 | Request & Reaction Dialogue | Challenges → Dialogue | Challenges reports offer, clear, rule broken `{keyword}` and challenge mode open/closed; Dialogue voices them (`challenge.clear`, `challenge.rule_broken`) and shows the offer in the bubble / offer ticket | Challenges owns the events; Dialogue owns the lines |
-| Hint System | Challenges → Hints | Challenge mode open/closed (Hint button hidden; main request's `active_time` paused) | Hint System |
+| Hint System | Challenges → Hints | Challenge mode open/closed (Hint button hidden; main request's `active_time` paused — `hint-system.md` rule 12) | Constraint Challenges (event); Hint System (reaction) |
 | Achievements (VS) | Challenges → Achievements | Clear events | Achievements |
 | Playtest Log | Challenges → Log | Offer shown, Try/Later, attempts, clears (MVP threshold "starts a challenge unprompted") | Challenges |
 | Content verifier | Verifier → Challenges | Rule 12 checks | Puzzle Definition |

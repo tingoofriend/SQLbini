@@ -141,7 +141,7 @@ the workbench state; the editor keeps its text and caret.
 | Shift & Chapter Progression | Progression → Manual | "request opened" events | Progression |
 | Query Workbench | Workbench hosts | Manual button, Ctrl+M, side panel over the results column, copy-to-editor | Workbench |
 | Hint System | Hints → Manual | Hint text may name a page; a page link opens it | Hint System |
-| Onboarding: First Shift | Onboarding → Manual | Highlights the Manual button on 1-3 ("Filtering rows"); coach-mark visibility suppresses the new-page indicator | Onboarding |
+| Onboarding: First Shift | Onboarding → Manual | Highlights the Manual button on 1-3 ("Filtering rows"); the Guided suppression window (onboarding rule 7) suppresses the new-page indicator | Onboarding |
 | Request & Reaction Dialogue | Dialogue → Manual | The previous part-timer's voice is a writing guide, not a speaker | Dialogue |
 | Content verifier | Verifier → Manual | Rule 4 check on every example | Puzzle Definition |
 | Playtest Log | Manual → Log | Page unlocked, opened, example copied | Manual |

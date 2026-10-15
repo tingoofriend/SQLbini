@@ -206,7 +206,7 @@ it (the older result is discarded).
 | Constraint Challenges | Workbench hosts | Shows the active constraint (e.g. "No OR") and its live check — canonical character count or keyword presence (`constraint-challenges.md` rule 8) | Constraint Challenges |
 | Shift & Chapter Progression | Progression ↔ Workbench | Which puzzle is open; PASS moves the shift on; the Restart event (rule 14 — reset draft, clear last result and verdict). Workbench → Progression: whether a puzzle's draft is empty | Progression (event); Workbench (draft state) |
 | Playtest Log | Workbench → Log | The `run` event (with timestamps and edits between Runs). The `submit` event is emitted by the Hidden-Data Grader, not the workbench | Workbench |
-| Onboarding: First Shift | Onboarding → Workbench | Ghost text, highlighted elements in 1-1 to 1-3; coach-mark visibility (suppresses tab indicators, rule 6). The 1-1 prefill is the puzzle's `prefill_sql` field (Puzzle Definition row) | Onboarding |
+| Onboarding: First Shift | Onboarding → Workbench | Ghost text, highlighted elements in 1-1 to 1-3; the Guided suppression window (suppresses tab indicators, rule 6; onboarding rule 7). The 1-1 prefill is the puzzle's `prefill_sql` field (Puzzle Definition row) | Onboarding |
 | Accessibility Options (VS) | Options → Workbench | Text scale, contrast theme, shortcut remapping, reduced motion | Accessibility Options |
 
 ## Formulas

@@ -35,3 +35,15 @@ Findings:
 - [RECOMMENDED] Player Fantasy absent (advisory at `standard`)
 Reviewed-Content-Hash: design/gdd/constraint-challenges.md 944b238e205c64aed6450f9ebbe147139b0f41fa
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+
+## Review — 2026-10-15 (re-review 6e of the 6d rule changes, fresh session) — Verdict: APPROVED
+Scope signal: S
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 0 | Recommended: 2
+Summary: Rule 6c (own challenge draft seeded from the last passing query, kept for the session, base draft and Restart untouched; dimmed side tickets), rule 9 UNAVAILABLE (stays `Attempting`, no counters, no rule check, no skip offer), the States row and CC-18 agree with workbench rule 14, Dialogue rule 3b and Progression rule 7a.
+Prior verdict resolved: Yes (6b APPROVED)
+Findings:
+- [RECOMMENDED] Interactions (Hint row): owner said Hint System, contradicting the 6d decision (Constraint Challenges owns the challenge-mode event) — fixed in-session (wording)
+- [RECOMMENDED] Core Rule 6c: who stores "the query that last passed the base puzzle" and that it survives a base Restart is unstated
+Reviewed-Content-Hash: design/gdd/constraint-challenges.md 08aaf80ef9f7f6e505b5948f94234510431dcbd7
+Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2

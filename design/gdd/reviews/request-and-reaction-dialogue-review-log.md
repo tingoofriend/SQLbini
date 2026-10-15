@@ -49,3 +49,19 @@ Findings:
 - [RECOMMENDED] UI Req 1 / rule 3b: offer ticket and side-message ticket can both sit at the strip's right edge — placement for /ux-design (not blocking)
 Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md 4522ef4468cfdfb8d608f5cdb21e3a62e2fcb9f4
 Reviewed-Content-Hash: design/registry/entities.yaml 0a8f21f0d31f4321478b519974332fc321281084
+
+## Review — 2026-10-15 (re-review 6e of the 6d rule changes, fresh session) — Verdict: NEEDS REVISION
+Scope signal: M
+Specialists: none (lean mode; independent session — not the authoring session)
+Blocking items: 1 | Recommended: 4
+Summary: Rule 3c / `Briefing` state (Day One order briefing → "Ever used SQL before?" → 1-1), dimmed side tickets in challenge mode (rule 3b, matches CC rule 6c), the UNAVAILABLE offer queue exception (matches Progression rule 7a) and TOO_MANY_ROWS with no `error_text` (rule 6, RD-09) are in. One gap: side-request messages arrived at shift start, i.e. during the briefing; opening that ticket left no way to end the briefing, and the first main request opens only when the briefing ends — a possible hard stop. The briefing-end signal to Progression was also missing from both Interactions tables.
+Prior verdict resolved: Yes (6c-2 APPROVED)
+Findings:
+- [BLOCKING] Core Rules 3b × 3c / Interactions (Progression): side ticket openable during `Briefing` → briefing never ends, first main stays Locked; no briefing-end signal
+- [RECOMMENDED] Core Rule 2 (bubble vs strip, `error` kind row) / UI Req 5: TOO_MANY_ROWS exception missing (rule 6 is right)
+- [RECOMMENDED] States: the state while Onboarding's "Ever used SQL before?" line holds the bubble (between `Briefing` and `Request`) is unnamed
+- [RECOMMENDED] Core Rule 3c: initial keyboard focus during the briefing (Enter/Space need the counter scene focused) → /ux-design
+- [RECOMMENDED] Info carried from 6d not re-raised (start-over line queue, Restart subscription, PassReaction clock-out row)
+Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md 57152491bdd8e8ec0d2484f8b7d48bc1e528b91d
+Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
+Revised in-session (2026-10-15, after the review; user decision "tickets after the briefing ends"): rule 3b — side messages arrive when the shift's briefing ends, never during it; rule 3c — Dialogue tells Progression when the briefing ends (first main opens, side messages arrive); Progression Interactions row; RD-21 (briefing end), RD-22 (Afternoon/S-1 case); wording: TOO_MANY_ROWS exception in rule 2 and UI Req 5. Status → In Review; re-review in a fresh session.
