@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-14
-> **Last Updated**: 2026-10-15 (re-review 6c-3: Onboarding APPROVED — all 11 MVP GDDs Approved; earlier: re-review 6c-2: Hint System, Shift & Chapter Progression, Request & Reaction Dialogue, Store Manual APPROVED; Onboarding NEEDS REVISION → revised, In Review; earlier: re-review 6c: Playtest Log APPROVED; Shift & Chapter Progression, Request & Reaction Dialogue, Store Manual, Onboarding NEEDS REVISION → revised, In Review; earlier: re-review 6b: Query Workbench + Constraint Challenges APPROVED; Hint System NEEDS REVISION → revised, In Review; earlier: re-review of Grader 6a fixes: Grader APPROVED; earlier: re-review 6a: Puzzle Definition + Sandbox APPROVED; Grader NEEDS REVISION → revised, In Review; earlier: cross-GDD review 2026-10-14 (FAIL → fixes applied): Depends-On column, dependency map, runtime couplings, counts and one-liners updated; earlier: design review: Request & Reaction Dialogue, Store Manual, Onboarding, Playtest Log NEEDS REVISION → revised, In Review; earlier: design review: Hint System, Constraint Challenges, Shift & Chapter Progression NEEDS REVISION → revised, In Review; earlier: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
+> **Last Updated**: 2026-10-15 (cross-review 6d: Hint System depends on the Sandbox lexer; Progression ↔ Workbench runtime coupling; Sandbox bottleneck 8; earlier: re-review 6c-3: Onboarding APPROVED — all 11 MVP GDDs Approved; earlier: re-review 6c-2: Hint System, Shift & Chapter Progression, Request & Reaction Dialogue, Store Manual APPROVED; Onboarding NEEDS REVISION → revised, In Review; earlier: re-review 6c: Playtest Log APPROVED; Shift & Chapter Progression, Request & Reaction Dialogue, Store Manual, Onboarding NEEDS REVISION → revised, In Review; earlier: re-review 6b: Query Workbench + Constraint Challenges APPROVED; Hint System NEEDS REVISION → revised, In Review; earlier: re-review of Grader 6a fixes: Grader APPROVED; earlier: re-review 6a: Puzzle Definition + Sandbox APPROVED; Grader NEEDS REVISION → revised, In Review; earlier: cross-GDD review 2026-10-14 (FAIL → fixes applied): Depends-On column, dependency map, runtime couplings, counts and one-liners updated; earlier: design review: Request & Reaction Dialogue, Store Manual, Onboarding, Playtest Log NEEDS REVISION → revised, In Review; earlier: design review: Hint System, Constraint Challenges, Shift & Chapter Progression NEEDS REVISION → revised, In Review; earlier: Sandbox + Workbench NEEDS REVISION → revised, In Review; earlier: Grader + Puzzle Definition NEEDS REVISION → revised, In Review; earlier: Grader, Puzzle Definition, Sandbox, Workbench, Hints, Constraint Challenges, Progression, Dialogue, Store Manual, Onboarding, Playtest Log designed — all MVP GDDs written)
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -47,7 +47,7 @@ SQL* (Pillar 4) in the sandbox (real SQLite) and the request/reaction layer.
 | 3 | SQL Execution Sandbox (inferred) | Core | MVP | Approved | design/gdd/sql-execution-sandbox.md | Puzzle Definition & Datasets |
 | 4 | Query Workbench | Gameplay | MVP | Approved | design/gdd/query-workbench.md | SQL Execution Sandbox, Puzzle Definition & Datasets, Hidden-Data Grader |
 | 5 | Back Room | Gameplay | Alpha | Not Started | — | SQL Execution Sandbox, Puzzle Definition & Datasets, Query Workbench |
-| 6 | Hint System | Gameplay | MVP | Approved | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader, Query Workbench |
+| 6 | Hint System | Gameplay | MVP | Approved | design/gdd/hint-system.md | Puzzle Definition & Datasets, Hidden-Data Grader, Query Workbench, SQL Execution Sandbox (lexer tokens) |
 | 7 | Constraint Challenges | Gameplay | MVP | Approved | design/gdd/constraint-challenges.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox, Query Workbench |
 | 8 | Shift & Chapter Progression | Progression | MVP | Approved | design/gdd/shift-and-chapter-progression.md | Puzzle Definition & Datasets, Hidden-Data Grader, Hint System |
 | 9 | Request & Reaction Dialogue | Narrative | MVP | Approved | design/gdd/request-and-reaction-dialogue.md | Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox, Query Workbench |
@@ -127,7 +127,7 @@ wage is a narrative beat, not a currency.
 ### Feature Layer (depends on core)
 
 1. **Back Room** — depends on: SQL Execution Sandbox, Puzzle Definition & Datasets, Query Workbench
-2. **Hint System** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader, Query Workbench
+2. **Hint System** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader, Query Workbench, SQL Execution Sandbox (lexer tokens)
 3. **Constraint Challenges** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader, SQL Execution Sandbox (lexer tokens), Query Workbench
 4. **Shift & Chapter Progression** — depends on: Puzzle Definition & Datasets, Hidden-Data Grader, Hint System (`exhausted`)
 5. **Efficiency Stats** — depends on: SQL Execution Sandbox, Hidden-Data Grader
@@ -150,7 +150,7 @@ wage is a narrative beat, not a currency.
 
 **Bottlenecks** (most dependents, from the Depends-On column): Puzzle Definition &
 Datasets (11), Hidden-Data Grader (9), Query Workbench (9), SQL Execution Sandbox
-(7), Shift & Chapter Progression (5). A design change in any of these ripples widely.
+(8), Shift & Chapter Progression (5). A design change in any of these ripples widely.
 
 **Leaf systems** (nothing depends on them — lower risk, can be designed late):
 Back Room, Playtest Log, Audio, Accessibility Options, Achievements, Modify Puzzle
@@ -205,6 +205,12 @@ accepted risks call for.
   (owner: Progression for offer timing); Challenges → Progression: clear marks
   shown on the chapter list and payslip (owner: Constraint Challenges, which
   owns the marks). Both are soft dependencies in their GDDs.
+- **Runtime event coupling: Shift & Chapter Progression ↔ Query Workbench** —
+  Progression → Workbench: which request is open and the Restart event (rule
+  12a; the Workbench resets the draft, last Run result and verdict, workbench
+  rule 14); Workbench → Progression: whether a puzzle's draft is empty (for
+  Restart's confirmation). Owner: Progression (event), Workbench (draft state).
+  Not a build-order cycle (Progression is a soft upstream of the Workbench).
 - **Design-time coupling: Hidden-Data Grader ↔ Puzzle Definition & Datasets** —
   the grader needs fields the puzzle format must provide (traps, feedback levels,
   synthetic counter-examples), and the format exists to serve the grader.

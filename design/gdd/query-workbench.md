@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (Restart subscriber, from the Progression re-review 6c; earlier: re-review 6b: TOO_MANY_ROWS strip text; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (cross-review 6d: Guided suppression window (rule 6), challenge draft (rule 14), Progression soft upstream; cross-reference rule numbers, statuses; earlier: 2026-10-15: Restart subscriber, from the Progression re-review 6c; earlier: re-review 6b: TOO_MANY_ROWS strip text; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 2 — Your Query, Your Way
 
@@ -65,9 +65,11 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
    Grader Visual/Audio). The entry points live in the counter scene (rule 1):
    **Hint** (Hint System), **Manual** (Store Manual), **Back Room** (Back Room —
    shown from Chapter 2 only; in Chapter 1 the tab and its shortcut are absent).
-   While an Onboarding coach mark is showing (Guided mode), the hint and manual
-   "new" indicators on these tabs are suppressed; they appear as soon as no
-   coach mark is showing (each system still owns its indicator's state).
+   While Onboarding's Guided suppression window is open (from 1-1's request
+   opening until the Morning shift's marks are finished —
+   `onboarding-first-shift.md` rule 7), the hint and manual "new" indicators
+   on these tabs are suppressed; they appear as soon as it closes (each system
+   still owns its indicator's state).
 
 **Run**
 
@@ -134,7 +136,9 @@ widget structure and theming → become ADRs and the `/ux-design` spec.
     (`shift-and-chapter-progression.md` rule 12a) the workbench resets that
     puzzle's draft to its `prefill_sql` (or empty), clears its last Run result
     and last verdict; it tells Progression whether a puzzle's draft is empty
-    (for Restart's confirmation).
+    (for Restart's confirmation). In challenge mode the editor holds the
+    challenge's own draft, never the base puzzle's (`constraint-challenges.md`
+    rule 6c).
 15. Keyboard-first: every action is reachable without the mouse.
 
 | Action | Default shortcut |
@@ -343,9 +347,9 @@ discarded by request order.
 
 | System | GDD | What the workbench needs | Status |
 |---|---|---|---|
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Title, request, schema, visible dataset, `reference_sql` | In Review |
-| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | `query`/`scratch` results and errors | In Review |
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Submit verdicts; `canon` for row marks; Run match bit | In Review |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Title, request, schema, visible dataset, `reference_sql` | Approved |
+| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | `query`/`scratch` results and errors | Approved |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Submit verdicts; `canon` for row marks; Run match bit | Approved |
 
 **Hosted / soft dependencies** (the workbench shows their entry points; it works
 without them): Back Room, Hint System, Store Manual, Constraint Challenges,
@@ -353,8 +357,13 @@ Request & Reaction Dialogue (text), Onboarding: First Shift, Accessibility
 Options (VS). All but Back Room and Accessibility Options have GDDs, and each
 lists the workbench.
 
+**Soft upstream:** Shift & Chapter Progression — which request is open and the
+Restart event (rule 14); the Workbench reports back whether a draft is empty, so
+the two form a runtime event coupling (systems-index Circular Dependencies).
+
 **Downstream:** Playtest Log (consumes Run/Submit events), Audio (VS — UI sounds),
-Shift & Chapter Progression (reacts to PASS via the grader).
+Shift & Chapter Progression (reacts to PASS via the grader; Restart
+confirmation reads the draft-empty flag).
 
 **Bidirectionality:** the grader, puzzle definition, sandbox, hint, store
 manual, constraint challenges, dialogue, onboarding, progression and playtest
@@ -479,11 +488,11 @@ This system *is* the main gameplay screen; its full screen-level spec belongs to
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/hidden-data-grader.md` | Core Rules 8–12, Visual/Audio | `canon`, match bit, verdict visuals, "Run never passes" | In Review |
-| `design/gdd/sql-execution-sandbox.md` | Core Rules 7, 13, Edge Cases | Modes, result shape, `error_kind`/`error_text`, `grader_row_cap` truncation | In Review |
-| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–5 | Puzzle fields; target computed from `reference_sql`; `visible_rows_max` (Open Question 6) | In Review |
-| `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1, Formulas, Visual/Audio | Counter scene (fixed 120 px, ×4), message log; voiced lines and `error.*` template ids; bubble vs. strip split | In Review |
-| `design/gdd/onboarding-first-shift.md` | Core Rules 1, 2, 3, 6, 15 | Guided 1-1 Submit; auto-separator for 1-2; Tab accepts ghost text; Esc precedence; indicator suppression | In Review |
+| `design/gdd/hidden-data-grader.md` | Core Rules 8–12, Visual/Audio | `canon`, match bit, verdict visuals, "Run never passes" | Approved |
+| `design/gdd/sql-execution-sandbox.md` | Core Rules 7, 13, Edge Cases | Modes, result shape, `error_kind`/`error_text`, `grader_row_cap` truncation | Approved |
+| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–5 | Puzzle fields; target computed from `reference_sql`; `visible_rows_max` (Open Question 6) | Approved |
+| `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1, Formulas, Visual/Audio | Counter scene (fixed 120 px, ×4), message log; voiced lines and `error.*` template ids; bubble vs. strip split | Approved |
+| `design/gdd/onboarding-first-shift.md` | Core Rules 1, 2, 3, 6, 7 | Guided 1-1 Submit; auto-separator for 1-2; Tab accepts ghost text; Esc precedence; indicator suppression | Approved |
 | `design/gdd/game-concept.md` | Overview, Rules 8, 11 | Pillars 2–3; concept review findings (Run vs Submit, row-diff marking, onboarding) | Source of intent |
 | `docs/engine-reference/godot/modules/ui.md` | UI Requirements 4, 7 | Dual focus (4.6), AccessKit (4.5), FoldableContainer (4.5) | Verified for 4.6, not re-verified for 4.7 |
 | `prototypes/sqlbini-spike-2026-10-14/` | Overview | `CodeEdit` with SQL highlighting proven | Evidence |
@@ -517,7 +526,7 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 - **QW-16 [Integration]** GIVEN the player edits while `Submitting`, WHEN the verdict arrives, THEN it is shown labelled "for the previous text" and clears on the next edit.
 - **QW-17 [Integration]** GIVEN `SELECT prise FROM products`, WHEN Run is pressed, THEN a strip beside the editor shows the error label and `no such column: prise` in monospace (the voiced line only in the bubble, not the strip), and the first `prise` is underlined; GIVEN an error naming no token, THEN no underline; a SUBMIT_ERROR uses the same strip, never the result area; GIVEN a stub grader returning SUBMIT_ERROR `TOO_MANY_ROWS`, THEN the strip shows the label and "5,000+ rows — too many to compare" at the default `grader_row_cap` (formatted from the knob, QW-29).
 - **QW-27 [Integration]** GIVEN a stub grader returning `UNAVAILABLE`, WHEN Submit is pressed, THEN the state returns to `Editing`, the strip shows "Content error — reported" with no raw or build text, and no verdict, counter or puzzle state changes.
-- **QW-28 [Integration]** GIVEN a coach mark shown and focus in the editor, WHEN Esc is pressed, THEN focus leaves the editor and the mark stays; GIVEN focus on the mark, Esc dismisses it; GIVEN a coach mark shown and a new manual page or hint unlocked, THEN no "new" indicator shows until the mark is gone.
+- **QW-28 [Integration]** GIVEN a coach mark shown and focus in the editor, WHEN Esc is pressed, THEN focus leaves the editor and the mark stays; GIVEN focus on the mark, Esc dismisses it; GIVEN the Guided suppression window open and a new manual page or hint unlocked, THEN no "new" indicator shows until the window closes (also between marks).
 - **QW-29 [Logic]** GIVEN `grader_row_cap` set to 1,000 and a truncated result, THEN the strings read "1,000+ rows — too many to compare"; no workbench string contains a hardcoded 5000 / 5,000.
 - **QW-30 [Integration]** GIVEN 1-5 with a draft, a last Run result and a FAIL verdict, WHEN a stub Progression sends Restart for 1-5, THEN the draft is empty and the result area and verdict note are cleared; GIVEN 1-1, THEN the draft is `SELECT * FROM products;`; the workbench reports "draft empty" true after the reset and false before it.
 

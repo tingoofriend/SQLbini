@@ -2,7 +2,7 @@
 
 > **Status**: Approved (design review 2026-10-14)
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-15 (cross-review 6d: Query Workbench reads prefill_sql; statuses; earlier: 2026-10-14: 2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 1 — The Condition, Not the Screen; Pillar 4 — Real Store, Real SQL
 
@@ -69,7 +69,7 @@ are not specified here → they become an ADR.
 | `hints` | yes | Hint System | Two hint texts, step 1 and step 2; optional per-puzzle unlock overrides (`hint1_fails`, `hint1_minutes`, …) |
 | `pass_reaction` | yes | Request & Reaction Dialogue | The requester's line on PASS |
 | `manual_pages` | yes | Store Manual | List of Store Manual page ids (`manual.<slug>`) this request unlocks when opened (Store Manual rule 5); may be empty |
-| `prefill_sql` | no | this system (read by Onboarding, Store Manual, Progression) | Text placed in the editor when the request opens or is restarted; always written with a trailing `;`. 1-1: `SELECT * FROM products;`. Onboarding uses it for 1-1, the Store Manual exempts it from its CI check, Progression's Restart (rule 12a) restores it |
+| `prefill_sql` | no | this system (read by Onboarding, Store Manual, Progression, Query Workbench) | Text placed in the editor when the request opens or is restarted; always written with a trailing `;`. 1-1: `SELECT * FROM products;`. Onboarding uses it for 1-1, the Store Manual exempts it from its CI check, Progression's Restart (rule 12a) restores it |
 | `constraint` | no | Constraint Challenges | `{type: max_chars / forbid / require, value, offer_line, witness_sql, unlock_after?}` — `unlock_after` optional (a later main puzzle id, `constraint-challenges.md` rule 2a); validated by `constraint-challenges.md` rule 12 |
 | `datasets_override` | no | this system | Puzzle-specific dataset changes (rule 5) |
 | `content_status` | yes | this system | `draft` / `verified` / `playtested` / `locked` (States) |
@@ -192,7 +192,7 @@ reaches a tester).
 |---|---|---|
 | Hidden-Data Grader | `reference_sql`, `key_column`, `ordered`/`order_cols`, datasets, `traps` (tagged keys, feedback), `trap_priority`, `kind` | Grader (contract in `hidden-data-grader.md`) |
 | SQL Execution Sandbox | Schema + resolved dataset rows to build a fresh database | Sandbox |
-| Query Workbench | `title`, `request`, schema (for the schema browser), visible dataset, target result (computed) | Workbench |
+| Query Workbench | `title`, `request`, schema (for the schema browser), visible dataset, target result (computed), `prefill_sql` (initial draft and Restart reset) | Workbench |
 | Back Room | Visible dataset (to copy); level-3 synthetic rows (Alpha, Chapter 2+) | Back Room |
 | Hint System | `hints` | Hint System |
 | Constraint Challenges | `constraint` | Constraint Challenges |
@@ -357,7 +357,7 @@ stated by other systems:
 
 | Contract from | GDD | What this system must provide | Status |
 |---|---|---|---|
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | `reference_sql`, `key_column`, `ordered`/`order_cols`, visible + ≥2 hidden datasets with ≥1 hardcode-proof, trap tags (as `tagged_keys`, per dataset incl. visible), key position, `trap_priority`, feedback levels 1–3, `kind` | In Review — this GDD implements it |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | `reference_sql`, `key_column`, `ordered`/`order_cols`, visible + ≥2 hidden datasets with ≥1 hardcode-proof, trap tags (as `tagged_keys`, per dataset incl. visible), key position, `trap_priority`, feedback levels 1–3, `kind` | Approved — this GDD implements it |
 
 **Downstream — systems that read puzzle data:**
 
@@ -416,7 +416,7 @@ authored as text data files (format → ADR).
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/hidden-data-grader.md` | Core Rules 2–6, Dependencies, Formulas | Grading contract this format implements; `result_match`, `R_cap`, cause selection | In Review |
+| `design/gdd/hidden-data-grader.md` | Core Rules 2–6, Dependencies, Formulas | Grading contract this format implements; `result_match`, `R_cap`, cause selection | Approved |
 | `design/gdd/game-concept.md` | Rules 7, 9, 13 | Trap philosophy, data realism, Pillars 1, 2, 4 | Source of intent |
 | `design/levels/chapter-1-puzzles.md` | Rules 1, 5, 9 | Chapter 1 puzzles, edge rows, the four requests to rewrite | Level design (to be migrated into this format) |
 | `prototypes/sqlbini-web/ch1.py` | Rules 1, 5, 10–12 | The prototype verifier this pipeline succeeds | Prototype — reference only |

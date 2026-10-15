@@ -272,9 +272,9 @@ constants:
       - design/gdd/request-and-reaction-dialogue.md
     value: 5000
     unit: rows
-    notes: "Player results over the cap are SUBMIT_ERROR (kind TOO_MANY_ROWS); references over the cap fail puzzle validation. Sandbox and Workbench express the cap as grader_row_cap (R_cap): fetch limit = grader_row_cap + 1, strings formatted from the value ('{grader_row_cap}+ rows'), never a hardcoded 5000. Safe range 1,000-50,000."
+    notes: "Player results over the cap on any visible run are SUBMIT_ERROR (kind TOO_MANY_ROWS, no error_text); over the cap on a hidden dataset only, the dataset mismatches (FAIL, cause generic, counted); references over the cap fail puzzle validation. Sandbox and Workbench express the cap as grader_row_cap (R_cap): fetch limit = grader_row_cap + 1, strings formatted from the value ('{grader_row_cap}+ rows'), never a hardcoded 5000. Safe range 1,000-50,000."
     added: 2026-10-14
-    revised: "2026-10-14"  # cross-GDD review (C16): note + referenced_by; value unchanged
+    revised: "2026-10-15"  # cross-review 6d: note split visible (TOO_MANY_ROWS) vs hidden-only (FAIL generic); earlier 2026-10-14 (C16): note + referenced_by; value unchanged
   - name: feedback_fails_per_level
     status: active
     source: design/gdd/hidden-data-grader.md

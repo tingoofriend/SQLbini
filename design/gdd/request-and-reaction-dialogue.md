@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (re-review 6c fixes: `skip.offer` / `skip.accept` lines, side-request messages, `TOO_MANY_ROWS` on any visible run; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (cross-review 6d: rule 3c shift briefing + Briefing state, dimmed tickets in challenge mode, UNAVAILABLE offer queue, RD-22 (rule changes); TOO_MANY_ROWS strip exception, statuses; earlier: 2026-10-15: re-review 6c fixes: `skip.offer` / `skip.accept` lines, side-request messages, `TOO_MANY_ROWS` on any visible run; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -138,7 +138,18 @@ is set in `/art-bible`.
    counter strip (envelope glyph + the requester's name) that opens the side
    request; they never replace the current request in the bubble. The ticket
    is removed once the side request has been opened or the shift clocks out
-   (the side request stays on the chapter list).
+   (the side request stays on the chapter list). While challenge mode is open,
+   message tickets are shown dimmed and cannot be opened — the player leaves
+   challenge mode first (`constraint-challenges.md` rule 6c).
+3c. **Shift briefing.** At each shift start Tanaka's `briefing` line fills the
+   bubble (state `Briefing`) before the shift's first main request. A
+   multi-page briefing advances a page on a click on the bubble or Enter/Space
+   with the counter scene focused; the same input on the last page ends it.
+   There is no timeout. The shift's first main request opens (its
+   `request_open` fires) when the briefing ends — on Day One's Morning shift,
+   only after Onboarding's "Ever used SQL before?" line, which follows the
+   briefing (`onboarding-first-shift.md` rule 1). The briefing stays in the
+   message log.
 4. The **message log** (button in the counter scene, shortcut Ctrl+L) lists every
    line of the current shift with speaker name and kind, newest at the bottom,
    for rereading. Nothing is ever lost from the log during a shift.
@@ -155,10 +166,12 @@ is set in `/art-bible`.
    the grader's SUBMIT_ERROR kind `TOO_MANY_ROWS`, or the grader verdict
    `UNAVAILABLE` (and, for `SQL_ERROR`, on SQLite's message). Each template has
    the string id `error.<KIND>` (e.g. `error.EMPTY`, `error.CONTENT_ERROR`);
-   other systems cite the id, never the text. **SQLite's original message is
-   always shown beneath** in monospace — in the workbench's error strip
-   (workbench rule 13) — **except** for `CONTENT_ERROR` / `UNAVAILABLE`, where
-   no raw text reaches the player. The bubble carries the voiced gloss only.
+   other systems cite the id, never the text. **SQLite's original message (or
+   the sandbox's fixed message) is always shown beneath** in monospace — in the
+   workbench's error strip (workbench rule 13) — **except** for `CONTENT_ERROR` /
+   `UNAVAILABLE`, where no raw text reaches the player, and `TOO_MANY_ROWS`,
+   which has no sandbox text: the strip shows its label and
+   "{grader_row_cap}+ rows — too many to compare" (workbench rule 13). The bubble carries the voiced gloss only.
    Speaker: on Run, Kenji; on Submit, the requester (rule 2). Every
    `error_kind` has a template. MVP templates:
 
@@ -204,6 +217,7 @@ The counter scene, per open puzzle:
 
 | State | Bubble shows | Event | To |
 |---|---|---|---|
+| `Briefing` | The shift briefing (Tanaka), paged | Click / Enter / Space on the last page (rule 3c) | `Request` (the shift's first main request; on Day One's Morning shift, Onboarding's question comes first) |
 | `Request` | The request (speaker neutral) | Pass / fail / error / offer arrives | `Reaction` |
 | `Reaction` | The reaction (speaker pleased / puzzled) | `reaction_hold` elapses, Run, click on speaker, or editor edit after `reaction_grace` | `Request` |
 | `PassReaction` | Pass line (+ offer line and buttons), or Kenji's `skip.accept` (rule 3b) | `reaction_hold` elapses, or click / Enter / Space on the counter scene (edits and Run do not end it) | `Request` (next request, new speaker) or, after `skip.accept` on a shift's last main request, clock-out; an unanswered offer → offer ticket (rule 3a) |
@@ -214,7 +228,7 @@ The counter scene, per open puzzle:
 | System | Direction | Data | Owner |
 |---|---|---|---|
 | Puzzle Definition & Datasets | Puzzle → Dialogue | `request`, `pass_reaction`, trap feedback texts, speaker ids, chapter shift briefings | Puzzle Definition |
-| Hidden-Data Grader | Grader → Dialogue | Verdict + feedback key `{verdict, cause, level}` only; `{verdict: UNAVAILABLE}` (no error text); SUBMIT_ERROR as `{error_kind, error_text}` incl. `TOO_MANY_ROWS` | Grader |
+| Hidden-Data Grader | Grader → Dialogue | Verdict + feedback key `{verdict, cause, level}` only; `{verdict: UNAVAILABLE}` (no error text); SUBMIT_ERROR as `{error_kind, error_text}`, or `{error_kind: TOO_MANY_ROWS}` with no `error_text` | Grader |
 | SQL Execution Sandbox | Sandbox → (Workbench) → Dialogue | `error_kind`, `error_text`; schema names for "did you mean" | Sandbox |
 | Query Workbench | Workbench hosts | Counter scene strip, message-log overlay | Workbench |
 | Shift & Chapter Progression | Progression → Dialogue | Shift briefing, next request, Kenji's skip offer and accept (`skip.offer`, `skip.accept`, rule 3b), side-request messages at shift start (`side` kind, rule 3b); Dialogue → Progression: end of the `skip.accept` hold (then the next request or clock-out) | Progression owns timing; Dialogue owns the lines |
@@ -330,7 +344,7 @@ it (`products`); the threshold applies only when a chapter has several tables.
 - **If the player Runs while a reaction is showing, or edits once it has been fully visible for `reaction_grace`**: the bubble returns to the request at once; the reaction stays in the log. An earlier edit does not dismiss it (rule 3). A pass line is not dismissed by edits or Run (rule 3a).
 - **If a CONTENT_ERROR occurs on Run, or a Submit returns `UNAVAILABLE`** (a dataset failed to build): Kenji's apology line (`error.CONTENT_ERROR`), never the requester's puzzled reaction; **no raw or build text is shown** — the build message reaches only the Playtest Log / content-bug report.
 - **If the player answers the offer ticket after the next request arrived**: Try it / Later behave exactly as in the bubble (`constraint-challenges.md` rule 6a).
-- **If several reactions arrive quickly** (repeated submits): only the newest is shown; all are in the log. **Exception — queue:** when a FAIL line and Kenji's skip `offer` arrive together (the FAIL that latches `exhausted`), neither replaces the other: the fail line shows first, then the offer after the fail line's `reaction_hold` (or earlier if the fail line is dismissed by rule 3).
+- **If several reactions arrive quickly** (repeated submits): only the newest is shown; all are in the log. **Exception — queue:** when a FAIL line and Kenji's skip `offer` arrive together (the FAIL that latches `exhausted`), or Kenji's `error.CONTENT_ERROR` line and the offer an UNAVAILABLE submit triggers (Progression rule 7a), neither replaces the other: the first line shows first, then the offer after its `reaction_hold` (or earlier if it is dismissed by rule 3).
 - **If challenge mode is open**: the bubble's request is the challenge puzzle's request; on leaving, it returns to whatever `constraint-challenges.md` rule 6a opens.
 - **If a reaction arrives while the player is reading a paged request**: the reaction replaces it; returning to the request starts at page 1.
 - **If a puzzle's requester has no sprite** (HQ, or a missing asset): a printed slip replaces the speaker; text behaviour is unchanged.
@@ -348,10 +362,10 @@ it (`products`); the threshold applies only when a chapter has several tables.
 
 | System | GDD | What Dialogue needs | Status |
 |---|---|---|---|
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Request, pass reaction, trap feedback, speaker ids, shift briefings | In Review |
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Feedback key `{verdict, cause, level}` | In Review |
-| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | `error_kind`, `error_text`, schema names | In Review |
-| Query Workbench | `design/gdd/query-workbench.md` | Hosts the counter scene and log (layout updated 2026-10-14) | In Review |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Request, pass reaction, trap feedback, speaker ids, shift briefings | Approved |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Feedback key `{verdict, cause, level}` | Approved |
+| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | `error_kind`, `error_text`, schema names | Approved |
+| Query Workbench | `design/gdd/query-workbench.md` | Hosts the counter scene and log (layout updated 2026-10-14) | Approved |
 
 **Soft:** Shift & Chapter Progression (briefings, skip offer), Constraint
 Challenges (offer / clear / rule-broken events), Hint System (Kenji's
@@ -473,11 +487,11 @@ blocked.
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/hidden-data-grader.md` | Rules 2, 8 | Feedback key; never row data (grader rule 11) | In Review |
-| `design/gdd/sql-execution-sandbox.md` | Rule 6 | `error_kind` set and `error_text` | In Review |
-| `design/gdd/query-workbench.md` | Overview, UI | Counter scene replaces the 56 px request bar; Ctrl+L; error strip | In Review, updated for this GDD |
-| `design/gdd/shift-and-chapter-progression.md` | Rule 2 | Briefings; Kenji's skip offer | In Review |
-| `design/gdd/constraint-challenges.md` | Rule 2 | Offer / clear / not-within-challenge lines | In Review |
+| `design/gdd/hidden-data-grader.md` | Rules 2, 8 | Feedback key; never row data (grader rule 11) | Approved |
+| `design/gdd/sql-execution-sandbox.md` | Rule 6 | `error_kind` set and `error_text` | Approved |
+| `design/gdd/query-workbench.md` | Overview, UI | Counter scene replaces the 56 px request bar; Ctrl+L; error strip | Approved, updated for this GDD |
+| `design/gdd/shift-and-chapter-progression.md` | Rule 2 | Briefings; Kenji's skip offer | Approved |
+| `design/gdd/constraint-challenges.md` | Rule 2 | Offer / clear / not-within-challenge lines | Approved |
 | `design/ideas-backlog.md` | Overview | #1 aesthetic/cozy mood; #2 pixel-art NPCs + speech bubbles (applied) | Developer ideas |
 
 ## Acceptance Criteria
@@ -505,7 +519,7 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 - **RD-08 [Integration]** GIVEN a reveal in progress, WHEN "abc" is typed in the editor, THEN "abc" is inserted in the same frame as with no dialogue showing, the reveal continues, and Enter in the editor inserts a newline.
 
 **Errors and suggestions**
-- **RD-09 [Logic]** Sandbox stubs `no such column`, `no such table`, `near "X"`, `incomplete input`, `unrecognized token`, `EMPTY`, `MULTI_STATEMENT`, `NOT_A_QUERY`, `NOT_ALLOWED`, `UNSUPPORTED`, `TIMEOUT`, `CONTENT_ERROR` and a grader `TOO_MANY_ROWS` SUBMIT_ERROR each map to their template (`error.<KIND>`) with `error_text` passed through unchanged; every `error_kind` in the sandbox enum has a template; `CONTENT_ERROR` on Run and a grader `UNAVAILABLE` verdict on Submit both give `error.CONTENT_ERROR`, spoken by Kenji with no puzzled requester sprite, and **no raw or build text is passed to the strip or the bubble**; a Run error is spoken by Kenji and a Submit error by the requester; an unknown message → the generic line; `SELEC name …` → the `near` template.
+- **RD-09 [Logic]** Sandbox stubs `no such column`, `no such table`, `near "X"`, `incomplete input`, `unrecognized token`, `EMPTY`, `MULTI_STATEMENT`, `NOT_A_QUERY`, `NOT_ALLOWED`, `UNSUPPORTED`, `TIMEOUT`, `CONTENT_ERROR` and a grader `TOO_MANY_ROWS` SUBMIT_ERROR each map to their template (`error.<KIND>`) with `error_text` passed through unchanged (`TOO_MANY_ROWS` has none); every `error_kind` in the sandbox enum has a template; `CONTENT_ERROR` on Run and a grader `UNAVAILABLE` verdict on Submit both give `error.CONTENT_ERROR`, spoken by Kenji with no puzzled requester sprite, and **no raw or build text is passed to the strip or the bubble**; a Run error is spoken by Kenji and a Submit error by the requester; an unknown message → the generic line; `SELEC name …` → the `near` template.
 - **RD-10 [Logic]** `did_you_mean`: prise, pirce, PRISE and `p.prise` → price; catagory → category; nam → name; stok → stock; shelfs → shelf; table `product` → products; expiry → null (no "Did you mean"); "p" → null; with names [cat, cut], cot → cat, and reversed → cut.
 
 **Text**
@@ -521,6 +535,7 @@ defaults: `hold_base` 1.0, `read_cps` 20, clamps 2.5 / 6.0, `reveal_cps` 45,
 - **RD-16 [Integration]** The Playtest Log records `line_shown {line_id, kind, speaker}`, `log_opened` and `line_skipped` (a reveal completed early), each with a timestamp and the common `puzzle` field.
 - **RD-19 [Integration]** GIVEN a FAIL that latches `exhausted` (stub progression sends Kenji's skip offer in the same frame), THEN the fail line shows first and the offer only after the fail line's `reaction_hold`; both are logged, in that order.
 - **RD-21 [Integration]** GIVEN a shift whose side request is valid, WHEN the shift starts, THEN a `side` line from its requester is in the message log and a message ticket shows on the strip while the bubble keeps the main request; opening the ticket opens the side request and removes the ticket. GIVEN an exhausted request, THEN `skip.offer` (Kenji) shows with Leave it for Kenji / Keep trying; WHEN accepted, THEN `skip.accept` holds for its `reaction_hold` (an edit or Run at 1.0 s does not end it, a click does) and only then does the next request open — or, on the shift's last main request, the clock-out begins.
+- **RD-22 [Integration]** GIVEN the Morning shift starting in a new game with a 2-page briefing, THEN the bubble shows page 1 (state `Briefing`), Enter shows page 2, Enter again shows Onboarding's "Ever used SQL before?" line, and only after the answer does 1-1's request show and `request_open` fire; no timer ends the briefing. GIVEN challenge mode open and a side message ticket on the strip, THEN the ticket is dimmed and clicking it does nothing. GIVEN a Submit returning UNAVAILABLE on a main request, THEN `error.CONTENT_ERROR` shows, then `skip.offer` after it.
 - **RD-20 [Integration]** GIVEN a FAIL, THEN the bubble shows only the voiced fail line and the workbench note shows only the grader's neutral symptom statement — no sentence appears in both; GIVEN a Run error, THEN the bubble shows only the gloss and the strip only the label + `error_text`. GIVEN challenge mode open, THEN the bubble's request is the challenge puzzle's; a stub clear / rule-broken event `{keyword: IN}` shows `challenge.clear` / `challenge.rule_broken` with "IN".
 
 ## Open Questions

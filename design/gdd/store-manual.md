@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (re-review 6c fix: `watch_out` carries a `rule_tag`, no conditional `watch_out`, `trap_rules` CI check; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (cross-review 6d: Guided suppression window; OQ1 rewritten; cross-reference rule numbers, statuses; earlier: 2026-10-15: re-review 6c fix: `watch_out` carries a `rule_tag`, no conditional `watch_out`, `trap_rules` CI check; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL (anti-pillar: NOT a textbook)
 
@@ -101,9 +101,10 @@ playtest (clear 1-1 to 1-3 without outside help) has no way to pass.
    Unlocked pages stay unlocked for the session (and, from Vertical Slice, the
    save).
 6. A newly unlocked page lights a small, silent indicator on the Manual button
-   ("1 new page"). While an Onboarding coach mark is showing (Guided mode) the
-   indicator is suppressed and appears once no mark is showing (workbench
-   rule 6). The manual **never opens by itself**; Onboarding points at the
+   ("1 new page"). While Onboarding's Guided suppression window is open (Guided
+   mode, from 1-1's request until the Morning marks are finished —
+   `onboarding-first-shift.md` rule 7) the indicator is suppressed and appears
+   once the window closes (workbench rule 6). The manual **never opens by itself**; Onboarding points at the
    button on 1-3 ("Filtering rows"), and a hint may name a page, but opening is always the
    player's action (button or Ctrl+M).
 7. Locked pages appear in the index as titles marked "later" with no content, so
@@ -127,7 +128,7 @@ playtest (clear 1-1 to 1-3 without outside help) has no way to pass.
 
 Per page, per session: `Locked → Unlocked (new)` (a request needing it is
 opened) `→ Unlocked (read)` (the page is viewed). The Manual button shows the new-
-page indicator while any page is `Unlocked (new)` and no coach mark is showing.
+page indicator while any page is `Unlocked (new)` and Onboarding's Guided suppression window is closed.
 
 The panel: `Closed ↔ Open` (button, Ctrl+M; Esc closes). Opening never changes
 the workbench state; the editor keeps its text and caret.
@@ -151,7 +152,7 @@ the workbench state; the editor keeps its text and caret.
 *Drafted without specialists — Lean mode.*
 
 - **If a puzzle's `manual_pages` lists an id with no page**: content validation fails for that puzzle (the manual cannot back it up). An empty `manual_pages` is valid (the puzzle unlocks nothing).
-- **If a page unlocks while a coach mark is showing** (1-1 "Reading the ledger" in Guided mode): the page is `Unlocked (new)` at once, but the indicator waits until no mark is showing.
+- **If a page unlocks during Onboarding's Guided suppression window** (1-1 "Reading the ledger" in Guided mode): the page is `Unlocked (new)` at once, but the indicator waits until the window closes (`onboarding-first-shift.md` rule 7).
 - **If two puzzles unlock the same page**: it unlocks once, on the first.
 - **If the player opens a side request first** (S-1 before 1-6): its pages unlock then; order does not matter.
 - **If the player copies an example while text is selected in the editor**: the example is inserted at the caret, not replacing the selection.
@@ -167,9 +168,9 @@ the workbench state; the editor keeps its text and caret.
 
 | System | GDD | What the Manual needs | Status |
 |---|---|---|---|
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `manual_pages`; `prefill_sql`; chapter schema | In Review |
-| Shift & Chapter Progression | `design/gdd/shift-and-chapter-progression.md` | Request-opened events | In Review |
-| Query Workbench | `design/gdd/query-workbench.md` | Host: button, Ctrl+M, side panel, copy to editor | In Review |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `manual_pages`; `prefill_sql`; chapter schema | Approved |
+| Shift & Chapter Progression | `design/gdd/shift-and-chapter-progression.md` | Request-opened events | Approved |
+| Query Workbench | `design/gdd/query-workbench.md` | Host: button, Ctrl+M, side panel, copy to editor | Approved |
 
 **Soft:** Hint System (page links), Onboarding (1-3 highlight; coach-mark
 visibility), Request & Reaction Dialogue (writing voice), Playtest Log,
@@ -220,10 +221,10 @@ grades, and always gives you something you can try right away.
 | This document references | Where | What | Status |
 |---|---|---|---|
 | `design/gdd/game-concept.md` | Overview, Rule 10 | Core Mechanic #6 store manual; anti-pillar "NOT a textbook" (reference allowed) | Source of intent |
-| `design/gdd/puzzle-definition-and-datasets.md` | Rules 2, 4, 5 | `manual_pages` field (page ids); `prefill_sql` field | In Review |
-| `design/gdd/onboarding-first-shift.md` | Rules 4, 6 | 1-1 prefill; Manual-button coach mark on 1-3; indicator suppression | In Review |
-| `design/gdd/hint-system.md` | Rule 6 | Hints may name a page; same "never solves a puzzle" CI pattern | In Review |
-| `design/gdd/query-workbench.md` | Rules 8–9 | Manual button, Ctrl+M, panel placement | In Review |
+| `design/gdd/puzzle-definition-and-datasets.md` | Rules 2, 4, 5 | `manual_pages` field (page ids); `prefill_sql` field | Approved |
+| `design/gdd/onboarding-first-shift.md` | Rules 2, 4, 7, 7a | 1-1 prefill; Manual-button coach mark on 1-3; indicator suppression | Approved |
+| `design/gdd/hint-system.md` | Rule 6 | Hints may name a page; same "never solves a puzzle" CI pattern | Approved |
+| `design/gdd/query-workbench.md` | Rules 8–9 | Manual button, Ctrl+M, panel placement | Approved |
 | `design/levels/chapter-1-puzzles.md` | Rule 2 | Learning goals per Chapter 1 puzzle | Level design |
 
 ## Acceptance Criteria
@@ -268,6 +269,6 @@ definition behaviour is covered in their own GDDs. Datasets: `visible`,
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | Do `watch_out` lines blunt the traps (e.g. "BETWEEN includes both ends" before 1-8)? Rule 3a already bars stating a trap's rule before its puzzle is passed; playtest whether that is enough. Compare first-submit fail rates with and without the page read (Playtest Log). | game-designer | Zero-SQL + some-SQL playtest |
+| 1 | Do `watch_out` lines blunt the traps (e.g. "BETWEEN includes both ends" before 1-8)? Rule 3a bars any Chapter 1 page's `watch_out` from stating a rule a Chapter 1 trap tests (no conditional `watch_out` at MVP; `trap_rules` CI, SM-22); playtest whether the remaining `watch_out` lines and page bodies still pre-solve traps. Compare first-submit fail rates with and without the page read (Playtest Log). | game-designer | Zero-SQL + some-SQL playtest |
 | 2 | Should the manual offer a small search/filter once later chapters add many pages? | ux-designer | Chapter 3 design |
 | 3 | Voice of the previous part-timer — name, personality, a mystery hook? | narrative-director | Character bios |

@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (wording: `TOO_MANY_ROWS` on any visible run, from the Dialogue re-review 6c; earlier: re-review fixes: rule 7a, neutral statements; earlier: cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (cross-review 6d: TOO_MANY_ROWS carries no error_text (rule 6, UI 4); Progression row incl. UNAVAILABLE + Restart; hint rule 4b citations; OQ 9 (G3); statuses; earlier: 2026-10-15: wording: `TOO_MANY_ROWS` on any visible run, from the Dialogue re-review 6c; earlier: re-review fixes: rule 7a, neutral statements; earlier: cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 1 — The Condition, Not the Screen; Pillar 2 — Your Query, Your Way
 
@@ -78,7 +78,9 @@ shaped) are not specified here → they become ADRs.
    or the result exceeds the row cap (Formulas), the verdict is **SUBMIT_ERROR**.
    A submit error carries the sandbox's `error_kind` and `error_text`, or — for a
    result over the cap — the grader-level kind `TOO_MANY_ROWS` (Request &
-   Reaction Dialogue voices it; the workbench strip shows the `error_text`), and
+   Reaction Dialogue voices it; it carries **no** `error_text` — the workbench
+   strip shows its label and "{grader_row_cap}+ rows — too many to compare",
+   workbench rule 13), and
    **does not count as a failed attempt**: a typo is not a misunderstanding
    (Pillar 3). A `CONTENT_ERROR` is not a pre-check rejection: it leads to
    UNAVAILABLE (rule 9a).
@@ -226,10 +228,10 @@ by Constraint Challenges.
 | Puzzle Definition & Datasets | Puzzle → Grader | Reference SQL, key column (key position = the reference output column of that name), ordered flag, datasets (visible + ≥2 hidden, ≥1 hardcode-proof), row trap tags per dataset (visible included), trap priority list, per-trap feedback texts (levels 1–3), puzzle kind (query / modify) | Grader states required fields; Puzzle Definition GDD implements them |
 | Query Workbench | Workbench → Grader | Submit (SQL text); Run match bit (visible only) | Workbench |
 | Hint System | Grader → Hints | The verdict only, carrying the submitted query text (hint rule 4a counts a FAIL only if its normalized text differs from the previous counted FAIL) — not cause, level or counters; Hints returns `hint_counted` for the `submit` log event | Grader |
-| Request & Reaction Dialogue | Grader → Dialogue | Verdict + feedback key (cause, level), or `{error_kind, error_text}` (a sandbox kind or `TOO_MANY_ROWS`); UNAVAILABLE carries no `error_text`; **never row data** | Grader |
-| Shift & Chapter Progression | Grader → Progression | PASS event (puzzle id) | Grader |
+| Request & Reaction Dialogue | Grader → Dialogue | Verdict + feedback key (cause, level), or `{error_kind, error_text}` (a sandbox kind), or `{error_kind: TOO_MANY_ROWS}` with no `error_text`; UNAVAILABLE carries no `error_text`; **never row data** | Grader |
+| Shift & Chapter Progression | Grader ↔ Progression | Grader → Progression: PASS and UNAVAILABLE events (puzzle id; UNAVAILABLE triggers Kenji's offer, Progression rule 7a). Progression → Grader: Restart event (rule 12a) — the puzzle's per-cause counters reset to 0 | Grader (verdicts); Progression (Restart) |
 | Constraint Challenges | Constraints → Grader | Calls grade first, supplying the per-challenge counter set (rule 5); applies its rule only on PASS | Constraint Challenges |
-| Playtest Log | Grader → Log | The grader emits the `submit` event for every submit: verdict (incl. UNAVAILABLE, with optional `build_message`), cause, level, per-dataset pass/fail, missing/extra row counts (log only), and `hint_counted: bool` (value supplied by the Hint System's counting rule, hint rule 4a) | Grader |
+| Playtest Log | Grader → Log | The grader emits the `submit` event for every submit: verdict (incl. UNAVAILABLE, with optional `build_message`), cause, level, per-dataset pass/fail, missing/extra row counts (log only), and `hint_counted: bool` (value returned by the Hint System, hint rule 4b; counting rule 4a) | Grader |
 | Efficiency Stats (VS) | Grader → Stats | PASS event with the passing SQL | Grader |
 | Modify Puzzle Grading (Alpha) | extends Grader | Replaces the result comparison with final-database-state comparison for modify puzzles | Modify Puzzle Grading |
 | Audio (VS) | Grader → Audio | Verdict event | Grader |
@@ -450,8 +452,8 @@ withheld from play and reported in the content verifier)**
 
 | System | GDD | What the grader needs | Status |
 |---|---|---|---|
-| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | Run one read-only statement on a named dataset in a fresh database; return ok/error, **column count even for zero rows**, rows as positional value lists (duplicate column names preserved), error text, timed-out flag | In Review — `sql-execution-sandbox.md` rule 16 implements it (`column_count`, `columns`, `truncated`, `CONTENT_ERROR`) |
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Reference SQL; key column; ordered flag; visible + ≥2 hidden datasets with ≥1 hardcode-proof set; trap tags per dataset (`tagged_keys`, visible included); trap priority list; per-trap feedback texts for levels 1–3; puzzle kind | In Review — `puzzle-definition-and-datasets.md` implements it |
+| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | Run one read-only statement on a named dataset in a fresh database; return ok/error, **column count even for zero rows**, rows as positional value lists (duplicate column names preserved), error text, timed-out flag | Approved — `sql-execution-sandbox.md` rule 16 implements it (`column_count`, `columns`, `truncated`, `CONTENT_ERROR`) |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Reference SQL; key column; ordered flag; visible + ≥2 hidden datasets with ≥1 hardcode-proof set; trap tags per dataset (`tagged_keys`, visible included); trap priority list; per-trap feedback texts for levels 1–3; puzzle kind | Approved — `puzzle-definition-and-datasets.md` implements it |
 
 **Downstream — systems that depend on this one:**
 
@@ -551,7 +553,9 @@ Workbench renders. The workbench must:
    data" is the most the player learns.)
 4. Show the error label and the sandbox's `error_text` (SQLite's original
    message, or the fixed message) on the SUBMIT_ERROR strip (Pillar 4); the
-   voiced line stays in the bubble.
+   voiced line stays in the bubble. `TOO_MANY_ROWS` has no `error_text`: the
+   strip shows its label and "{grader_row_cap}+ rows — too many to compare"
+   (workbench rule 13).
 5. Keep feedback visible until the query text changes.
 6. On **UNAVAILABLE**, return to editing and show "Content error — reported" on
    the strip with no raw text; the voiced line is Dialogue's
@@ -567,8 +571,8 @@ Workbench renders. The workbench must:
 | This document references | Where | What | Status |
 |---|---|---|---|
 | `design/gdd/game-concept.md` | Pillars 1–4, Core Mechanics #2, MVP Definition | Hidden-data grading, "no hidden rows" rule, escalating feedback, MVP level-1 scope | Source of truth for intent |
-| `design/gdd/sql-execution-sandbox.md` | Dependencies, Core Rules 6–8 | Sandbox contract (one read-only statement, fresh DB, column count for zero rows, no collapsed duplicate names, timeout, error text) | In Review |
-| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–4, 10, 12; Formulas (`ordered`, `order_cols`, `k`, `R_cap`) | Required puzzle fields; `hardcode_proof` | In Review |
+| `design/gdd/sql-execution-sandbox.md` | Dependencies, Core Rules 6–8 | Sandbox contract (one read-only statement, fresh DB, column count for zero rows, no collapsed duplicate names, timeout, error text) | Approved |
+| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–4, 10, 12; Formulas (`ordered`, `order_cols`, `k`, `R_cap`) | Required puzzle fields; `hardcode_proof` | Approved |
 | `design/levels/chapter-1-puzzles.md` | Formulas examples | Puzzle 1-5 and S-1 data | Requests 1-4/1-5/1-7/1-8 to be rewritten (trap philosophy) |
 | `prototypes/sqlbini-web/ch1.py` | Formulas examples | Datasets used to verify worked examples | Prototype — reference only |
 | `prototypes/sqlbini-spike-2026-10-14/SPIKE-NOTE.md` | Dependencies | Zero-row column count and duplicate-name limitations of godot-sqlite | Drives the sandbox contract |
@@ -620,7 +624,7 @@ Logic tests use a stub sandbox where noted. Config: `R_cap = 5000`, `k = 2`,
 
 **No hidden-row leakage**
 - **AC-18 [Integration]** GIVEN AC-06, WHEN the verdict reaches Request & Reaction Dialogue, THEN the payload keys are exactly `{verdict, cause, level}` — no rows, names, counts or per-dataset flags.
-- **AC-19 [Integration]** GIVEN AC-06, WHEN the Playtest Log records it, THEN the entry holds per-dataset results `[match, mismatch, mismatch]`, missing/extra counts, and `hint_counted` equal to the value the Hint System's rule 4a returned for that submit (true for a first FAIL; false when the same query is resubmitted, and for every SUBMIT_ERROR and UNAVAILABLE).
+- **AC-19 [Integration]** GIVEN AC-06, WHEN the Playtest Log records it, THEN the entry holds per-dataset results `[match, mismatch, mismatch]`, missing/extra counts, and `hint_counted` equal to the value the Hint System's rule 4b returned for that submit (true for a first FAIL; false when the same query is resubmitted, and for every SUBMIT_ERROR and UNAVAILABLE).
 - **AC-29 [Logic]** GIVEN 1-5 and a stub whose visible pre-check succeeds but whose determinism run (and, separately, the visible grading run) returns `TIMEOUT`, WHEN submitted, THEN the verdict is SUBMIT_ERROR `TIMEOUT`, every per-cause counter stays 0, and no hidden dataset is run; the same with a `truncated` determinism run gives SUBMIT_ERROR `TOO_MANY_ROWS`.
 - **AC-20 [UI]** GIVEN AC-06 and AC-08, WHEN the outcome is rendered, THEN a retained screenshot in `production/qa/evidence/` shows only the neutral symptom statement on the note (and the voiced line in the bubble, not repeated on the note) — no hidden row, count, per-dataset result or hidden-data error text. GIVEN AC-28, THEN the screenshot shows "Content error — reported" with no raw or build text.
 - **AC-28 [Logic]** GIVEN a stub that reports `CONTENT_ERROR` on `hidden_b` (and, separately, on `visible`), WHEN the player submits, THEN the verdict is UNAVAILABLE, the payload is exactly `{verdict: UNAVAILABLE}` (no `error_text`), puzzle state and every per-cause counter are unchanged, and a content-bug report is logged.
@@ -650,5 +654,6 @@ Logic tests use a stub sandbox where noted. Config: `R_cap = 5000`, `k = 2`,
 | 5 | Should feedback text ever name the dataset as "another day"? (Currently: no per-dataset information at all.) | game-designer | Puzzle Definition GDD |
 | 6 | Default `k` (fails per level) = 2 is a guess; tune from playtest logs once levels 2–3 exist. | systems-designer | Vertical Slice |
 | 7 | Which machine is the "target PC" for the 300 ms / 200 ms p95 budgets? Until named, AC-26 cannot be checked. | technical-director | Technical Setup (performance ADR) |
+| 9 | Feedback escalation counts every FAIL, so resubmitting one near-miss query `2k` times reaches level 3 (the synthetic counter-example) in seconds. Should the Hint System's same-query check (hint rule 4a) also gate `feedback_level`? Deferred with levels 2–3 (cross-review 6d, G3). | game-designer | Vertical Slice (feedback levels 2–3) |
 | 8 | Trap tags, key columns and priority lists for Chapter 1 are not yet authored (the AC fixtures are provisional). Wording for hidden-only runtime errors is not authored. | Puzzle Definition GDD / level design | Before Chapter 1 content locks |
 | 9 | (art bible 2026-10-14) `canon` does not trim (Formulas: trailing-space traps are intended). Should the result grids then show a visible-space marker for leading / trailing spaces (art bible 7.3; the glyph would be added to bible 3.3)? Not decided here. | Grader owner + art-director (`/ux-design` G-08) | `/ux-design` |

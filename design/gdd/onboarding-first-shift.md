@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (re-review 6c-3: APPROVED; earlier: re-review 6c-2 fix: coach-mark Done conditions scoped to their own puzzle; earlier: re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (cross-review 6d: Guided suppression window (rule 7), 1-3.manual Done when the Manual is already open, question after the briefing, OB-24/OB-25 (rule changes); submit-before-run wording, statuses; earlier: 2026-10-15: re-review 6c-3: APPROVED; earlier: re-review 6c-2 fix: coach-mark Done conditions scoped to their own puzzle; earlier: re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -41,8 +41,9 @@ balancing rules in this system.
 1. At the start of a new game, Tanaka asks once: "Ever used SQL before?" —
    **"No, show me around"** (default) or **"Yes, I know SQL"**. The question is
    a Dialogue `system` line in the bubble with the two choices as buttons,
-   shown **before** 1-1's request arrives (`request-and-reaction-dialogue.md`
-   rule 2), so it never competes with a request. 1-1's `request_open` fires
+   shown **after** the Morning shift's briefing and **before** 1-1's request
+   arrives (`request-and-reaction-dialogue.md` rules 2, 3c), so it never
+   competes with a request. 1-1's `request_open` fires
    only **after** the player answers (so manual / hint unlocks and the Playtest
    Log's time-to-first-Run clock start then). "Yes" turns off coach marks
    and ghost text for the whole game (also a setting); the puzzles (including
@@ -104,9 +105,14 @@ balancing rules in this system.
    action is done. "Got it", or Esc **while the mark has focus**, dismisses one
    early; with focus in the editor, Esc keeps its workbench meaning (leave the
    editor) and the mark stays (workbench rule 15, Esc precedence). Ring is
-   static under reduced motion. While a coach mark is showing, the hint and
-   manual "new" indicators are suppressed; they appear once no mark is showing
-   (workbench rule 6), so the player meets one new signal at a time.
+   static under reduced motion. **Guided suppression window:** from 1-1's
+   `request_open` until the Morning shift's marks are finished (`1-3.manual`
+   Done or Dismissed, the Morning shift clocked out, or coach marks turned
+   off), the hint and manual "new" indicators are suppressed — not only while
+   a mark shows, because tutorial hints and the 1-1 manual page are ready in
+   the gaps between marks (e.g. 1-1's PASS hold). They appear once the window
+   closes (workbench rule 6), so the player meets one new signal at a time.
+   The Hint and Manual buttons stay visible and usable throughout.
 7a. **The marks.** Guided mode has exactly these four marks, in this order;
    the mark id is the `{mark}` value of the Playtest Log's
    `mark_shown/done/dismissed` events:
@@ -116,7 +122,7 @@ balancing rules in this system.
 | `1-1.run` | 1-1 | Run button | "Press Run (Ctrl+Enter) to see what's on the shelves." | Any Run on 1-1, or a Submit on 1-1 first (rule 8) |
 | `1-1.submit` | 1-1 | Submit button | "Now hand it to me — Submit (Ctrl+Shift+Enter)." | Any Submit on 1-1 |
 | `1-2.schema` | 1-2 | Schema browser | "Click a column to put it in your query." | A column name appears in 1-2's editor by any means (Edge Cases) |
-| `1-3.manual` | 1-3 | Manual button | "New page in the binder — have a look if you need it." | The Manual panel is opened on 1-3 |
+| `1-3.manual` | 1-3 | Manual button | "New page in the binder — have a look if you need it." | The Manual panel is opened on 1-3, or is already open when 1-3 opens (then Done without being shown) |
 
    **Done conditions are scoped to the mark's own puzzle**: they count only
    while that puzzle is open. Doing a later mark's target on an earlier puzzle
@@ -149,7 +155,7 @@ later target of the **same puzzle** early marks that puzzle's earlier ones `Done
 
 | System | Direction | Data | Owner |
 |---|---|---|---|
-| Query Workbench | Onboarding → Workbench | Ghost text; coach-mark anchors (Run, Submit, schema browser, Manual button); coach-mark visibility (the workbench suppresses hint / manual "new" indicators while a mark shows; Esc precedence) | Workbench renders; Onboarding decides |
+| Query Workbench | Onboarding → Workbench | Ghost text; coach-mark anchors (Run, Submit, schema browser, Manual button); the Guided suppression window (rule 7 — the workbench suppresses hint / manual "new" indicators while it is open); Esc precedence) | Workbench renders; Onboarding decides |
 | Request & Reaction Dialogue | Onboarding → Dialogue | The "Ever used SQL before?" `system` line and its two choices (before 1-1's request); Tanaka's one-time "start over" `system` line (Guided only); guidance lines are rendered in coach-mark labels by Onboarding, never in the bubble | Dialogue renders the lines |
 | Store Manual | Manual → Onboarding | "Filtering rows" unlocked on 1-3 → coach mark on the Manual button | Store Manual |
 | Hint System | — | `tutorial` puzzles 1-1/1-2 (both steps at once) and the 1-3 override (Hint System Formulas) | Hint System |
@@ -163,12 +169,13 @@ later target of the **same puzzle** early marks that puzzle's earlier ones `Done
 *Drafted without specialists — Lean mode.*
 
 - **If the player edits 1-1's prefilled query before running**: allowed; Run and Submit grade whatever is there; a broken edit gets the normal error/feedback and, **in Guided mode only**, Tanaka adds "You can always start over with the ledger: `SELECT * FROM products;`" once per game, as a one-time `system` line in the **bubble** after the error reaction (Dialogue rule 2; it returns to the request like any reaction).
-- **If the player submits 1-1 before running**: allowed; `1-1.submit` is Done and `1-1.run` is marked Done too (rule 8), without being shown.
+- **If the player submits 1-1 before running**: allowed; `1-1.run` (already shown when 1-1 opened) is marked Done too (rule 7a), and `1-1.submit` is Done without ever being shown.
 - **If the player types in 1-2 before clicking the schema browser**: the schema mark is marked Done as soon as a column name appears in the editor by any means.
 - **If the player dismisses every coach mark**: onboarding continues silently; no re-prompts.
 - **If the player chose "Yes, I know SQL" and later struggles**: hints and the manual work as usual; coach marks can be re-enabled in settings.
 - **If the player presses Esc while a coach mark shows and focus is in the editor**: focus leaves the editor; the mark stays (workbench Esc precedence).
-- **If a manual page or hint unlocks while a coach mark shows** (e.g. "Reading the ledger" on 1-1): its "new" indicator waits until no mark is showing.
+- **If a manual page or hint unlocks during the Guided suppression window** (e.g. "Reading the ledger" and the tutorial hints on 1-1): its "new" indicator waits until the window closes (rule 7), even through the gaps between marks.
+- **If the Manual panel is already open when 1-3 opens** (it stays open across a request change — `store-manual.md` Edge Cases): `1-3.manual` is Done and never shown.
 - **If the player restarts 1-1 from the chapter list**: the prefill (`prefill_sql`) returns; coach marks do not replay (they are per game, not per puzzle).
 - **If the player opens the manual on 1-1 or 1-2**: nothing is marked Done (rule 7a scope); the 1-1 / 1-2 marks continue and the 1-3 mark still shows when 1-3 opens.
 - **If the player opens the manual on 1-3 before its mark is shown** (e.g. Ctrl+M as the request arrives): `1-3.manual` is Done and never shown.
@@ -180,17 +187,19 @@ later target of the **same puzzle** early marks that puzzle's earlier ones `Done
 
 | System | GDD | What Onboarding needs | Status |
 |---|---|---|---|
-| Query Workbench | `design/gdd/query-workbench.md` | Prefill, ghost text, coach-mark anchors, click-to-insert | In Review |
-| Request & Reaction Dialogue | `design/gdd/request-and-reaction-dialogue.md` | Tanaka's lines, the opening question | In Review |
-| Store Manual | `design/gdd/store-manual.md` | Unlock event for "Filtering rows" | In Review |
+| Query Workbench | `design/gdd/query-workbench.md` | Prefill, ghost text, coach-mark anchors, click-to-insert | Approved |
+| Request & Reaction Dialogue | `design/gdd/request-and-reaction-dialogue.md` | Tanaka's lines, the opening question | Approved |
+| Store Manual | `design/gdd/store-manual.md` | Unlock event for "Filtering rows" | Approved |
 
 **Soft:** Shift & Chapter Progression, Puzzle Definition (tutorial flags), Hint
 System (early unlocks), Settings (VS), Playtest Log.
 
 **Bidirectionality:** workbench, dialogue, store manual and hint system list
 Onboarding ✓ (workbench Interactions; dialogue Interactions; manual rule 6;
-Hint System Interactions — added 2026-10-14). Puzzle Definition must list
-Onboarding as a consumer of `tutorial` and `prefill_sql`.
+Hint System Interactions — added 2026-10-14); Puzzle Definition lists
+Onboarding as a consumer of `tutorial` and `prefill_sql` ✓ (Interactions,
+Dependencies); Progression (Interactions, Morning shift / Restart prefill) and
+the Playtest Log (rule 4 event catalogue) list Onboarding ✓.
 
 ## Visual/Audio Requirements
 
@@ -237,10 +246,10 @@ they no longer need it.
 | This document references | Where | What | Status |
 |---|---|---|---|
 | `design/gdd/game-concept.md` | Overview | Top design risk (zero-SQL bounce); MVP threshold "≥ 2 of 3 zero-SQL testers clear 1-1 to 1-3 without outside help" | Source of intent |
-| `design/gdd/query-workbench.md` | Rules 2–3, 6–7 | Click-to-insert with auto-separator; first-submit explainer (moved to 1-2 when onboarding is on) | In Review |
-| `design/gdd/hint-system.md` | Rule 5 | Early unlocks on 1-1 to 1-3 | In Review |
-| `design/gdd/store-manual.md` | Rules 4–6 | "Filtering rows" page unlock; 1-1 exemption from the example check | In Review |
-| `design/gdd/puzzle-definition-and-datasets.md` | Rule 2 | 1-1 and 1-2 flagged `tutorial` | In Review |
+| `design/gdd/query-workbench.md` | Rules 2–3, 6–7 | Click-to-insert with auto-separator; first-submit explainer (moved to 1-2 when onboarding is on) | Approved |
+| `design/gdd/hint-system.md` | Rule 5 | Early unlocks on 1-1 to 1-3 | Approved |
+| `design/gdd/store-manual.md` | Rules 4–6 | "Filtering rows" page unlock; 1-1 exemption from the example check | Approved |
+| `design/gdd/puzzle-definition-and-datasets.md` | Rule 2 | 1-1 and 1-2 flagged `tutorial` | Approved |
 
 ## Acceptance Criteria
 
@@ -270,7 +279,8 @@ retained screenshot in `production/qa/evidence/`.*
 **Mark behaviour**
 - **OB-13 [Logic]** Guided mode defines exactly the four marks of rule 7a (`1-1.run`, `1-1.submit`, `1-2.schema`, `1-3.manual`), each logged with that id; at most one is shown at a time, in table order; a Submit on 1-1 before any Run marks `1-1.run` Done; on 1-2 no Run or Submit mark is ever shown. GIVEN Guided at 1-1 with `1-1.run` shown, WHEN the Manual is opened and a column name is typed, THEN `1-1.run` stays shown, no mark becomes Done, and later `1-2.schema` and `1-3.manual` each show when their puzzle opens.
 - **OB-14 [Logic]** A shown mark becomes Done on its target action and Dismissed on "Got it" or Esc with the mark focused; Esc with focus in the editor leaves the editor and the mark stays; a dismissed mark never reappears.
-- **OB-24 [Integration]** GIVEN a coach mark shown and a manual page or hint unlocking (1-1 "Reading the ledger"), THEN no "new" indicator is visible until no mark is showing, then it appears.
+- **OB-24 [Integration]** GIVEN Guided mode, WHEN 1-1 opens ("Reading the ledger" unlocked, tutorial hints ready), THEN no "new" indicator is visible during the marks, during 1-1's PASS hold, or between `1-2.schema` Done and 1-3; WHEN `1-3.manual` is Done or Dismissed (or the Morning shift clocks out, or coach marks are turned off), THEN pending indicators appear.
+- **OB-25 [Integration]** GIVEN the Manual panel open on 1-2, WHEN 1-3 opens, THEN `1-3.manual` is Done, never shown, and logged as `mark_done` with no `mark_shown`.
 - **OB-15 [UI]** GIVEN a mark shown, THEN typing, Run and clicks still work, the ring never overlaps editor text or result tables, and it follows its target on resize or text scaling.
 - **OB-16 [Logic]** GIVEN 1-1 restarted, THEN the prefill returns and no mark replays.
 

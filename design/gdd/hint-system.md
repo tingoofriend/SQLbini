@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (re-review 6b fixes: rule 4b `hint_counted`, tokenize normalization, `shown(p)`; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (cross-review 6d: challenge-mode event owned by Constraint Challenges; Guided suppression window; Restart resets the rule 4a comparison; statuses; earlier: 2026-10-14: re-review 6b fixes: rule 4b `hint_counted`, tokenize normalization, `shown(p)`; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 1 — The Condition, Not the Screen
 
@@ -139,7 +139,7 @@ Per puzzle, per session:
 | `Step2Ready` | Step 2 available, unread; indicator shown | Player opens hint | `Step2Read` |
 | `Step2Read` | Both steps readable | `stuck_fails` more fails or `exhausted_minutes` more active time (not PASSED) | `Exhausted` (event to Progression) |
 | any | | Puzzle PASSED | unchanged (hints stay readable) |
-| any | | Puzzle restarted from the chapter list (Progression rule 12a; Restart event) | `Locked` (counters reset, as in the grader) |
+| any | | Puzzle restarted from the chapter list (Progression rule 12a; Restart event) | `Locked` (counters, the rule 4a last counted query, snapshots and `exhausted` reset, as in the grader) |
 | any | | Challenge mode open | unchanged; `active_time` paused (rule 12) |
 
 ### Interactions with Other Systems
@@ -150,8 +150,9 @@ Per puzzle, per session:
 | Hidden-Data Grader | Grader ↔ Hints | Grader → Hints: each submit's verdict + the submitted query text (challenge mode is known from Constraint Challenges' open/closed event, rule 12; FAIL counts if distinct, rule 4a; SUBMIT_ERROR does not). Hints → Grader: `hint_counted` for that submit (rule 4b), which the Grader writes into the `submit` log event | Grader (call); Hint System (`hint_counted` value) |
 | Query Workbench | Workbench hosts | Hint button, Ctrl+H, hint panel, "new step" indicator | Workbench |
 | Store Manual | Hints → Manual | Optional manual page link in a step | Store Manual |
-| Shift & Chapter Progression | Hints ↔ Progression | `exhausted` event per puzzle (Hints → Progression); Restart event (rule 12a) broadcast by Progression, subscribed to by the Hint System (Progression → Hints); challenge-mode open/closed | Progression decides what to offer |
-| Onboarding: First Shift | Onboarding → Hints | Coach-mark showing flag: while a coach mark is showing (Guided mode), the "new step" indicator is suppressed; it appears when no coach mark is showing | Onboarding |
+| Shift & Chapter Progression | Hints ↔ Progression | `exhausted` event per puzzle (Hints → Progression); Restart event (rule 12a) broadcast by Progression, subscribed to by the Hint System (Progression → Hints) | Progression decides what to offer |
+| Constraint Challenges | Challenges → Hints | Challenge mode open/closed (rule 12: Hint button hidden, the main request's `active_time` paused; challenge-mode submits return `hint_counted` false, rule 4b) | Constraint Challenges |
+| Onboarding: First Shift | Onboarding → Hints | Guided suppression window (`onboarding-first-shift.md` rule 7: from 1-1's request until the Morning marks are finished): the "new step" indicator is suppressed; it appears when the window closes | Onboarding |
 | Playtest Log | Hints → Log | `hint_unlock {step}`, `hint_open {step}`, `hint_exhausted` with timestamps; `submit.hint_counted` reaches the log via the Grader (rule 4b) | Hint System |
 | Request & Reaction Dialogue | Dialogue → Hints | Helper character's portrait/name | Dialogue |
 
@@ -279,17 +280,17 @@ outside the stated ranges (e.g. `hint1_fails = 5` → 4, `idle_cutoff_s = 20` �
 
 **Downstream:** Shift & Chapter Progression (consumes `exhausted`), Playtest Log
 (events). **Soft:** Store Manual (page links in hint text), Request & Reaction
-Dialogue (helper character identity), Onboarding: First Shift (coach-mark flag
-suppresses the "new step" indicator), Shift & Chapter Progression (Restart event,
-challenge-mode open/closed — the Hint↔Progression coupling is a runtime cycle).
+Dialogue (helper character identity), Onboarding: First Shift (its Guided
+suppression window suppresses the "new step" indicator), Shift & Chapter
+Progression (Restart event — the Hint↔Progression coupling is a runtime cycle),
+Constraint Challenges (challenge-mode open/closed event, rule 12).
 
 **Soft (lexer):** SQL Execution Sandbox — `tokenize(sql)` for rule 4a
 normalization (the contract Constraint Challenges also uses).
 
 **Bidirectionality:** the grader, puzzle definition, workbench, progression,
 constraint challenge and onboarding GDDs list the Hint System ✓. The sandbox
-lists Constraint Challenges as its lexer consumer but not yet the Hint System —
-add it at the next sandbox edit (cross-review 6d).
+lists the Hint System as a lexer consumer ✓ (added cross-review 6d).
 
 ## Tuning Knobs
 
@@ -352,10 +353,10 @@ never has a reason to quit instead of asking.
 | `design/gdd/hidden-data-grader.md` | Core Rules 4–5, 4b, 9 | FAIL vs SUBMIT_ERROR counting; `hint_counted` in the `submit` event; feedback vs hint separation; counter reset on restart | Approved |
 | `design/gdd/sql-execution-sandbox.md` | Core Rule 4a | `tokenize(sql)` token kinds | Approved |
 | `design/gdd/query-workbench.md` | UI Requirements | Hint button, Ctrl+H, panel placement | Approved |
-| `design/gdd/shift-and-chapter-progression.md` | Core Rules 8, 11, 12 | Restart action and event (rule 12a); consumer of `exhausted` (rule 7); challenge mode keeps the main request Open | In Review |
-| `design/gdd/onboarding-first-shift.md` | Interactions | Indicator suppressed while a coach mark shows | In Review |
-| `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1 | Kenji is the hint voice (cast) | In Review |
-| `design/gdd/constraint-challenges.md` | Core Rule 12 | Challenge-mode submits leave hint state unchanged | In Review |
+| `design/gdd/shift-and-chapter-progression.md` | Core Rules 8, 11, 12 | Restart action and event (rule 12a); consumer of `exhausted` (rule 7); challenge mode keeps the main request Open | Approved |
+| `design/gdd/onboarding-first-shift.md` | Interactions | Indicator suppressed while a coach mark shows | Approved |
+| `design/gdd/request-and-reaction-dialogue.md` | Core Rule 1 | Kenji is the hint voice (cast) | Approved |
+| `design/gdd/constraint-challenges.md` | Core Rule 12 | Challenge-mode submits leave hint state unchanged | Approved |
 | `design/gdd/game-concept.md` | Overview | Zero-SQL risk; "hints and skippable puzzles prevent hard stops" | Source of intent |
 
 ## Acceptance Criteria

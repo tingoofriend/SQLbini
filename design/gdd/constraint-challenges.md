@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (re-review 6b: Approved; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (cross-review 6d: rules 6c challenge draft + dimmed tickets, rule 9 UNAVAILABLE, CC-18 (rule changes); OQ2 and statuses; earlier: 2026-10-14: re-review 6b: Approved; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 2 — Your Query, Your Way; Pillar 1 — The Condition, Not the Screen
 
@@ -104,6 +104,14 @@ comments, so `'COLOR'` never counts as `OR`.
    rule 12). A challenge cleared appears on the payslip of the shift in which
    it is cleared; one cleared after the final clock-out appears on the End of
    day screen only.
+6c. **The challenge draft.** Each challenge has its own draft, separate from
+   the base puzzle's: on the first entry into challenge mode in a session it is
+   seeded with the query that last passed the base puzzle; it is kept for the
+   session across leaving and re-entering (like workbench rule 14 drafts),
+   never changes the base puzzle's draft, and is not touched by Progression's
+   Restart of the base puzzle. While challenge mode is open, the counter
+   strip's message tickets are dimmed and cannot be opened — the player leaves
+   challenge mode first (`request-and-reaction-dialogue.md` rule 3b).
 7. A challenge can also be started any time later from the puzzle in the chapter
    list (a "challenge" mark shows which puzzles have one).
 8. In challenge mode the workbench shows the rule and a **live check** under the
@@ -120,6 +128,11 @@ comments, so `'COLOR'` never counts as `OR`.
       they never escalate the base puzzle's feedback (levels 2–3, Vertical
       Slice) and never change hint state (`hint-system.md` rule 12). The base
       puzzle stays PASSED (grader: further submits cannot un-clear it).
+      If the grader says **UNAVAILABLE** (a dataset failed to build), it is
+      shown as usual ("Content error — reported" strip, Kenji's
+      `error.CONTENT_ERROR` line); the state stays `Attempting`, no challenge
+      counter changes, the rule is not checked, and Progression makes no skip
+      offer (`shift-and-chapter-progression.md` rule 7a covers main requests only).
    3. If the grader says PASS, the rule is checked. Met → **challenge cleared**,
       reported to Dialogue, which voices `challenge.clear`. Broken → reported
       to Dialogue with the broken keyword, which voices `challenge.rule_broken`
@@ -154,7 +167,7 @@ Per puzzle with a constraint, per session at MVP (per save from Vertical Slice):
 | `Offered` | | Later, or offer expiry (first Submit of the next request, opening a request other than the next one, or clock-out — rule 6) | `Available` |
 | `Available` | Mark in the chapter list | Start from chapter list | `Attempting` |
 | `Attempting` | Challenge mode in the workbench | Submit → PASS + rule met | `Cleared` |
-| `Attempting` | | Submit → PASS + rule broken, or FAIL / SUBMIT_ERROR | `Attempting` |
+| `Attempting` | | Submit → PASS + rule broken, or FAIL / SUBMIT_ERROR / UNAVAILABLE | `Attempting` |
 | `Attempting` | | Leave challenge mode (return target per rule 6a) | `Available` |
 | `Cleared` | Challenge stamp in the chapter list | Start from chapter list | `Cleared` (replaying in challenge mode) |
 | `Cleared` (replaying) | | Any submit outcome, or leave | `Cleared` |
@@ -289,7 +302,8 @@ breaks Pillar 1); S-1 `forbid(DISTINCT)` (needs `GROUP BY`, not taught yet).
 - **If the player ignores the offer and starts typing the next request**: the offer stays answerable until that request's first Submit, then counts as Later (rule 6 expiry; the request's automatic arrival does not expire it).
 - **If the player chooses Try it during the PASS hold**: the next request is already `Open` with `request_open` fired; it stays `Open`, its hint clock is paused while in challenge mode (rule 6b), and the bubble shows the challenge puzzle's request.
 - **If a challenge is cleared in a later shift than its base puzzle** (from the chapter list): it appears on the payslip of the shift in which it is cleared; cleared after the final clock-out, it appears on the End of day screen only (rule 6b).
-- **If the player leaves challenge mode mid-attempt**: the challenge returns to `Available` (or stays `Cleared`), its counters reset, and the workbench returns to the open main request with its draft.
+- **If the player leaves challenge mode mid-attempt**: the challenge returns to `Available` (or stays `Cleared`), its counters reset, and the workbench returns to the open main request with its draft. The challenge draft is kept for the session (rule 6c).
+- **If the player clicks a side-request message ticket in challenge mode**: nothing happens — the ticket is dimmed until challenge mode is left (rule 6c).
 - **If the player chooses "Later"**: the challenge stays `Available` in the chapter list with no further prompts — re-passing the base puzzle does not show the offer again.
 
 ## Dependencies
@@ -298,10 +312,10 @@ breaks Pillar 1); S-1 `forbid(DISTINCT)` (needs `GROUP BY`, not taught yet).
 
 | System | GDD | What this system needs | Status |
 |---|---|---|---|
-| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Verdict on the challenge submit; "constraint runs only after a PASS" (grader rule 17) | In Review |
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `constraint` field; verifier hook for rule 12 | In Review |
-| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | Lexer contract `tokenize(sql)` (`WORD` tokens) | In Review |
-| Query Workbench | `design/gdd/query-workbench.md` | Rule banner, live check, outcome display | In Review |
+| Hidden-Data Grader | `design/gdd/hidden-data-grader.md` | Verdict on the challenge submit; "constraint runs only after a PASS" (grader rule 17) | Approved |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | `constraint` field; verifier hook for rule 12 | Approved |
+| SQL Execution Sandbox | `design/gdd/sql-execution-sandbox.md` | Lexer contract `tokenize(sql)` (`WORD` tokens) | Approved |
+| Query Workbench | `design/gdd/query-workbench.md` | Rule banner, live check, outcome display | Approved |
 
 **Soft:** Shift & Chapter Progression (base PASS event, chapter-list marks),
 Request & Reaction Dialogue (offer and reaction lines; `challenge.clear` /
@@ -370,13 +384,13 @@ the dare"), never a fail.
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/hidden-data-grader.md` | Core Rule 9 | Grading first; rule 17 "constraint rules run after a PASS" | In Review |
-| `design/gdd/sql-execution-sandbox.md` | Core Rules 4–5 | Lexer contract `tokenize(sql)`; `WORD` tokens | In Review |
-| `design/gdd/request-and-reaction-dialogue.md` | Core Rules 6, 9 | Offer bubble / ticket; `challenge.clear`, `challenge.rule_broken` | In Review |
-| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–2, 12 | `constraint` field; content verifier | In Review |
-| `design/gdd/query-workbench.md` | Core Rule 8, UI | Banner and live check host | In Review |
-| `design/gdd/shift-and-chapter-progression.md` | Core Rules 6, 6a | No-menu flow; return to the open main request | In Review |
-| `design/gdd/hint-system.md` | Core Rules 6b, 9, 11 | Challenge submits leave hint state unchanged; no hints in challenge mode; main request's hint clock paused (hint rule 12) | In Review |
+| `design/gdd/hidden-data-grader.md` | Core Rule 9 | Grading first; rule 17 "constraint rules run after a PASS" | Approved |
+| `design/gdd/sql-execution-sandbox.md` | Core Rules 4–5 | Lexer contract `tokenize(sql)`; `WORD` tokens | Approved |
+| `design/gdd/request-and-reaction-dialogue.md` | Core Rules 6, 9 | Offer bubble / ticket; `challenge.clear`, `challenge.rule_broken` | Approved |
+| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–2, 12 | `constraint` field; content verifier | Approved |
+| `design/gdd/query-workbench.md` | Core Rule 8, UI | Banner and live check host | Approved |
+| `design/gdd/shift-and-chapter-progression.md` | Core Rules 6, 6a | No-menu flow; return to the open main request | Approved |
+| `design/gdd/hint-system.md` | Core Rules 6b, 9, 11 | Challenge submits leave hint state unchanged; no hints in challenge mode; main request's hint clock paused (hint rule 12) | Approved |
 | `design/gdd/game-concept.md` | Overview | Pillar 2; MVP threshold "starts a constraint challenge unprompted" | Source of intent |
 
 ## Acceptance Criteria
@@ -389,6 +403,7 @@ dataset checks are covered in their own GDDs. Fixtures from
 - **CC-01 [Integration]** GIVEN 1-6 not yet passed, WHEN Submit returns PASS, THEN the offer line is attached to the PASS reaction once with inline **Try it** / **Later**, both keyboard reachable, no modal, and 1-7 arrives at once; **Later** leaves the chapter-list mark and no further prompt; ignoring the offer and submitting on 1-7 counts as Later; **Try it** opens challenge mode. GIVEN 1-5 (no constraint), WHEN it passes, THEN no offer appears.
 - **CC-15 [Integration]** GIVEN 1-4 passed and 1-8 not passed, THEN 1-4's challenge is `Hidden` (no offer at 1-4's PASS, no mark); WHEN 1-8 is passed, THEN 1-4's mark appears with no offer line, and only 1-8's own offer is shown.
 - **CC-16 [Integration]** GIVEN 1-6's offer accepted while 1-7 is open with a draft, WHEN the challenge is cleared — or left without clearing — THEN the workbench returns to 1-7 with its draft intact, and 1-7's state is unchanged.
+- **CC-18 [Integration]** GIVEN 1-6 passed with query Q and the base draft edited to D, WHEN Try it is chosen, THEN the editor holds Q; WHEN the player edits it to Q2, leaves, and starts the challenge again from the chapter list, THEN the editor holds Q2 and 1-6's base draft is still D. GIVEN a stub UNAVAILABLE verdict in challenge mode, THEN the strip shows "Content error — reported", the state stays `Attempting`, challenge counters are unchanged, and no skip offer appears. GIVEN a side message ticket on the strip in challenge mode, THEN it cannot be opened.
 - **CC-17 [Logic]** GIVEN 1-6 in challenge mode, WHEN 3 FAILs with the same cause occur, THEN the base puzzle's grader counters and hint state are unchanged; WHEN challenge mode is left and re-entered, THEN the challenge counters are 0.
 - **CC-02 [Integration]** GIVEN `Available`, WHEN started from the chapter list, THEN `Attempting` with the banner; leaving returns to `Available` and the workbench returns per rule 6a (the open main request with its draft, or the shift screen when none is open). GIVEN `Hidden`, THEN no mark and no way to start. GIVEN **Later** and then a re-pass of the base puzzle, THEN no second offer.
 - **CC-03 [Logic]** `has_keyword(q, OR)` is false for `name = 'COLOR'`, `-- or`, `[OR]`, `ORDER BY`, `color`; `has_keyword(q, IN)` is false for `INTEGER`; `has_keyword(q, OR)` is true for lower-case `or` used as an operator; `NOT IN (…)` is true for `IN`.
@@ -409,5 +424,5 @@ dataset checks are covered in their own GDDs. Fixtures from
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
 | 1 | Is the challenge offer right after the PASS too pushy, or exactly when curiosity peaks? Measure Try/Later rates in the playtest log. | game-designer (playtest) | MVP playtest |
-| 2 | Should challenges have their own hints (step 1 only)? MVP reuses the base puzzle's hints. | game-designer | After MVP playtest |
+| 2 | Should challenges have their own hints (step 1 only)? At MVP there are no hints in challenge mode (rule 11). | game-designer | After MVP playtest |
 | 3 | Efficiency stats (VS) — does a `max_chars` challenge duplicate the efficiency metric? Decide when the efficiency metric is chosen. | systems-designer | Efficiency Stats GDD |

@@ -2,7 +2,7 @@
 
 > **Status**: Approved (design review 2026-10-14)
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (wording: `TOO_MANY_ROWS` on any visible run, from the Dialogue re-review 6c; earlier: 2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-15 (cross-review 6d: Hint System listed as tokenize consumer; SQLite text shown in the workbench strip; statuses; earlier: 2026-10-15: wording: `TOO_MANY_ROWS` on any visible run, from the Dialogue re-review 6c; earlier: 2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -76,7 +76,8 @@ interrupt a query — both shape the rules below. How the time limit is enforced
    systems as `tokenize(sql) -> Array of {kind, text}`, with `kind` one of
    `WORD`, `NUMBER`, `STRING`, `QUOTED_IDENT`, `COMMENT`, `PUNCT`. Keyword
    matching — here (rules 6–9) and in Constraint Challenges' rule checks — uses
-   `WORD` tokens only, compared case-insensitively, so a keyword inside a string,
+   `WORD` tokens only (the Hint System also uses these tokens to normalize
+   query text for its distinct-query rule, `hint-system.md` rule 4a), compared case-insensitively, so a keyword inside a string,
    quoted identifier or comment never matches.
 6. If anything other than whitespace or comments follows a `;`, the request is
    rejected as `MULTI_STATEMENT` **without executing anything**. (godot-sqlite
@@ -183,6 +184,7 @@ The scratch database (Back Room) has a lifecycle:
 | Request & Reaction Dialogue | Sandbox → (via Grader/Workbench) → Dialogue | `error_kind` + `error_text` to voice | Dialogue |
 | Content verifier | Verifier → Sandbox | Same `query` mode as the game, so CI and the game agree | Puzzle Definition |
 | Constraint Challenges | Challenges → Sandbox | `tokenize(sql)` (rule 5a) for `forbid`/`require` keyword checks and the live check | Sandbox |
+| Hint System | Hints → Sandbox | `tokenize(sql)` (rule 5a) to normalize submitted query text for the distinct-query rule (`hint-system.md` rule 4a) | Sandbox |
 | Playtest Log | Sandbox → (via Workbench / Grader) → Log | `build_message` on `CONTENT_ERROR`, reaching the log **only** as the optional `build_message` field of the `run` event (Run hit `CONTENT_ERROR`) and of the `submit` event (verdict UNAVAILABLE) | Playtest Log |
 | Efficiency Stats (VS) | Sandbox → Stats | `elapsed_ms` (if the efficiency metric uses execution cost) | Efficiency Stats |
 | Modify Puzzle Grading (Alpha) | extends | `modify` mode and final-state readout | Modify Puzzle Grading |
@@ -296,7 +298,7 @@ observed on Godot 4.7.2 + godot-sqlite v4.9.*
 - **If a column has no name** (`SELECT price * 2`): SQLite names it from the expression; the name is display-only.
 
 **Errors and limits**
-- **If SQLite reports an error** (`no such column: prise`): `SQL_ERROR` with SQLite's exact text, which Request & Reaction Dialogue can show beneath its voiced line.
+- **If SQLite reports an error** (`no such column: prise`): `SQL_ERROR` with SQLite's exact text, which the workbench's error strip shows (workbench rule 13); Request & Reaction Dialogue voices a gloss in the bubble only.
 - **If execution exceeds `exec_time_limit`**: `TIMEOUT` within the limit + 50 ms; the frame never blocks (rule 15). The residual case is an aggregate, `GROUP BY`, `DISTINCT` or `ORDER BY` over a many-way join (rule 15); how the limit is enforced is Open Question 1.
 - **If the dataset fails to build** (a schema/data error): `CONTENT_ERROR` with the fixed `error_text` "content error"; the build message goes only in `build_message` (Playtest Log / content-bug report), never to the player, because it can name hidden keys. The grader returns UNAVAILABLE (`hidden-data-grader.md` rule 9a), not a player failure. The content verifier should have caught it first.
 
@@ -313,7 +315,7 @@ observed on Godot 4.7.2 + godot-sqlite v4.9.*
 
 | System | GDD | What the sandbox needs | Status |
 |---|---|---|---|
-| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Schema (typed columns, keys) and resolved dataset rows | In Review |
+| Puzzle Definition & Datasets | `design/gdd/puzzle-definition-and-datasets.md` | Schema (typed columns, keys) and resolved dataset rows | Approved |
 
 **Engine / library:** godot-sqlite v4.9 (GDExtension, `compatibility_minimum = "4.7"`).
 Behaviour this GDD relies on is recorded in the spike note addendum.
@@ -328,13 +330,14 @@ Behaviour this GDD relies on is recorded in the spike note addendum.
 | Request & Reaction Dialogue | soft | `error_kind`, `error_text` (via Grader / Workbench) |
 | Content verifier (Puzzle Definition) | hard | Same `query` mode as the game |
 | Constraint Challenges | hard | `tokenize(sql)` lexer contract (rule 5a) |
+| Hint System | soft | `tokenize(sql)` lexer contract (rule 5a) for query normalization (hint rule 4a) |
 | Playtest Log | soft | `build_message`, only via the optional field on the `run` event (`CONTENT_ERROR`) and the `submit` event (UNAVAILABLE) |
 | Efficiency Stats (VS) | soft | `elapsed_ms` |
 | Modify Puzzle Grading (Alpha) | hard | `modify` mode |
 
 **Bidirectionality:** `hidden-data-grader.md`, `puzzle-definition-and-datasets.md`,
-`query-workbench.md`, `request-and-reaction-dialogue.md` and
-`constraint-challenges.md` list this system ✓.
+`query-workbench.md`, `request-and-reaction-dialogue.md`,
+`constraint-challenges.md` and `hint-system.md` list this system ✓.
 Back Room, Efficiency Stats and Modify Puzzle Grading have no GDD yet.
 
 ## Visual/Audio Requirements
@@ -359,8 +362,8 @@ Query Workbench decides how they are shown.
 
 | This document references | Where | What | Status |
 |---|---|---|---|
-| `design/gdd/hidden-data-grader.md` | Overview, Core Rules 10–16, Formulas | Contract implemented here (column count for zero rows, no collapsed names, errors, timeout); rule 8 reference caching and stop-on-`TIMEOUT` | In Review |
-| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–2, Dependencies | Schema and resolved datasets; content verifier uses `query` mode | In Review |
+| `design/gdd/hidden-data-grader.md` | Overview, Core Rules 10–16, Formulas | Contract implemented here (column count for zero rows, no collapsed names, errors, timeout); rule 8 reference caching and stop-on-`TIMEOUT` | Approved |
+| `design/gdd/puzzle-definition-and-datasets.md` | Core Rules 1–2, Dependencies | Schema and resolved datasets; content verifier uses `query` mode | Approved |
 | `prototypes/sqlbini-spike-2026-10-14/SPIKE-NOTE.md` | Overview, Core Rules 6, 10–12, 15, Game Feel | godot-sqlite v4.9 behaviour probed on Godot 4.7.2 | Evidence |
 | `design/registry/entities.yaml` | Formulas | `grader_row_cap` (5000) | Registered |
 

@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-14 (2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (cross-review 6d: request_restart, request_unavailable {source}; {mark}/{page}/hint_counted citations; statuses; earlier: 2026-10-14: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Supports all pillars by measuring them (MVP Definition thresholds in `game-concept.md`)
 
@@ -64,7 +64,7 @@ prints the threshold table. Players of the released game never meet this system.
 | Query Workbench | `run {sql, dataset: visible/scratch, ok, error_kind, rows, match: bool, build_message?}`, `edit_burst {chars_changed}` (edits between actions, coalesced) |
 | Hidden-Data Grader | `submit {sql, verdict, cause, level, per_dataset, missing_count, extra_count, hint_counted: bool, build_message?}` |
 | Hint System | `hint_unlock {step}`, `hint_open {step}`, `hint_exhausted` |
-| Shift & Chapter Progression | `request_open`, `request_pass`, `request_skip`, `request_unavailable`, `shift_clockout`, `chapter_complete {starred}` |
+| Shift & Chapter Progression | `request_open`, `request_pass`, `request_skip`, `request_unavailable {source: content_check / submit}`, `request_restart {state, draft_was_empty}`, `shift_clockout`, `chapter_complete {starred}` |
 | Constraint Challenges | `challenge_offer`, `challenge_try`, `challenge_later` (also written when an unanswered offer expires), `challenge_start {source}`, `challenge_attempt {verdict, rule_met}`, `challenge_clear` |
 | Store Manual | `manual_unlock {page}`, `manual_open {page}`, `manual_copy {page}` |
 | Onboarding | `sql_question {answer}`, `mark_shown/done/dismissed {mark}` |
@@ -79,8 +79,12 @@ prints the threshold table. Players of the released game never meet this system.
    is the boolean visible-data match bit (true = the Run's result matches the
    reference on the visible dataset; false otherwise or when not applicable).
    `submit.hint_counted` is true when the FAIL counted toward hint unlocking
-   (Hint System rule 4a — its normalized query text differs from the previous
-   counted FAIL's); false for every other submit. `build_message` is present
+   (value returned by the Hint System, its rule 4b: true only for a FAIL outside
+   challenge mode whose normalized query text differs from the previous counted
+   FAIL's — the counting rule, Hint System rule 4a); false for every other submit.
+   `mark_*.mark` is an Onboarding mark id (`onboarding-first-shift.md` rule 7a:
+   `1-1.run`, `1-1.submit`, `1-2.schema`, `1-3.manual`). `manual_*.page` is a
+   Store Manual page id, `manual.<slug>` (Puzzle Definition `manual_pages`). `build_message` is present
    only on a `run` whose `error_kind` is CONTENT_ERROR or a `submit` whose
    verdict is UNAVAILABLE: it carries the sandbox's dataset build message, and
    this log (and the content-bug report built from it) is the **only** place it
@@ -288,7 +292,7 @@ excluded from claims on it.
 **Upstream (hard):** every MVP system that declares events — Hidden-Data Grader,
 Query Workbench, Hint System, Shift & Chapter Progression, Constraint
 Challenges, Store Manual, Onboarding, Request & Reaction Dialogue — and Puzzle
-Definition (content hash). All In Review; each lists the
+Definition (content hash). All Approved; each lists the
 Playtest Log in its Interactions ✓.
 
 **Upstream (soft):** SQL Execution Sandbox — its `build_message` reaches this
@@ -321,8 +325,8 @@ stopped"), glyph + words, ≥ 4.5:1, never over the editor or tables. The ● is
 |---|---|---|---|
 | `design/gdd/game-concept.md` | Overview, Rule 10, Formulas | MVP Definition threshold table | Source of intent |
 | `prototypes/sqlbini-web/REPORT.md` | Overview | First playtest kept no log | Evidence |
-| All MVP GDDs in `design/gdd/` | Rule 4 | Their declared events (must use the canonical names) | In Review |
-| `design/gdd/hidden-data-grader.md` | Rule 6 | Hidden details may appear only in this developer-facing log | In Review |
+| All MVP GDDs in `design/gdd/` | Rule 4 | Their declared events (must use the canonical names) | Approved |
+| `design/gdd/hidden-data-grader.md` | Rule 6 | Hidden details may appear only in this developer-facing log | Approved |
 
 ## Acceptance Criteria
 
