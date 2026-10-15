@@ -1,8 +1,8 @@
 # Shift & Chapter Progression
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (re-review 6f: NEEDS REVISION → revised — side requests become `Open` when the briefing ends (States, PR-03); PR-19 briefing wording; Onboarding → Progression answer signal (Interactions); earlier: re-review 6e: NEEDS REVISION → revised — `Unavailable` resolves a main request in rules 4, 6, States, PR-02/PR-04, payslip mark; first main opens when the briefing ends; side messages after the briefing; earlier: cross-review 6d: rule 7a UNAVAILABLE → Kenji's offer / Unavailable state, request_restart logged, briefing opens the first request, PR-22 (rule changes); OQ1 G2 note, statuses; earlier: 2026-10-15: re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (6g check: 6f fixes confirmed — side requests `Open` when the briefing ends (States note, PR-03, rule 5), PR-19, Onboarding → Progression answer signal — APPROVED; earlier: re-review 6f: NEEDS REVISION → revised — side requests become `Open` when the briefing ends (States, PR-03); PR-19 briefing wording; Onboarding → Progression answer signal (Interactions); earlier: re-review 6e: NEEDS REVISION → revised — `Unavailable` resolves a main request in rules 4, 6, States, PR-02/PR-04, payslip mark; first main opens when the briefing ends; side messages after the briefing; earlier: cross-review 6d: rule 7a UNAVAILABLE → Kenji's offer / Unavailable state, request_restart logged, briefing opens the first request, PR-22 (rule changes); OQ1 G2 note, statuses; earlier: 2026-10-15: re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -334,7 +334,7 @@ judgement. Mastery is visible (the star) but never required to keep going.
 | `design/gdd/hint-system.md` | Core Rule 7 | `exhausted` event (fails or time path, hint rule 11); Open Question 3 answered here (skip any main request incl. boss) | Approved |
 | `design/gdd/constraint-challenges.md` | Rules 2, 9–10 | Chapter 1 challenge puzzles; challenges never affect completion | Approved |
 | `design/gdd/puzzle-definition-and-datasets.md` | Rules 1, 3, 12a | Ordering fields, flags, chapter definition; `prefill_sql` | Approved |
-| `design/gdd/onboarding-first-shift.md` | Rule 12a, Interactions | Restart returns 1-1's `prefill_sql` (OB-16); Morning shift of Day One | Approved |
+| `design/gdd/onboarding-first-shift.md` | Rules 11, 12a, Interactions | Restart returns 1-1's `prefill_sql` (OB-16); Morning shift of Day One; the "Ever used SQL before?" answer opens 1-1 (onboarding rule 1) | Approved |
 | `design/gdd/game-concept.md` | Overview, Rules 9–10 | Session loop, "skippable puzzles prevent hard stops", anti-pillar (no economy) | Source of intent |
 | `design/levels/chapter-1-puzzles.md` | Rule 2 | Chapter 1 request list | Level design |
 

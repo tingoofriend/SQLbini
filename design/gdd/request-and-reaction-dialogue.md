@@ -1,8 +1,8 @@
 # Request & Reaction Dialogue
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (re-review 6f: NEEDS REVISION → revised — `side` kind row: side messages arrive when the briefing ends; Progression cross-reference; earlier: re-review 6e: NEEDS REVISION → revised — side messages arrive when the briefing ends, briefing-end signal to Progression, RD-21/RD-22; TOO_MANY_ROWS exception wording in rule 2 / UI Req 5; earlier: cross-review 6d: rule 3c shift briefing + Briefing state, dimmed tickets in challenge mode, UNAVAILABLE offer queue, RD-22 (rule changes); TOO_MANY_ROWS strip exception, statuses; earlier: 2026-10-15: re-review 6c fixes: `skip.offer` / `skip.accept` lines, side-request messages, `TOO_MANY_ROWS` on any visible run; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (6g check: 6f fixes confirmed — side messages arrive when the briefing ends (rule 2 `side` row, rules 3b, 3c, RD-22) — APPROVED; Progression cross-reference → Approved; earlier: re-review 6f: NEEDS REVISION → revised — `side` kind row: side messages arrive when the briefing ends; Progression cross-reference; earlier: re-review 6e: NEEDS REVISION → revised — side messages arrive when the briefing ends, briefing-end signal to Progression, RD-21/RD-22; TOO_MANY_ROWS exception wording in rule 2 / UI Req 5; earlier: cross-review 6d: rule 3c shift briefing + Briefing state, dimmed tickets in challenge mode, UNAVAILABLE offer queue, RD-22 (rule changes); TOO_MANY_ROWS strip exception, statuses; earlier: 2026-10-15: re-review 6c fixes: `skip.offer` / `skip.accept` lines, side-request messages, `TOO_MANY_ROWS` on any visible run; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -495,7 +495,7 @@ blocked.
 | `design/gdd/hidden-data-grader.md` | Rules 2, 8 | Feedback key; never row data (grader rule 11) | Approved |
 | `design/gdd/sql-execution-sandbox.md` | Rule 6 | `error_kind` set and `error_text` | Approved |
 | `design/gdd/query-workbench.md` | Overview, UI | Counter scene replaces the 56 px request bar; Ctrl+L; error strip | Approved, updated for this GDD |
-| `design/gdd/shift-and-chapter-progression.md` | Rules 2, 3b, 3c | Briefings and the briefing-end signal; Kenji's skip offer; side messages | In Review (6f) |
+| `design/gdd/shift-and-chapter-progression.md` | Rules 2, 3b, 3c | Briefings and the briefing-end signal; Kenji's skip offer; side messages | Approved (6g) |
 | `design/gdd/constraint-challenges.md` | Rule 2 | Offer / clear / not-within-challenge lines | Approved |
 | `design/ideas-backlog.md` | Overview | #1 aesthetic/cozy mood; #2 pixel-art NPCs + speech bubbles (applied) | Developer ideas |
 

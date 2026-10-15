@@ -79,3 +79,15 @@ Findings:
 Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md 571a081f2023bb55aec8690bae8fa8979a1d6d88
 Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
 Revised in-session (2026-10-15, after the review; user decisions "Open when the briefing ends" + "fix the recommendations too"): States note — side requests become `Open` when the shift's briefing ends, never during it (ticket or chapter list); PR-03 updated; PR-19 — 1-4 `Open` when the Afternoon briefing ends; Onboarding Interactions row → bidirectional (the "Ever used SQL before?" answer opens 1-1). With the Dialogue 6f fix (`side` kind row). Status stays In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (6g light check of the 6f fixes only, session 7 step 0 — no full /design-review) — Verdict: APPROVED
+Scope signal: S
+Specialists: none (lean mode; check limited to the 6f changes per user instruction)
+Blocking items: 0 | Recommended: 1 (fixed in place)
+Summary: The 6f fix holds: rule 5, the States side-request note and PR-03 make side requests `Open` only when the shift's briefing ends (never during it, ticket or chapter list), matching Dialogue rule 2 `side` row, rules 3b/3c and RD-21/RD-22; PR-19 opens 1-4 when the Afternoon briefing ends (consistent with PR-02, rule 11, States Locked row). The Onboarding Interactions row (the "Ever used SQL before?" answer opens 1-1) agrees with rule 11, the Locked row, Dialogue rule 3c / `Briefing` state and Onboarding rule 1 / OB-04. Day One's Morning shift has no side request, so the answer-before-1-1 order does not interact with side messages. Grep of "shift start" / side-request timing across design/gdd: no stale wording left.
+Prior verdict resolved: Yes (6f blocker)
+Findings:
+- [RECOMMENDED] Bidirectionality wording: `onboarding-first-shift.md` Interactions still listed Progression → Onboarding only — fixed in place (row → bidirectional, answer → 1-1); Cross-References onboarding row now cites rules 11, 12a and the answer
+Reviewed-Content-Hash: design/gdd/shift-and-chapter-progression.md 6a2fa711796367133fe6817422aab051ca220dac
+Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
+Status → Approved (index + header).

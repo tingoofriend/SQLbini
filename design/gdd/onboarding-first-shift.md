@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (re-review 6e: APPROVED; earlier: cross-review 6d: Guided suppression window (rule 7), 1-3.manual Done when the Manual is already open, question after the briefing, OB-24/OB-25 (rule changes); submit-before-run wording, statuses; earlier: 2026-10-15: re-review 6c-3: APPROVED; earlier: re-review 6c-2 fix: coach-mark Done conditions scoped to their own puzzle; earlier: re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-15 (6g check of the Progression/Dialogue 6f fixes: Progression Interactions row → bidirectional (the "Ever used SQL before?" answer opens 1-1), wording only; Dialogue cross-reference → Approved; earlier: re-review 6e: APPROVED; earlier: cross-review 6d: Guided suppression window (rule 7), 1-3.manual Done when the Manual is already open, question after the briefing, OB-24/OB-25 (rule changes); submit-before-run wording, statuses; earlier: 2026-10-15: re-review 6c-3: APPROVED; earlier: re-review 6c-2 fix: coach-mark Done conditions scoped to their own puzzle; earlier: re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -159,7 +159,7 @@ later target of the **same puzzle** early marks that puzzle's earlier ones `Done
 | Request & Reaction Dialogue | Onboarding → Dialogue | The "Ever used SQL before?" `system` line and its two choices (before 1-1's request); Tanaka's one-time "start over" `system` line (Guided only); guidance lines are rendered in coach-mark labels by Onboarding, never in the bubble | Dialogue renders the lines |
 | Store Manual | Manual → Onboarding | "Filtering rows" unlocked on 1-3 → coach mark on the Manual button | Store Manual |
 | Hint System | — | `tutorial` puzzles 1-1/1-2 (both steps at once) and the 1-3 override (Hint System Formulas) | Hint System |
-| Shift & Chapter Progression | Progression → Onboarding | Which request is open | Progression |
+| Shift & Chapter Progression | Progression ↔ Onboarding | Progression → Onboarding: which request is open. Onboarding → Progression: on a new game, the "Ever used SQL before?" answer — Day One's first main request (1-1) opens on it (rule 1; `shift-and-chapter-progression.md` rule 11, Interactions) | Progression (request state); Onboarding (the answer) |
 | Puzzle Definition & Datasets | Puzzle → Onboarding | `tutorial` flags (1-1, 1-2); `prefill_sql` (1-1: `SELECT * FROM products;`) | Puzzle Definition |
 | Accessibility Options (VS) / Settings | Settings ↔ Onboarding | "Coach marks" on/off; reduced motion | Settings |
 | Playtest Log | Onboarding → Log | Answer to "Ever used SQL before?" (`sql_question`), each mark shown/done/dismissed with timestamps. Time to first Run / first PASS are **computed by the Playtest Log's formulas** from `request_open`, `run` and `request_pass` (authoritative); Onboarding emits no `first_run` / `first_pass` events | Onboarding |
@@ -188,7 +188,7 @@ later target of the **same puzzle** early marks that puzzle's earlier ones `Done
 | System | GDD | What Onboarding needs | Status |
 |---|---|---|---|
 | Query Workbench | `design/gdd/query-workbench.md` | Prefill, ghost text, coach-mark anchors, click-to-insert | Approved |
-| Request & Reaction Dialogue | `design/gdd/request-and-reaction-dialogue.md` | Tanaka's lines, the opening question | Approved |
+| Request & Reaction Dialogue | `design/gdd/request-and-reaction-dialogue.md` | Tanaka's lines, the opening question | Approved (6g) |
 | Store Manual | `design/gdd/store-manual.md` | Unlock event for "Filtering rows" | Approved |
 
 **Soft:** Shift & Chapter Progression, Puzzle Definition (tutorial flags), Hint

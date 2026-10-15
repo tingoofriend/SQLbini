@@ -78,3 +78,15 @@ Findings:
 Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md 43771228e4b558d9b04a7755f7f8a77ca6209ceb
 Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
 Revised in-session (2026-10-15, after the review; user decision "Open when the briefing ends"): `side` kind row — delivered when the shift's briefing ends (rules 3b, 3c); Progression cross-reference row (rules 2, 3b, 3c; In Review). With the Progression 6f fix (States note, PR-03, PR-19, Onboarding row). Status stays In Review; re-review in a fresh session.
+
+## Review — 2026-10-15 (6g light check of the 6f fixes only, session 7 step 0 — no full /design-review) — Verdict: APPROVED
+Scope signal: S
+Specialists: none (lean mode; check limited to the 6f changes per user instruction)
+Blocking items: 0 | Recommended: 1 (fixed in place)
+Summary: The 6f fix holds: the rule 2 `side` kind row delivers side messages when the shift's briefing ends (rules 3b, 3c), matching rule 3b ("never during it"), rule 3c (briefing-end signal → first main opens, side messages arrive; Day One Morning after Onboarding's question), RD-21, RD-22 and Progression rule 5 / States note / PR-03. No conflicting rule or implementation gap.
+Prior verdict resolved: Yes (6f blocker)
+Findings:
+- [RECOMMENDED] Cross-References: Progression status "In Review (6f)" → "Approved (6g)"; Onboarding's cross-reference to this doc → "Approved (6g)" — fixed in place
+Reviewed-Content-Hash: design/gdd/request-and-reaction-dialogue.md c54ef902635ee876e6c4f620ceec549ccf55057f
+Reviewed-Content-Hash: design/registry/entities.yaml 9bfe3fd10be0643425af7af9514ee5e77a2e56f2
+Status → Approved (index + header).
