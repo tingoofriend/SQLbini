@@ -65,3 +65,4 @@ gate reports and GDD review logs; earlier entries are reconstructed from those.
 | 2026-10-15 | `/estimate` accepted; `game-concept.md` / `systems-index.md` schedule wording updated | Docs | User | — |
 | 2026-10-15 | Build flavours dev / playtest / release from feature tags; EventBus validates the catalogue; JSONL recorder flushes per event; report tool in Python | Code structure only | Claude | ADR-0004 |
 | 2026-10-15 | F9 facilitator note recorded as a separate `help_note {note}` event (GDD gap: `help_given` is written at once, the note comes later) | Playtest log format only | User (rec.) | ADR-0004, `playtest-log.md` rule 7 |
+| 2026-10-15 | One composition root builds all services and hands them to each screen; no gameplay autoloads; all time from an injectable Clock | Code structure only; makes timed rules testable instantly | Claude | ADR-0006 |

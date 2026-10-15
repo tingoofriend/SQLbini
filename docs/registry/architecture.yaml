@@ -166,6 +166,20 @@ interfaces:
     added: 2026-10-15
     revised: ""
 
+  - contract: service_injection
+    status: active
+    pattern: direct_call
+    producer: composition-root
+    consumers:
+      - all-scenes
+      - all-refcounted-systems
+    adr: docs/architecture/adr-0006-composition-root-and-service-wiring.md
+    signal_signature: "Scenes: func setup(services: Services) -> void, called before add_child; RefCounted systems: dependencies via _init(...); services built only by ServicesFactory.build(flavour, clock)"
+    referenced_by:
+      - docs/architecture/adr-0006-composition-root-and-service-wiring.md
+    added: 2026-10-15
+    revised: ""
+
 # Example:
 #
 # interfaces:
@@ -278,6 +292,18 @@ api_decisions:
     added: 2026-10-15
     revised: ""
 
+  - purpose: game_time_source
+    status: active
+    api: "@abstract Clock (now_ms, is_focused, wall_iso) — RealClock (Time.get_ticks_usec + NOTIFICATION_APPLICATION_FOCUS_IN/OUT), FakeClock in tests"
+    not: "Time.* or frame delta in rule code"
+    adr: docs/architecture/adr-0006-composition-root-and-service-wiring.md
+    reason: "Hint, Dialogue, Log and Sandbox timing rules must be testable with a fake clock"
+    referenced_by:
+      - docs/architecture/adr-0006-composition-root-and-service-wiring.md
+      - docs/architecture/adr-0004-event-bus-and-playtest-log.md
+    added: 2026-10-15
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -371,6 +397,27 @@ forbidden_patterns:
     description: "No system writes playtest log lines directly; all events go through EventBus.emit_event."
     why: "Catalogue validation, stamping and undeclared counting happen only in the bus."
     adr: docs/architecture/adr-0004-event-bus-and-playtest-log.md
+    added: 2026-10-15
+
+  - pattern: gameplay_autoloads
+    status: active
+    description: "Game systems must not be autoloads or be looked up by /root/ node paths; they are injected (setup / _init). Addon tooling autoloads (e.g. gdUnit4) are allowed."
+    why: "Coding standard: DI over singletons; tests swap fakes without global state."
+    adr: docs/architecture/adr-0006-composition-root-and-service-wiring.md
+    added: 2026-10-15
+
+  - pattern: time_outside_clock
+    status: active
+    description: "Rule code must not call Time.* or use frame delta for rules; read the injected Clock. Only RealClock calls Time.*."
+    why: "Timed rules (hints, dialogue holds, sandbox timeout, log t_ms) must run under a fake clock."
+    adr: docs/architecture/adr-0006-composition-root-and-service-wiring.md
+    added: 2026-10-15
+
+  - pattern: mutual_refcounted_references
+    status: active
+    description: "Services must not hold strong references to each other in both directions or hold the Services container; back-references use signals or WeakRef."
+    why: "RefCounted cycles are never freed (probed: ObjectDB leak at exit)."
+    adr: docs/architecture/adr-0006-composition-root-and-service-wiring.md
     added: 2026-10-15
 
 # Example:

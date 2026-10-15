@@ -94,7 +94,7 @@ func undeclared_count() -> int
    `undeclared_events` += 1 (dev builds also push a warning naming the event).
 2. Builds the record `{t_ms, wall, session, build, event, puzzle, content_hash, data}`:
    `t_ms` from the injectable `Clock` (monotonic, since session start); `wall`
-   from the system clock (ISO 8601); `content_hash` from `PuzzleRepository`
+   from `Clock.wall_iso()` (UTC ISO 8601, ADR-0006); `content_hash` from `PuzzleRepository`
    when `puzzle_id` is set, else `null`.
 3. Emits `event_recorded(record)`.
 

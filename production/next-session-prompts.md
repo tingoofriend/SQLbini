@@ -1,7 +1,7 @@
 # 다음 세션 프롬프트 모음
 
 > 작성: 2026-10-14 (갱신 2026-10-15) · 프로젝트: SQLbini (Godot 4.7.2 / GDScript)
-> 현재 단계: **Technical Setup** — 세션 7 게이트 통과(CONCERNS 수용) → 세션 8 진행 중: 아키텍처 문서 v1 + ADR-0001~0004(Proposed) 완료, MVP 재추정 ≈ 17주 남음(수용), ADR-0006부터 이어서 작업
+> 현재 단계: **Technical Setup** — 세션 8 완료(아키텍처 v1 + Foundation ADR 5개 Proposed, MVP ≈ 17주 남음) → 세션 9(새 세션: /architecture-review → ADR 수락 → /test-setup)
 > 마지막 커밋: 세션 8 1차(아키텍처 문서 + ADR-0001) — `git log -1` 참고
 
 > 세션별 문서(공통 프롬프트 포함, 블록 하나만 복사): `production/session-prompts/session-N-*.md`
@@ -325,7 +325,7 @@ Concept 게이트에서 받아들인 위험(production/gate-checks/2026-10-14-co
 
 ---
 
-## 세션 8 — 아키텍처 작성 (Technical Setup 시작) — 🔄 진행 중 2026-10-15 (아키텍처 문서 v1, 타임아웃 스파이크, ADR-0001~0004 Proposed, /estimate ≈ 17주 수용; 다음 ADR-0006 → Windows 스파이크 → 0005)
+## 세션 8 — 아키텍처 작성 (Technical Setup 시작) — ✅ 완료 2026-10-15 (아키텍처 문서 v1, 타임아웃 스파이크, ADR-0001·0002·0003·0004·0006 Proposed, /estimate ≈ 17주 수용, 결정 기록 시작)
 
 > 세션 문서: `production/session-prompts/session-8-create-architecture.md`
 
@@ -381,3 +381,10 @@ ADR은 한 번에 다 쓰지 말고, 아키텍처 문서와 ADR 작업 계획(�
 | 교차 검토 보고서 | `design/gdd/gdd-cross-review-2026-10-15.md` (최신), `-2026-10-14.md` |
 | 게이트 보고서 | `production/gate-checks/` |
 | 프로토타입·스파이크 | `prototypes/` (`index.md`) |
+
+---
+
+## 세션 9 — 아키텍처 독립 검토 + 테스트 환경
+
+> 세션 문서: `production/session-prompts/session-9-architecture-review-test-setup.md` (프롬프트 전문은 그 문서에 있음)
+> 반드시 **새 세션**에서 시작 — `/architecture-review`는 ADR을 쓴 세션에서 돌리면 무효입니다.

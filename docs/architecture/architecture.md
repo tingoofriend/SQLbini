@@ -7,7 +7,7 @@
 - Engine: Godot 4.7.2 (GDScript) + godot-sqlite v4.9 (GDExtension, `compatibility_minimum = "4.7"`)
 - Workflow tier: `standard` — system layer map + critical ADR list (module ownership, data flow and API boundaries kept to what the Foundation ADRs need)
 - GDDs Covered: all 11 MVP GDDs (Approved) — hidden-data-grader, puzzle-definition-and-datasets, sql-execution-sandbox, query-workbench, hint-system, constraint-challenges, shift-and-chapter-progression, request-and-reaction-dialogue, store-manual, onboarding-first-shift, playtest-log; plus `game-concept.md`, `systems-index.md`, `design/art/art-bible.md` §8 (display chain, budgets)
-- ADRs Referenced: ADR-0001 (Proposed) — sandbox execution and timeout; ADR-0002 (Proposed) — sandbox API and lexer contract; ADR-0003 (Proposed) — puzzle data format, loader and verifier; ADR-0004 (Proposed) — event bus and playtest log; rest planned in [Required ADRs](#required-adrs)
+- ADRs Referenced: ADR-0001 (Proposed) — sandbox execution and timeout; ADR-0002 (Proposed) — sandbox API and lexer contract; ADR-0003 (Proposed) — puzzle data format, loader and verifier; ADR-0004 (Proposed) — event bus and playtest log; ADR-0006 (Proposed) — composition root and service wiring; rest planned in [Required ADRs](#required-adrs)
 - Inputs carried forward: Technical Director items from `production/gate-checks/2026-10-15-systems-design-to-technical-setup.md`
 - TD-ARCHITECTURE: 2026-10-15 — skipped — lean mode
 - LP-FEASIBILITY: 2026-10-15 — skipped — lean mode
