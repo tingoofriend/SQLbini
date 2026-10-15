@@ -1,0 +1,8 @@
+; PROTOTYPE - NOT FOR PRODUCTION — sandbox timeout spike (2026-10-15, ADR-0001)
+
+config_version=5
+
+[application]
+
+config/name="SQLbini Timeout Spike"
+config/features=PackedStringArray("4.7", "Forward Plus")

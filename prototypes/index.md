@@ -11,3 +11,4 @@
 | Question | Date | Path | Result | Note |
 |---|---|---|---|---|
 | Godot 4.7.2 + godot-sqlite + CodeEdit can host and grade Chapter 1 | 2026-10-14 | Engine | YES | [SPIKE-NOTE.md](sqlbini-spike-2026-10-14/SPIKE-NOTE.md) |
+| Sandbox timeout without an interrupt API (ADR-0001): worker thread vs helper process | 2026-10-15 | Engine | Both meet SB-18/19 as measured; trade-offs recorded | [README.md](sandbox-timeout-spike-2026-10-15/README.md) |
