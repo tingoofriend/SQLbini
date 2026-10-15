@@ -1,8 +1,8 @@
 # 다음 세션 프롬프트 모음
 
 > 작성: 2026-10-14 (갱신 2026-10-15) · 프로젝트: SQLbini (Godot 4.7.2 / GDScript)
-> 현재 단계: **Systems Design** — 세션 6a~6c-3 완료: **MVP GDD 11개 모두 Approved** → 6d 교차 확인 → 세션 7
-> 마지막 커밋: `0b729ca` (6c-3 재검토: 온보딩 APPROVED)
+> 현재 단계: **Systems Design** — 세션 6a~6d 완료: **MVP GDD 11개 모두 Approved**, 6d 교차 검토 CONCERNS → 모두 반영 → (선택) 6e → 세션 7
+> 마지막 커밋: `c5ce5a0` (6d 교차 검토와 수정)
 
 > 세션별 문서(공통 프롬프트 포함, 블록 하나만 복사): `production/session-prompts/session-N-*.md`
 
@@ -202,7 +202,7 @@ NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 �
 끝나면 결과를 요약하고, GDD 11개 중 몇 개가 Approved인지 알려주고, 커밋할지 물어봐줘.
 ```
 
-## 세션 6d — 재검토 후 교차 일관성 확인
+## 세션 6d — 재검토 후 교차 일관성 확인 — ✅ 완료 2026-10-15 (CONCERNS → 모두 반영, 11개 Approved 유지)
 
 ```
 이번 세션 작업: /review-all-gdds since-last-review 를 실행해줘.
@@ -234,14 +234,48 @@ GDD 11개가 모두 Approved인지도 확인해서, 아니면 어떤 문서가 �
 끝나면 active.md를 갱신하고, 결과를 표로 요약하고, 커밋할지 물어봐줘.
 ```
 
+## 세션 6e — 6d 규칙 변경 확인 재검토 (선택, 권장)
+
+> 건너뛰어도 됩니다: 6d 수정은 사용자 결정에 따른 작은 규칙 명시이고 상태는 Approved로 유지됐습니다.
+
+```
+이번 세션 작업: 6d 교차 검토(design/gdd/gdd-cross-review-2026-10-15.md, 커밋 c5ce5a0)에서
+규칙이 바뀐 GDD를 독립 재검토해줘. 범위는 6d 변경분과 그 파급만이야.
+1. /design-review design/gdd/shift-and-chapter-progression.md — rule 7a(UNAVAILABLE → Kenji 넘기기
+   제안, Unavailable 상태, 완료·별 제외, 다시 열기 가능), rule 9, rule 11(브리핑이 끝나야 첫 요청),
+   rule 12a의 request_restart 기록, States 표, PR-17·PR-22
+2. /design-review design/gdd/request-and-reaction-dialogue.md — rule 3c와 Briefing 상태(Day One 순서:
+   브리핑 → "Ever used SQL?" → 1-1), 챌린지 모드에서 티켓 비활성(rule 3b), UNAVAILABLE 제안 큐 예외,
+   TOO_MANY_ROWS(error_text 없음), RD-22
+3. /design-review design/gdd/constraint-challenges.md — rule 6c(챌린지 자체 초안: 마지막 통과 쿼리로 시작,
+   세션 동안 유지, 기본 초안 불변), rule 9의 UNAVAILABLE, States 표, CC-18
+4. /design-review design/gdd/onboarding-first-shift.md — rule 1 순서, rule 7 Guided suppression window
+   (1-3.manual Done/Dismissed·Morning 종료·코치 마크 끄기에서 닫힘; 1-3을 건너뛰어도 닫히는지),
+   rule 7a 1-3.manual(매뉴얼이 이미 열려 있으면 Done), OB-24·OB-25
+같은 창(window)과 규칙이 query-workbench.md(rule 6, rule 14), store-manual.md(rule 6, States, Edge Cases),
+hint-system.md(Interactions: 챌린지 모드 이벤트 소유 = Constraint Challenges), playtest-log.md
+(request_unavailable {source}, request_restart)와 맞는지도 확인해줘. 이 네 문서는 따로 /design-review
+하지 말고 교차 확인만 해.
+보고서의 Info(이월) 항목과 이미 기록된 권고(RECOMMENDED)는 새 차단 항목으로 올리지 마.
+/ux-design·플레이테스트로 미룬 항목도 차단 항목이 아니야.
+문맥이 70%를 넘으면 남은 문서는 다음 세션으로 넘겨줘(active.md에 기록).
+결과는 각 review-log에 남겨줘. APPROVED면 상태는 Approved 그대로 두고 헤더 Last Updated에 6e를 남겨줘.
+NEEDS REVISION이면 차단 항목을 어떻게 고칠지 나에게 물어본 뒤 고치고, systems-index와 헤더 상태를
+In Review로 바꾸고 다음 새 세션에서 다시 검토하도록 active.md에 적어줘.
+끝나면 결과를 표로 요약하고, GDD 11개 중 몇 개가 Approved인지 알려주고, 커밋할지 물어봐줘.
+```
+
 ## 세션 7 — Technical Setup 게이트
 
 ```
 이번 세션 작업: /gate-check technical-setup 을 실행해줘.
 Concept 게이트에서 받아들인 위험(production/gate-checks/2026-10-14-concept-to-systems-design-rerun.md)이
 해결됐는지도 함께 확인해줘.
-시작 전에 6a~6c-3 재검토와 6d가 끝나 MVP GDD 11개가 모두 Approved인지 먼저 확인하고,
-아니면 게이트를 돌리지 말고 남은 문서를 알려줘.
+시작 전에 MVP GDD 11개가 모두 Approved인지 먼저 확인하고(systems-index와 각 문서 헤더),
+아니면 게이트를 돌리지 말고 남은 문서를 알려줘. 6e를 진행했다면 그 결과도 반영해서 봐줘.
+최신 교차 검토는 design/gdd/gdd-cross-review-2026-10-15.md(6d, CONCERNS → 모두 반영)야.
+거기 남은 Info(이월) 항목과 /ux-design으로 미룬 항목은 게이트 차단 항목인지 판단만 해주고,
+고칠 필요가 있으면 고치기 전에 나에게 물어봐줘.
 ```
 
 ---
@@ -252,7 +286,8 @@ Concept 게이트에서 받아들인 위험(production/gate-checks/2026-10-14-co
   `design/gdd/game-concept.md` → MVP Definition의 측정 표 참고.
   1챕터 요청 1-4/1-5/1-7/1-8은 아직 "경계값을 말해 주는" 옛 문구이니, 가능하면
   다시 쓴 뒤에 테스트하는 것이 좋습니다(퍼즐 문구 재작성은 레벨 디자인 단계에서 진행).
-- 필요 없으면 `prototypes/sqlbini-web/production/` 폴더(훅이 남긴 로그) 삭제.
+- 필요 없으면 `prototypes/sqlbini-web/production/`, `design/gdd/production/` 폴더(세션 종료 훅이
+  작업 폴더 기준으로 남긴 로그) 삭제.
 
 ## 참고 위치
 
@@ -263,5 +298,6 @@ Concept 게이트에서 받아들인 위험(production/gate-checks/2026-10-14-co
 | 컨셉 | `design/gdd/game-concept.md` |
 | 시스템 목록·설계 순서 | `design/gdd/systems-index.md` |
 | 공유 값(레지스트리) | `design/registry/entities.yaml` |
+| 교차 검토 보고서 | `design/gdd/gdd-cross-review-2026-10-15.md` (최신), `-2026-10-14.md` |
 | 게이트 보고서 | `production/gate-checks/` |
 | 프로토타입·스파이크 | `prototypes/` (`index.md`) |
