@@ -1,7 +1,7 @@
 # ADR-0004: Event Bus and Playtest Log
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-15
@@ -85,9 +85,11 @@ const EVENTS := { &"run": {"required": {...}, "optional": {"build_message": TYPE
 
 class_name EventBus extends Node
 signal event_recorded(record: Dictionary)
-func emit_event(name: StringName, puzzle_id: Variant, data: Dictionary) -> void
+func emit_event(event_name: StringName, puzzle_id: Variant, data: Dictionary) -> void
 func undeclared_count() -> int
 ```
+(The parameter is `event_name`, not `name`: `EventBus` is a `Node`, and `name`
+would shadow `Node.name` — SHADOWED_VARIABLE_BASE_CLASS.)
 `emit_event`:
 1. If `name` is not in the catalogue, or `data` lacks a required field, has an
    undeclared field, or a field has the wrong type → **not dispatched**;
@@ -103,6 +105,16 @@ system that adds an event edits its GDD, `playtest-log.md` rule 4 and
 `EventCatalog` together. Gameplay systems never subscribe to `event_recorded`;
 they talk through their own typed signals (Hint ← verdict, Progression ← PASS,
 Workbench ← Restart).
+
+**One exception — a value the grader needs back (`hint_counted`).** Hint rule
+4b requires the grader to receive `hint_counted` for each submit before it
+emits the `submit` event, and a signal cannot return a value. The grader
+therefore takes a narrow injected `hint_counter: Callable` —
+`func(verdict: Verdict, sql: String) -> bool` — in its `_init`, bound by
+`ServicesFactory` to the Hint System (ADR-0006). The grader depends on the
+callable's shape, not on the Hint type (no Core → Feature dependency). This is
+the pattern for any future synchronous answer between systems; one-way
+notifications stay signals.
 
 ### 3. PlaytestRecorder — append + flush per event
 Created only when `BuildFlavour == playtest` (or dev with a debug toggle).
@@ -120,8 +132,15 @@ States: `AwaitingSetup → Recording → Ended`, or `Recording → Stopped`.
   write error `store_line` still returned `true` while `get_error()` was
   non-`OK`); a `false` return is also treated as failure. On failure: close the
   file, go to `Stopped`, show "Recording stopped"; never retry, never raise.
-- `session_end` (on `NOTIFICATION_WM_CLOSE_REQUEST` or chapter end) carries
-  `{undeclared_events: EventBus.undeclared_count()}` and closes the file.
+- `session_end` is written **only when the game quits** (`playtest-log.md`
+  States: `Ended` on quit) — never at chapter end, because play continues after
+  `chapter_complete` (replays, reopened skipped requests, challenge clears —
+  CC r.6b). It carries `{undeclared_events: EventBus.undeclared_count()}` and
+  closes the file. Both quit paths call it once: the window close
+  (`NOTIFICATION_WM_CLOSE_REQUEST`) and every code-initiated quit, which goes
+  through one `Main.quit_game()` that ends the session before
+  `get_tree().quit()` (a code quit sends no close request). Crashes and
+  SIGTERM leave no `session_end`; the report tool flags those (PL-15).
 - Corner label "● Recording playtest" / "Recording stopped" on a top
   `CanvasLayer`, positioned clear of the editor and tables (ink, not red).
 
@@ -148,7 +167,11 @@ after the note field is hidden.
 `tools/playtest-report/playtest_report.py`, Python 3, **standard library only**,
 run as `python3 tools/playtest-report/playtest_report.py <folder>`, prints
 Markdown. Its tests (PL-11…16) use `unittest` with fixture JSONL files in
-`tools/playtest-report/fixtures/`. Rationale: it is an offline analysis tool
+`tools/playtest-report/fixtures/`. Values the report needs from the game's
+tuning (e.g. `idle_cutoff_s` for `puzzle_active_time`, `playtest-log.md`
+Formulas) are read from the same config data file the game reads
+(`GameConfig`, ADR-0007), passed with `--config <file>` (default: the repo's
+file); the log format is unchanged. Rationale: it is an offline analysis tool
 over a text format, not a correctness gate on content (so ADR-0003's "one
 SQLite, one verdict" principle does not apply), and Python is faster to write
 and run outside the engine.
@@ -157,7 +180,7 @@ and run outside the engine.
 
 ```
  Grader, Workbench, Hint, Progression, Challenges, Manual, Onboarding, Dialogue
-        │ emit_event(name, puzzle_id, data)
+        │ emit_event(event_name, puzzle_id, data)
         ▼
  EventBus ── catalogue check ──✗──► undeclared_events += 1
         │ ✓ stamp {t_ms (Clock), wall, session, build, puzzle, content_hash (PuzzleRepository)}
@@ -246,6 +269,8 @@ See §2 (`EventBus.emit_event`, `event_recorded`, `undeclared_count`) and §1
 | playtest-log.md | Open Question 1 (file format and writer) | Resolved: JSONL via `FileAccess`, flush per event, main thread |
 | puzzle-definition-and-datasets.md | Runtime load state by build (dev / playtest / release) | `BuildFlavour` (§1) |
 | hidden-data-grader.md | Rule 11: hidden details only in the developer-facing log | Only the `submit` event carries them |
+| hint-system.md / hidden-data-grader.md | Hint rule 4b: grader receives `hint_counted` before emitting `submit` | Injected `hint_counter: Callable` (§2 exception) |
+| playtest-log.md | States: session ends on quit only; Formulas `idle_cutoff_s` in the report | §3 quit paths; §5 `--config` |
 
 ## Performance Implications
 - **CPU**: validation + one `JSON.stringify` per event; negligible at human event rates.

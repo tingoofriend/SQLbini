@@ -1,7 +1,7 @@
 # ADR-0002: Sandbox API and Lexer Contract
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-15
@@ -155,12 +155,19 @@ func tokenize(sql: String) -> Array[SqlToken]
 
 Callers write `var result: SqlResult = await sandbox.execute(request)`. Internally
 `execute` runs the check (§3), then hands a static worker function and a copy of
-the request data to `ExecutionRunner.run` (ADR-0001) and awaits its completion
-signal. Error-only results (`EMPTY`, `MULTI_STATEMENT`, …) still go through
+the request data to `ExecutionRunner.run` (ADR-0001) and awaits a **per-request**
+completion object — a small `RefCounted` with its own `done(result)` signal,
+created for that request only. A shared runner signal is forbidden: with
+concurrent requests every pending `await` would resume on the first emission
+and receive the wrong result (engine review N1, 2026-10-15). Error-only results (`EMPTY`, `MULTI_STATEMENT`, …) still go through
 `await` so callers have one code path.
 
 ### 5. Inside the worker (`query` mode)
 1. `SQLite.new()`, `path = ":memory:"`, `verbosity_level = QUIET`, `open_db()`.
+   Extension loading is never enabled (rule 4a; SB-09 expects `load_extension`
+   → `not authorized`): the sandbox never sets godot-sqlite's extension-loading
+   option and relies on SQLite's default of disabled — SB-09 guards it on every
+   godot-sqlite upgrade.
 2. Build: `CREATE TABLE` per `TableSpec` (columns, `NOT NULL`, `PRIMARY KEY` from
    the spec), then rows with `query_with_bindings` inside one `BEGIN`/`COMMIT`.
    Any failure → `CONTENT_ERROR`, `error_text = "content error"`, the SQLite
@@ -184,8 +191,14 @@ signal. Error-only results (`EMPTY`, `MULTI_STATEMENT`, …) still go through
 
 ### 6. Calling rules
 - The sandbox accepts concurrent requests (each has its own thread and
-  database). **Callers** keep at most one request in flight per workbench; the
-  grader awaits its `2 + D` executions sequentially.
+  database). **Run supersede** (`query-workbench.md` States / Edge Cases,
+  QW-12, QW-16): the workbench controller stamps each Run with an increasing
+  sequence number; a new Run may start while an older one is still running,
+  and when an older Run's result arrives after a newer Run was started it is
+  discarded (never shown, never logged as the latest result). A **Submit** is
+  exclusive: while one is in flight the controller refuses a second Run or
+  Submit. The grader awaits its `2 + D` executions sequentially; the content
+  verifier may keep several in flight (ADR-0003).
 - A caller that no longer needs a result (the puzzle was closed mid-submit)
   ignores it after `await`; the sandbox never cancels.
 - Nothing but the grader and the content verifier may send a hidden dataset.
@@ -276,6 +289,8 @@ See §2 and §4. Type names (`SqlRequest`, `SqlResult`, `SqlToken`,
 | hint-system.md | Rule 4a: normalization on `tokenize` tokens | Token kinds and no whitespace tokens as specified |
 | constraint-challenges.md | Rules 4–5, `has_keyword`: WORD tokens only | `kind = WORD` + case-insensitive compare |
 | query-workbench.md | Rule 13 / QW-17: underline the first occurrence of the named token | `SqlToken.start` offsets |
+| query-workbench.md | States / Edge Cases, QW-12, QW-16: a newer Run replaces one in flight | Sequence-numbered Runs; stale results discarded (§6) |
+| sql-execution-sandbox.md | Rule 4a / SB-09: extensions never enabled | §5 step 1 |
 
 ## Performance Implications
 - **CPU**: lexer O(n) in characters, microseconds for typical queries — safe per keystroke. Execution cost unchanged from the spike (≈ 0.4 ms).

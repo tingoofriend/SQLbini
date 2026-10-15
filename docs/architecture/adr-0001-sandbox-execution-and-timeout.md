@@ -1,7 +1,7 @@
 # ADR-0001: Sandbox Execution and Timeout Mechanism
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-15
@@ -84,7 +84,15 @@ rejected (rule 9) and streaming results are cut by the outer `LIMIT` (rule 12).
    - elapsed ≥ `exec_time_limit` → deliver a `TIMEOUT` result at once, move the
      `Thread` to the **graveyard**, and ignore whatever it later returns.
    Frame polling bounds the detection delay to one frame (≤ 16.6 ms at 60 fps;
-   spike: limit + 4 ms), inside the 50 ms margin.
+   spike: limit + 4 ms), inside the 50 ms margin. The guarantee is therefore
+   **limit + one frame**: it stays inside SB-18's 50 ms above ≈ 20 fps, and a
+   main-thread stall (e.g. a scene load) delays it by the stall. The same poll
+   delivers successful results, so every execution costs at least one frame of
+   latency; callers that run many executions (the content verifier) keep
+   several in flight instead of awaiting them one by one (ADR-0003).
+   The runner node uses `process_mode = PROCESS_MODE_ALWAYS` (probed on 4.7.2:
+   a paused tree stops `_process` on default nodes, which would stop delivery,
+   TIMEOUT and reaping).
 4. The graveyard is reaped every frame: a thread whose `is_alive()` is false is
    joined with `wait_to_finish()` and dropped. Graveyard threads are never
    joined while alive (that would block the frame).
@@ -136,8 +144,8 @@ func abandoned_count() -> int
 - Must create the `SQLite` object inside the worker, not pass one in.
 - Must return plain data (Dictionary / Array / primitives) from the worker; must not emit signals or touch nodes from the worker.
 - Must deliver exactly one result per request (TIMEOUT or the real one, never both).
-- Must measure elapsed time with `Time.get_ticks_usec()` from request receipt (`elapsed_ms`, rule 16).
-- Must keep the timeout clock injectable (ADR-0006 `Clock`) so SB-17/18 logic is unit-testable with a fake clock; SB-18 itself stays an integration test with a real query.
+- Must measure elapsed time from the injected `Clock.now_ms()` (ADR-0006; `RealClock` uses `Time.get_ticks_usec()`) from request receipt (`elapsed_ms`, rule 16), for both `elapsed_ms` and the timeout check, so SB-17/18 logic is unit-testable with a fake clock; SB-18 itself stays an integration test with a real query.
+- The runner node must set `process_mode = PROCESS_MODE_ALWAYS`.
 - Dev builds must log a warning when `abandoned_count()` exceeds 2.
 - The worker `Callable` must be a static function (or bound to a `RefCounted`), never a method of a `Node` that can be freed while the worker runs.
 - The worker must build its returned Dictionary/Array entirely inside the thread and must call `close_db()` on every exit path, including after a late result nobody will read.
@@ -194,11 +202,12 @@ func abandoned_count() -> int
 | sql-execution-sandbox.md | SB-19: frame ≤ 16.6 ms during the SB-18 query and a 6-way self-join | Main thread never waits on a worker; spike max frame gap 7.1 ms |
 | sql-execution-sandbox.md | Rule 2: fresh database per `query` request | Database created and closed inside each worker |
 | sql-execution-sandbox.md | Open Question 1 | Resolved: option (b), worker thread abandoned on timeout |
-| hidden-data-grader.md | Rule 8: stop grading at the first hidden `TIMEOUT`; Submit p95 ≤ 300 ms | Runner delivers TIMEOUT at the limit, so the grader's early stop bounds the worst case at ≈ 175 ms (sandbox Formulas) |
+| hidden-data-grader.md | Rule 8: stop grading at the first hidden `TIMEOUT`; Submit p95 ≤ 300 ms | Runner delivers TIMEOUT within limit + one frame, so the grader's early stop bounds the worst case (timeout on the last hidden set): ≈ 243 ms at D = 3 at the measured cost, ≈ 310 ms at the target ceilings (sandbox Formulas `submit_worst`, corrected 2026-10-15) |
 | query-workbench.md | QW-13: typing, scrolling and pane switching stay live during Run and Submit | Main thread is never blocked by an execution |
 
 ## Performance Implications
 - **CPU**: ≈ 0.4 ms per execution on a worker (spike); thread start is negligible at this rate. Abandoned workers consume a core each until SQLite returns.
+- **Latency**: each result arrives on the next frame poll — ≥ one frame (≈ 16.7 ms at 60 fps, ≈ 6.6 ms headless) per sequential execution (architecture review 2026-10-15, C2).
 - **Memory**: per execution, one in-memory database (Chapter 1 ≈ tens of KB); an abandoned `ORDER BY` over 8M rows peaked at 113 MB RSS (≈ +7 MB over baseline).
 - **Load Time**: none at start-up beyond the content verifier's executions (≈ 200, sequential, off the frame thread).
 - **Network**: none.

@@ -29,34 +29,547 @@
 #   NNN = three-digit zero-padded sequence per system, starting at 001
 #
 # STATUS VALUES: active | deprecated | "superseded-by: TR-[system]-NNN"
-
 version: 1
-last_updated: ""
+last_updated: "2026-10-15"
 
-requirements: []
-
-# --- EXAMPLE ENTRIES (remove when first real entries are added) ---
-#
-# - id: TR-combat-001
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Player takes damage from enemies based on attack power minus defence"
-#   created: 2026-03-10
-#   revised: ""
-#   status: active
-#
-# - id: TR-combat-002
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Combo window timing is 0.4 seconds between hits"
-#   created: 2026-03-10
-#   revised: "2026-04-01"
-#   status: active
-#
-# - id: TR-combat-003
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Old damage formula using raw stats"
-#   created: 2026-03-10
-#   revised: ""
-#   status: "superseded-by: TR-combat-001"
+requirements:
+  - id: TR-sandbox-001
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "r.2"
+    requirement: "Fresh in-memory DB per `query` request, destroyed after"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-sandbox-002
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "r.5-9"
+    requirement: "Lexer-based statement check before execution: one statement, EMPTY, verb rules, `WITH RECURSIVE` rejected"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-sandbox-003
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "r.5a"
+    requirement: "`tokenize(sql) -> Array of {kind, text}` exposed to Hints and Challenges"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-sandbox-004
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "r.10-13"
+    requirement: "Temp-view wrapper, column metadata for zero rows, positional rows, `fetch_limit = grader_row_cap + 1`, `truncated`"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-sandbox-005
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "r.15, SB-19"
+    requirement: "Execution never on the frame thread; frame <= 16.6 ms during any query"
+    domain: "Threading"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-sandbox-006
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "r.15, SB-18"
+    requirement: "`TIMEOUT` delivered within `exec_time_limit` + 50 ms; next request succeeds"
+    domain: "Threading"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-sandbox-007
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "r.16"
+    requirement: "Result record (status, error_kind, error_text, build_message, columns, column_count, rows, truncated, rows_changed, elapsed_ms)"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-sandbox-008
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "r.4, r.14"
+    requirement: "Scratch DB lifecycle (Alpha - Back Room); API must not preclude it"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-sandbox-009
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "SB-20"
+    requirement: "p95 <= 25 ms per execution on the target PC"
+    domain: "Performance"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-sandbox-010
+    system: sandbox
+    gdd: "design/gdd/sql-execution-sandbox.md"
+    source: "r.4a, SB-09"
+    requirement: "SQLite extensions are never enabled (`load_extension` -> `not authorized`)"
+    domain: "Security"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-puzzle-001
+    system: puzzle
+    gdd: "design/gdd/puzzle-definition-and-datasets.md"
+    source: "r.1-2"
+    requirement: "Chapter definition (schema, base datasets, shifts) + puzzle definitions; text, diffable, data-driven"
+    domain: "Data"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-puzzle-002
+    system: puzzle
+    gdd: "design/gdd/puzzle-definition-and-datasets.md"
+    source: "r.5"
+    requirement: "Dataset overrides (`add`/`remove`/`set`/`reverse`/`renumber`) resolved at load"
+    domain: "Data"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-puzzle-003
+    system: puzzle
+    gdd: "design/gdd/puzzle-definition-and-datasets.md"
+    source: "r.10-14, L-04"
+    requirement: "Content verifier (`puzzle_valid`) runs identically in CI and at game load"
+    domain: "Data / CI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-puzzle-004
+    system: puzzle
+    gdd: "design/gdd/puzzle-definition-and-datasets.md"
+    source: "States, L-01, L-06"
+    requirement: "Content hash over a canonical serialisation, excluding `content_status` and the hash"
+    domain: "Data"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-puzzle-005
+    system: puzzle
+    gdd: "design/gdd/puzzle-definition-and-datasets.md"
+    source: "States"
+    requirement: "Runtime `loaded`/`withheld` by build flavour (dev allows all; playtest/release only verified+)"
+    domain: "Build"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-puzzle-006
+    system: puzzle
+    gdd: "design/gdd/puzzle-definition-and-datasets.md"
+    source: "r.3"
+    requirement: "Target result computed from `reference_sql`, never stored"
+    domain: "Data"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-puzzle-007
+    system: puzzle
+    gdd: "design/gdd/puzzle-definition-and-datasets.md"
+    source: "HS-13, SM-14..17, CC-11/12, OB-18"
+    requirement: "Non-puzzle content checks (hints, manual, challenges, ghost text) run in CI, with a defined load-time scope and result"
+    domain: "Data / CI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-grader-001
+    system: grader
+    gdd: "design/gdd/hidden-data-grader.md"
+    source: "r.5-9a"
+    requirement: "Submit pipeline: pre-check, determinism, per-dataset grading, early stop on hidden TIMEOUT, UNAVAILABLE"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-grader-002
+    system: grader
+    gdd: "design/gdd/hidden-data-grader.md"
+    source: "r.8"
+    requirement: "Reference results cached per puzzle + dataset for the session"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-grader-003
+    system: grader
+    gdd: "design/gdd/hidden-data-grader.md"
+    source: "Formulas"
+    requirement: "`canon` / `result_match` / `tie_list_eq` - pure functions, unit-testable"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-grader-004
+    system: grader
+    gdd: "design/gdd/hidden-data-grader.md"
+    source: "r.11"
+    requirement: "Missing/extra rows never reach player or Dialogue - only the log"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-grader-005
+    system: grader
+    gdd: "design/gdd/hidden-data-grader.md"
+    source: "AC-26"
+    requirement: "Submit p95 <= 300 ms, Run p95 <= 200 ms on the target PC"
+    domain: "Performance"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-grader-006
+    system: grader
+    gdd: "design/gdd/hidden-data-grader.md"
+    source: "r.4b (hint), grader Interactions"
+    requirement: "Grader gets `hint_counted` back from the Hint System synchronously before it emits `submit`"
+    domain: "Events"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-grader-007
+    system: grader
+    gdd: "design/gdd/hidden-data-grader.md"
+    source: "r.14, AC-18, RD-05"
+    requirement: "Typed verdict fan-out to Workbench, Dialogue (`{verdict, cause, level}` only), Progression, Hints, Challenges"
+    domain: "Events"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-workbench-001
+    system: workbench
+    gdd: "design/gdd/query-workbench.md"
+    source: "r.1-6"
+    requirement: "`CodeEdit` editor with SQL highlighting, schema browser, result vs target tables at 1280x720"
+    domain: "UI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-workbench-002
+    system: workbench
+    gdd: "design/gdd/query-workbench.md"
+    source: "r.15, UI Req 4, QW-20"
+    requirement: "Keyboard-first: every action has a shortcut; F6 pane cycle; focus ring"
+    domain: "UI / Input"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-workbench-003
+    system: workbench
+    gdd: "design/gdd/query-workbench.md"
+    source: "r.16"
+    requirement: "IME composition committed before Run"
+    domain: "UI / Input"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-workbench-004
+    system: workbench
+    gdd: "design/gdd/query-workbench.md"
+    source: "Formulas"
+    requirement: "`ui_scale` 1.0-2.0 through Theme font sizes, not `content_scale_factor`"
+    domain: "UI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-workbench-005
+    system: workbench
+    gdd: "design/gdd/query-workbench.md"
+    source: "r.14"
+    requirement: "Reacts to Restart (draft, last Run result, verdict reset)"
+    domain: "Events"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-workbench-006
+    system: workbench
+    gdd: "design/gdd/query-workbench.md"
+    source: "States, QW-12, QW-16"
+    requirement: "A newer Run supersedes one in flight; the older result is discarded"
+    domain: "Threading"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-workbench-007
+    system: workbench
+    gdd: "design/gdd/query-workbench.md"
+    source: "UI Req 7, OQ3"
+    requirement: "Screen-reader labels through AccessKit, including `CodeEdit`"
+    domain: "UI / A11y"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-workbench-008
+    system: workbench
+    gdd: "design/gdd/query-workbench.md"
+    source: "r.14, QW-18; CC r.6c"
+    requirement: "Per-puzzle session state (draft, last result, verdict, challenge draft, counters, hint state) kept as plain serialisable data"
+    domain: "Persistence"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-hint-001
+    system: hint
+    gdd: "design/gdd/hint-system.md"
+    source: "Formulas, HS-03, HS-04"
+    requirement: "`active_time` from clamped per-frame time x window focus x shown x idle cutoff, not paused; fake-clock testable"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-hint-002
+    system: hint
+    gdd: "design/gdd/hint-system.md"
+    source: "r.4a-4b"
+    requirement: "Distinct-query counting via `tokenize` normalization; returns `hint_counted`"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-hint-003
+    system: hint
+    gdd: "design/gdd/hint-system.md"
+    source: "Formulas (`last_input_t`, not paused)"
+    requirement: "Input-activity feed from workbench, manual and hint panel, plus a pause state"
+    domain: "Core / Input"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-challenge-001
+    system: challenge
+    gdd: "design/gdd/constraint-challenges.md"
+    source: "r.3-5"
+    requirement: "`forbid`/`require` keyword checks on `WORD` tokens (MVP); `canonical_length` for `max_chars` is Alpha"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-challenge-002
+    system: challenge
+    gdd: "design/gdd/constraint-challenges.md"
+    source: "r.9.2"
+    requirement: "Per-challenge counter set supplied to the grader"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-challenge-003
+    system: challenge
+    gdd: "design/gdd/constraint-challenges.md"
+    source: "r.6-6b, hint r.12"
+    requirement: "Challenge-mode open/closed event consumed by Hints, Dialogue, Workbench, Progression"
+    domain: "Events"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-progression-001
+    system: progression
+    gdd: "design/gdd/shift-and-chapter-progression.md"
+    source: "r.1-12a, r.13"
+    requirement: "Request/shift/chapter state machine; Restart event; session-only persistence at MVP"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-progression-002
+    system: progression
+    gdd: "design/gdd/shift-and-chapter-progression.md"
+    source: "r.13"
+    requirement: "No save at MVP; VS Save/Load must be able to serialise this state"
+    domain: "Persistence"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-dialogue-001
+    system: dialogue
+    gdd: "design/gdd/request-and-reaction-dialogue.md"
+    source: "r.9"
+    requirement: "String tables keyed by id; missing id -> `[id]` in dev, generic line in release, logged"
+    domain: "Data / L10n"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-dialogue-002
+    system: dialogue
+    gdd: "design/gdd/request-and-reaction-dialogue.md"
+    source: "Formulas, r.5"
+    requirement: "Reveal / hold timers (`reaction_hold`, `reveal_cps`), reduced motion"
+    domain: "UI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-dialogue-003
+    system: dialogue
+    gdd: "design/gdd/request-and-reaction-dialogue.md"
+    source: "art bible 8"
+    requirement: "Counter strip: 320x30 `SubViewport`, Nearest, palette shader, integer xk, `strip_to_ui()`"
+    domain: "Rendering"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-dialogue-004
+    system: dialogue
+    gdd: "design/gdd/request-and-reaction-dialogue.md"
+    source: "r.10, RD-11"
+    requirement: "Measured bubble paging from laid-out text metrics at runtime (graphemes, r.9)"
+    domain: "UI / L10n"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-dialogue-005
+    system: dialogue
+    gdd: "design/gdd/request-and-reaction-dialogue.md"
+    source: "RD-12"
+    requirement: "CI scan: no player-facing string literals in dialogue code"
+    domain: "CI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-dialogue-006
+    system: dialogue
+    gdd: "design/gdd/request-and-reaction-dialogue.md"
+    source: "Edge Cases, RD-19"
+    requirement: "Cross-system reaction queue (e.g. FAIL then `skip.offer` in the same frame)"
+    domain: "Events / UI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-manual-001
+    system: manual
+    gdd: "design/gdd/store-manual.md"
+    source: "r.1-4"
+    requirement: "Page data; CI: examples never pass a puzzle, `watch_out.rule_tag` not in Chapter 1 `trap_rules`"
+    domain: "Data / CI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-onboarding-001
+    system: onboarding
+    gdd: "design/gdd/onboarding-first-shift.md"
+    source: "r.7a, OB-18"
+    requirement: "Puzzle-scoped coach marks; ghost-text CI check"
+    domain: "Data / CI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-onboarding-002
+    system: onboarding
+    gdd: "design/gdd/onboarding-first-shift.md"
+    source: "UI Req 4, OQ4; dialogue r.5"
+    requirement: "Session-only settings (reduced motion, coach marks, `ui_scale`) read by every presentation system"
+    domain: "Core"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-onboarding-003
+    system: onboarding
+    gdd: "design/gdd/onboarding-first-shift.md"
+    source: "OB-15"
+    requirement: "Coach-mark rings follow their targets across resize and `ui_scale`"
+    domain: "UI"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-playtest-001
+    system: playtest
+    gdd: "design/gdd/playtest-log.md"
+    source: "r.3-4"
+    requirement: "Canonical event catalogue; undeclared events rejected and counted"
+    domain: "Events"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-playtest-002
+    system: playtest
+    gdd: "design/gdd/playtest-log.md"
+    source: "r.8-9"
+    requirement: "Append + flush per event to `user://playtest-logs/<session>.jsonl`; write failure stops the log, never gameplay"
+    domain: "I/O"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-playtest-003
+    system: playtest
+    gdd: "design/gdd/playtest-log.md"
+    source: "r.1"
+    requirement: "Playtest flag: compiled in, disabled in release; recording label"
+    domain: "Build"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-playtest-004
+    system: playtest
+    gdd: "design/gdd/playtest-log.md"
+    source: "r.7"
+    requirement: "F9 facilitator key + note field returning focus to the editor"
+    domain: "Input"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-playtest-005
+    system: playtest
+    gdd: "design/gdd/playtest-log.md"
+    source: "r.10"
+    requirement: "`tools/playtest-report` reads JSONL and prints the threshold table"
+    domain: "Tools"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-playtest-006
+    system: playtest
+    gdd: "design/gdd/playtest-log.md"
+    source: "Formulas (`idle_cutoff_s`)"
+    requirement: "Report tool knows the game's `idle_cutoff_s` (reads config or the log)"
+    domain: "Tools / Data"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-playtest-007
+    system: playtest
+    gdd: "design/gdd/playtest-log.md"
+    source: "r.3 (`build`)"
+    requirement: "Source of the build id written on every event"
+    domain: "Build"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-platform-001
+    system: platform
+    gdd: "design/gdd/game-concept.md"
+    source: "concept (PC/Steam), sandbox OQ4, prefs"
+    requirement: "Windows + Linux desktop (Steam); godot-sqlite `.dll` must load on 4.7.2"
+    domain: "Platform"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-platform-002
+    system: platform
+    gdd: "design/gdd/game-concept.md"
+    source: "art bible 8.9"
+    requirement: "Total 2D texture memory <= 64 MB; < 500 draw calls; 60 fps"
+    domain: "Performance"
+    created: 2026-10-15
+    revised: ""
+    status: active
+  - id: TR-config-001
+    system: config
+    gdd: "design/gdd/*.md (all Tuning Knobs)"
+    source: "all Tuning Knobs"
+    requirement: "Every gameplay value from data files with load-time range validation"
+    domain: "Data"
+    created: 2026-10-15
+    revised: ""
+    status: active

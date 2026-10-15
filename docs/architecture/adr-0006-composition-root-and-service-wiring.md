@@ -1,7 +1,7 @@
 # ADR-0006: Composition Root and Service Wiring
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-15
@@ -28,14 +28,14 @@ gameplay autoloads**, and time comes from an injectable `Clock`.
 | **Domain** | Core (scene architecture) |
 | **Knowledge Risk** | LOW — scenes, `Node`, `RefCounted`, `_init`, `_ready`, notifications, `Time.get_ticks_usec` are pre-4.3. 4.7 typed-return rule applies to overrides of typed virtuals |
 | **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `breaking-changes.md` (4.7 typed-return overrides), `deprecated-apis.md` (cached `@onready` references, typed signal connections), `current-best-practices.md` (`-s` scripts and autoloads, lambda capture by value); ADR-0001…0004 |
-| **Post-Cutoff APIs Used** | None |
-| **Verification Required** | (0) godot-specialist probes 2026-10-15 on 4.7.2: `await` in `_ready` works and returns control at the first `await`; `setup()` before `add_child` is in place when the child's `_ready` runs; an app-level `NOTIFICATION_APPLICATION_FOCUS_OUT` sent via the SceneTree reaches a non-root child; mutual `RefCounted` references leak. (1) Real focus events on Linux and Windows (headless probe only) — first workbench build. (2) gdUnit4 (not installed — NOT SOURCEABLE): does it add autoloads, and can `scene_runner` take an already set-up instance? If it only takes a path, scene tests need a test-only wrapper scene that calls `setup` — check at `/test-setup` |
+| **Post-Cutoff APIs Used** | `@abstract` (4.5) on `Clock` — probed on 4.7.2 (RefCounted base + typed abstract method + concrete subclass parse and run, 2026-10-15) |
+| **Verification Required** | (0) godot-specialist probes 2026-10-15 on 4.7.2: `await` in `_ready` works and returns control at the first `await`; `setup()` before `add_child` is in place when the child's `_ready` runs; an app-level `NOTIFICATION_APPLICATION_FOCUS_OUT` sent via the SceneTree reaches a non-root child; mutual `RefCounted` references leak. (1) Real focus events on Linux and Windows (headless probe only) — first workbench build. (2) gdUnit4 — **verified 2026-10-16 at `/test-setup` (gdUnit4 v6.2.2 on 4.7.2)**: it adds **no autoloads** (no `add_autoload_singleton` / `autoload/` writes in its source; the plugin only adds `gdunit4/*` settings and editor docks; `tests/unit/test_infra/test_infra_project_settings_test.gd` asserts the project has no `autoload/` entries and passes). `scene_runner(scene: Variant)` **accepts an already set-up instance** (it adds the given `Node` to the root, which runs `_ready`); `tests/integration/test_infra/test_infra_scene_runner_test.gd` calls `setup()` first and asserts `_ready` saw the dependency — passes, and fails (exit 100) when `setup` is moved after `scene_runner`. No wrapper scene is needed. Note: the runner frees only scenes it loaded by path, so tests wrap instances in `auto_free()` (else exit 101, orphan node) |
 
 ## ADR Dependencies
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | None (wires ADR-0001…0004 but does not change them) |
+| **Depends On** | None (it wires the sandbox, repository, verifier, event bus and clock services but changes none of their decisions; see Related) |
 | **Enables** | Every epic — fixes how a system receives its dependencies and how tests substitute them |
 | **Blocks** | First code story of any epic (project skeleton: `src/main.tscn`, `Services`) |
 | **Ordering Note** | Sets `run/main_scene` in `project.godot` when the root scene is created |
@@ -63,7 +63,7 @@ progression → dialogue → workbench) must also be enforced somewhere.
 
 1. **One composition root.** `src/main.tscn` (script `Main`) is the main scene.
    In `_ready()` it builds the services in boot order, awaits
-   `PuzzleRepository.verify_all()` behind a loading state, then instantiates the
+   `ContentVerifier.verify_all(false)` (ADR-0003) behind a loading state, then instantiates the
    play scenes and calls `setup(services)` on each **before** `add_child`.
 2. **`Services` container** — a `RefCounted` with typed fields, built once:
    ```gdscript
@@ -76,6 +76,7 @@ progression → dialogue → workbench) must also be enforced somewhere.
    var sandbox: SqlSandbox
    var puzzles: PuzzleRepository
    var grader: HiddenDataGrader
+   var verifier: ContentVerifier   # built after the grader: (puzzles, sandbox, grader) — ADR-0003 §4
    # feature systems (hints, progression, challenges, dialogue, manual, onboarding) added by their epics
    ```
    Node services (`SqlSandbox` with its runner, `EventBus`, the clock's focus
@@ -106,8 +107,19 @@ progression → dialogue → workbench) must also be enforced somewhere.
    under `Main` that tracks `NOTIFICATION_APPLICATION_FOCUS_IN/OUT`.
    `FakeClock` (tests) exposes `advance(ms)` and `set_focused(bool)`. Every
    time-based rule reads `Clock`: the hint `active_time`, Dialogue hold/reveal
-   timers, the sandbox timeout watchdog, log `t_ms`. Per-frame `delta` may
-   drive animation only, never a rule.
+   timers, the sandbox timeout watchdog, log `t_ms`. The engine's `_process`
+   `delta` may drive animation only, never a rule.
+
+   **Accumulated rule time** (e.g. hint `active_time = Σ dt × focused × shown ×
+   idle`, dt clamped to 0.25 s — `hint-system.md` Formulas, HS-03/04): the
+   owning system samples `Clock.now_ms()` once per tick, takes the difference
+   from its previous sample as `dt`, applies the rule's clamp, and adds it only
+   while the rule's conditions hold. A **tick** is one `_process` call in the
+   game and one `FakeClock.advance(ms)` in tests — so "a single 2 s frame adds
+   0.25 s" (HS-04) is `advance(2000)` followed by one tick. Gameplay pause
+   (challenge mode, briefing, a closed request) is not a `Clock` concern: it
+   comes from the owning system's state (Progression / Constraint Challenges
+   signals); `Clock` reports application focus only.
 6. **Tests and tools** construct only what they need: `Services` fields left
    `null` are a programming error caught at `setup` with `assert` in debug.
    gdUnit4 suites use fakes (`FakeClock`, an in-memory `LogSink`, stub
@@ -121,7 +133,9 @@ main.tscn (Main) ── _ready ──► ServicesFactory.build()
   ├─ SqlSandbox (Node, runner) ← GameConfig
   ├─ EventBus (Node)           ← Clock, PuzzleRepository (hash)
   ├─ PlaytestRecorder (Node, playtest only) ← EventBus, BuildFlavour
-  │   await puzzles.verify_all()  (loading state)
+  │   grader = HiddenDataGrader.new(sandbox, puzzles, bus, hint_counter)
+  │   verifier = ContentVerifier.new(puzzles, sandbox, grader)
+  │   await verifier.verify_all(false)  (loading state)
   └─ play scenes: chapter list / workbench / payslip
        scene.setup(services) → add_child(scene)
 ```
@@ -134,9 +148,12 @@ scene script, `ServicesFactory.build(flavour, clock) -> Services`.
 - Must not register gameplay systems as autoloads, and must not reach a service by node path or `get_node("/root/…")`.
 - Every scene script that needs a service must expose `setup(services)` and must be set up before it enters the tree.
 - `RefCounted` systems must receive dependencies through `_init` arguments.
-- Every rule that depends on time must read `Clock`; `Time.*` may be called only inside `RealClock` (incl. `wall_iso()` for ADR-0004's `wall` field).
+- Every rule that depends on time must read `Clock`; `Time.*` may be called only inside `RealClock` (incl. `wall_iso()` for ADR-0004's `wall` field). The CI grep checks `src/` excluding `real_clock.gd`; tests and `FakeClock` are not scanned.
+- `ContentVerifier` is built by `ServicesFactory` after the grader; `PuzzleRepository` receives no upstream service (ADR-0003 §4).
+- The grader's `hint_counter: Callable` (ADR-0004 §2) is bound by `ServicesFactory` once the Hint System exists; until its epic lands it is a stub returning `false`.
 - **Ownership is one-way** (probed: two `RefCounted` objects referencing each other are never freed and leak at exit): `Main` / `ServicesFactory` own the services; no service holds the `Services` container; a service that must notify an upstream one does it with a signal (or a `WeakRef`), never a stored strong reference back. EventBus (a Node) may read `PuzzleRepository`; `PuzzleRepository` must not hold the bus.
-- Nothing may wait on `Main.ready`: `_ready` returns at its first `await` (probed), before the services exist. Input is blocked by the loading state until `verify_all()` completes and the play scenes are set up.
+- Nothing may wait on `Main.ready`: `_ready` returns at its first `await` (probed), before the services exist. Input is blocked by the loading state until `verify_all(false)` completes and the play scenes are set up.
+- The `FocusListener` node (and the sandbox runner, ADR-0001) must use `process_mode = PROCESS_MODE_ALWAYS` so a paused tree does not freeze focus tracking.
 - Services must be built only by `ServicesFactory` (game and integration tests share it).
 - Overrides of typed engine virtuals must return on every path (4.7).
 - Signals between systems must use typed `signal.connect(callable)` connections, never string-based `connect`.
@@ -185,7 +202,7 @@ scene script, `ServicesFactory.build(flavour, clock) -> Services`.
 
 ## Performance Implications
 - **CPU / Memory**: negligible (one container, a few nodes).
-- **Load Time**: boot shows a loading state while `verify_all()` runs (≈ 0.1 s for Chapter 1, ADR-0003).
+- **Load Time**: boot shows a loading state while `verify_all(false)` runs (≈ 0.6 s for Chapter 1 at 60 fps with 6 executions in flight, ADR-0003; corrected 2026-10-15 from ≈ 0.1 s).
 - **Network**: none.
 
 ## Migration Plan

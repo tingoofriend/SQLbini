@@ -7,7 +7,8 @@
 - Engine: Godot 4.7.2 (GDScript) + godot-sqlite v4.9 (GDExtension, `compatibility_minimum = "4.7"`)
 - Workflow tier: `standard` — system layer map + critical ADR list (module ownership, data flow and API boundaries kept to what the Foundation ADRs need)
 - GDDs Covered: all 11 MVP GDDs (Approved) — hidden-data-grader, puzzle-definition-and-datasets, sql-execution-sandbox, query-workbench, hint-system, constraint-challenges, shift-and-chapter-progression, request-and-reaction-dialogue, store-manual, onboarding-first-shift, playtest-log; plus `game-concept.md`, `systems-index.md`, `design/art/art-bible.md` §8 (display chain, budgets)
-- ADRs Referenced: ADR-0001 (Proposed) — sandbox execution and timeout; ADR-0002 (Proposed) — sandbox API and lexer contract; ADR-0003 (Proposed) — puzzle data format, loader and verifier; ADR-0004 (Proposed) — event bus and playtest log; ADR-0006 (Proposed) — composition root and service wiring; rest planned in [Required ADRs](#required-adrs)
+- ADRs Referenced: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0006 — all **Accepted** 2026-10-15 after `/architecture-review` (amended per `architecture-review-2026-10-15.md`); ADR-0005 pending the Windows spike; rest planned in [Required ADRs](#required-adrs)
+- Review: `docs/architecture/architecture-review-2026-10-15.md`; permanent requirement IDs: `docs/architecture/tr-registry.yaml` (60), matrix: `docs/architecture/requirements-traceability.md`
 - Inputs carried forward: Technical Director items from `production/gate-checks/2026-10-15-systems-design-to-technical-setup.md`
 - TD-ARCHITECTURE: 2026-10-15 — skipped — lean mode
 - LP-FEASIBILITY: 2026-10-15 — skipped — lean mode
@@ -58,8 +59,9 @@ stretch `scale_mode = fractional` (4.2).
 ## Technical Requirements Baseline
 
 Extracted from 11 GDDs (Detailed Rules, Formulas, Dependencies, Tuning Knobs,
-Acceptance Criteria) plus the art bible's §8 constraints. **IDs are provisional**:
-`/architecture-review` writes the permanent IDs into `docs/architecture/tr-registry.yaml`.
+Acceptance Criteria) plus the art bible's §8 constraints. **Superseded by
+`docs/architecture/tr-registry.yaml`** (2026-10-15: these 44 IDs kept, 16 added,
+some citations corrected) — the table below is the v1 snapshot.
 
 | Req ID | GDD | Requirement | Domain | Planned ADR |
 |---|---|---|---|---|
@@ -178,7 +180,7 @@ Presentation modules follow their GDD's "Interactions" table.
 | **EventBus** | Event catalogue (declared names + required fields), dispatch | `emit_event(name, puzzle_id, data)`, typed signals | `Clock`, `BuildFlavour` | Signals |
 | **GameConfig** | All tuning-knob values, defaults, clamps, validation errors | typed getters | data files | `FileAccess`, `JSON` |
 | **StringTable** | Player-facing text by id; missing-id behaviour | `text(id, args)` | `BuildFlavour`, EventBus (missing-id report) | `TranslationServer` / `tr()` — see ADR-0007 |
-| **Clock** | Monotonic ms, frame dt, window focus state | `now_ms()`, `focused` | — | `Time.get_ticks_usec`, `NOTIFICATION_APPLICATION_FOCUS_*` |
+| **Clock** | Monotonic ms, window focus state, UTC wall time (ADR-0006) | `now_ms()`, `is_focused()`, `wall_iso()` | — | `Time.get_ticks_usec`, `NOTIFICATION_APPLICATION_FOCUS_*` |
 | **HiddenDataGrader** | Verdict pipeline, cause selection, per-cause counters (in the caller's set), neutral statements | `submit(puzzle, sql, counters) -> Verdict` (async), `run_match(puzzle, result) -> bool` | Sandbox, Repository, EventBus | none |
 | **WorkbenchController** | Draft text per puzzle, last Run result, last verdict, "checking…" state | `run()`, `submit()`, `restart()`, `draft_is_empty()` | Sandbox, Grader, Progression (open request, Restart), EventBus | none |
 
@@ -220,7 +222,9 @@ returns `hint_counted`) → EventBus `submit` → Dialogue (feedback key only) a
 Progression (PASS / UNAVAILABLE). Missing/extra rows travel **only** inside the
 `submit` event to the recorder (grader rule 11; enforced by the event's field
 schema — ADR-0004). While a submit is in flight a second Run/Submit is
-refused by the controller (one execution in flight per workbench).
+refused by the controller; a newer **Run** may start while an older Run is in
+flight, and the older result is discarded (ADR-0002 §6). `hint_counted` comes
+back through an injected `hint_counter` Callable (ADR-0004 §2).
 
 ### Event path
 
@@ -238,7 +242,7 @@ This keeps gameplay working when the recorder is disabled (release) or stopped
 2. `StringTable`
 3. `EventBus` (+ `PlaytestRecorder` if the playtest flag is on → `AwaitingSetup`)
 4. `SqlSandbox` (start worker / helper process — ADR-0001)
-5. `PuzzleRepository` → load chapter, resolve datasets, run `ContentVerifier`, fill the reference cache — **off the frame thread** (≈ 200 executions for Chapter 1, ~0.1 s on the dev laptop); withheld puzzles reported
+5. `PuzzleRepository` → load chapter, resolve datasets; `HiddenDataGrader`; then `ContentVerifier(repository, sandbox, grader)` computes references, runs puzzle checks, pushes load states and the reference cache into the repository — executions on workers, 6 in flight (≈ 200 for Chapter 1 ≈ 0.6 s at 60 fps, ADR-0003); withheld puzzles reported
 6. Progression → Dialogue → Workbench scene
 
 ### Save/load
@@ -308,9 +312,13 @@ and the verifier; `SqlResult` and `PuzzleDef` are treated as immutable.
 
 ## ADR Audit
 
-No ADRs exist (`docs/architecture/` holds only `tr-registry.yaml`). Nothing to
-audit for engine compatibility or conflicts. Traceability: **0 / 44 covered**;
-every gap is assigned to an ADR below.
+v1 snapshot: no ADRs existed when this document was written. Current state:
+see `docs/architecture/architecture-review-2026-10-15.md` (5 ADRs reviewed,
+2 blocking conflicts fixed, all 5 Accepted) and
+`docs/architecture/requirements-traceability.md` (33 / 60 covered).
+New from the review: **ADR-0010 Gameplay signal contracts** (verdict fan-out,
+challenge mode, reaction queue, input-activity feed) — should-have before the
+first Grader/Hint/Dialogue story.
 
 ## Required ADRs
 

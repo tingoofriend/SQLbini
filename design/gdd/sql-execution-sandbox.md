@@ -2,7 +2,7 @@
 
 > **Status**: Approved (design review 2026-10-14)
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (cross-review 6d: Hint System listed as tokenize consumer; SQLite text shown in the workbench strip; statuses; earlier: 2026-10-15: wording: `TOO_MANY_ROWS` on any visible run, from the Dialogue re-review 6c; earlier: 2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-15 (architecture review: Formulas worst case → `submit_worst` with frame delivery and last-hidden-set timeout, user decision; earlier: cross-review 6d: Hint System listed as tokenize consumer; SQLite text shown in the workbench strip; statuses; earlier: 2026-10-15: wording: `TOO_MANY_ROWS` on any visible run, from the Dialogue re-review 6c; earlier: 2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -267,9 +267,27 @@ loose for the yet-unnamed target PC and larger later chapters.
 
 **Worst case — a query that times out only on hidden data.** The grader stops at
 the first `TIMEOUT` and returns FAIL(`generic`) without running the remaining
-datasets (`hidden-data-grader.md` rule 8): pre-check + determinism + visible ≈ 3 × 25
-+ 100 = **175 ms** at the targets. Without the early stop, two hidden timeouts
-would take ≈ 275 ms — no margin. Without enforcement at all, unbounded.
+datasets (`hidden-data-grader.md` rule 8). The worst position is the **last**
+hidden dataset, after every earlier execution passed. Results reach the caller
+on the next frame poll (ADR-0001), so each execution costs whole frames:
+
+`submit_worst = (1 + D) × t_exec + (exec_time_limit + f) + overhead`,
+`t_exec = max(1, ⌈exec_cost / f⌉) × f`
+
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| f | float (ms) | 16.7 at 60 fps | engine | One frame; TIMEOUT is delivered within limit + one frame (ADR-0001) |
+| t_exec | float (ms) | ≥ f | calculated | Execution time rounded up to whole frames |
+
+**Output Range:** at the measured cost (0.37 ms → `t_exec` = 16.7): D = 3 →
+4 × 16.7 + 116.7 + 60 ≈ **243 ms** ✓; D = 5 → ≈ 277 ms ✓. At the target
+ceilings (25 ms → `t_exec` = 33.3): D = 3 → ≈ 310 ms; D = 5 → ≈ 377 ms — over
+300. This is a rare path (a pathological query), not the p95 of AC-26, but
+before a chapter uses D ≥ 4 or once the target PC is measured (ADR-0005),
+re-check it; the mitigation is architectural (e.g. hidden datasets run
+concurrently — the verdict is unchanged), not a rule change. Without the early
+stop, every further hidden timeout adds limit + f. Without enforcement at all,
+unbounded.
 
 ## Edge Cases
 

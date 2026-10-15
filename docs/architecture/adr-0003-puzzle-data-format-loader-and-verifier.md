@@ -1,7 +1,7 @@
 # ADR-0003: Puzzle Data Format, Loader and Content Verifier
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-15
@@ -125,24 +125,47 @@ and whitespace in the file therefore never change the hash; any value edit
 does. CI and the game compute it with the same function.
 
 ### 4. Content verifier: GDScript on the game's sandbox (resolves puzzle Open Question 2)
-`ContentVerifier` is ordinary game code under the Foundation layer. It runs:
+`ContentVerifier` is ordinary game code, a **separate object** — not part of
+`PuzzleRepository` (architecture review 2026-10-15, C1). It sits above the
+grader: `ServicesFactory` builds it with `(repository, sandbox, grader)` after
+the grader exists. The repository holds no reference to the verifier, the
+grader or the sandbox; the verifier pushes its results into the repository
+through setters (`set_load_state`, `set_reference_result`). This keeps
+ownership one-way (ADR-0006) and the repository free of upward dependencies.
+
+Order inside one run: (1) the reference result of every puzzle × dataset is
+computed first and stored in the repository's cache; (2) only then does
+`puzzle_valid` run the traps and `alt_valid` queries, so the grader's cause
+selection reads references that already exist.
+
+The verifier keeps up to `verify_parallelism` executions in flight (default 6,
+range 4–8; ADR-0002 §6 allows concurrency) instead of awaiting them one by one:
+the runner delivers each result on the next frame poll (ADR-0001), so a
+sequential chain costs one frame per execution.
+
+It runs:
 - `puzzle_valid` (H, R, A, T, F, K, O, V, C) using the real `HiddenDataGrader`
   for cause selection and the real `SqlSandbox` for every query;
 - chapter checks (duplicate ids, `boss` flag vs position — R-04, constraint
-  field shape — R-03);
-- the other content checks as separate check modules in the same run: Store
-  Manual examples and `trap_rules`, hint-text and onboarding ghost-text checks,
-  Constraint Challenges `content_valid`.
+  field shape — R-03, and the ordered puzzle-id list in `chapter.json` agrees
+  with each puzzle's `order`);
+- **CI only**: the other content checks as separate check modules: Store
+  Manual examples and `trap_rules` (SM-14…17), hint-text checks (HS-13),
+  onboarding ghost text (OB-18), Constraint Challenges `content_valid`
+  (CC-11/12). They add ≈ 400–700 executions and their failure has no runtime
+  meaning (the content ships only after CI passes), so the game does not run
+  them at load.
 
 Two entry points, one code path:
 - **CI**: `godot --headless --path . -s res://tools/ci/verify_content.gd`
-  (after `godot --headless --path . --import` on a fresh clone). Prints the
-  Markdown report; exit code 1 if any puzzle at `verified` or later is invalid
-  or its hash differs, 0 otherwise (draft failures are reported, not fatal — L-05).
-- **Game load**: the same verifier runs at boot, off the frame thread (ADR-0001),
-  and its results decide `loaded` / `withheld` per puzzle and fill the
-  **reference-result cache** (puzzle id + dataset id → `SqlResult`, grader rule 8)
-  as a by-product.
+  (after `godot --headless --path . --import` on a fresh clone). Runs every
+  check module and prints the Markdown report; exit code 1 if any puzzle at
+  `verified` or later is invalid or its hash differs, or a non-puzzle check
+  fails; 0 otherwise (draft failures are reported, not fatal — L-05).
+- **Game load**: the same verifier runs at boot with the puzzle and chapter
+  checks and the hash only, its executions on worker threads (ADR-0001), and
+  its results decide `loaded` / `withheld` per puzzle and fill the
+  **reference-result cache** (puzzle id + dataset id → `SqlResult`, grader rule 8).
 
 `prototypes/sqlbini-web/ch1.py` is retired as a verifier once Chapter 1 is
 migrated; it stays in `prototypes/` as a reference only.
@@ -151,18 +174,20 @@ migrated; it stays in `prototypes/` as a reference only.
 
 ```
 assets/data/content/*.json
-        │ JSON.parse_string (floats)
+        │ JSON.new().parse() (numbers arrive as float)
         ▼
 PuzzleRepository ── typed conversion (§2) ──► ChapterDef / PuzzleDef / ResolvedDataset
-        │                                             │
-        │ content_hash (§3)                           ▼
-        ▼                                  ContentVerifier (§4)
-  stored vs computed ──────────────────────►  ├─ puzzle_valid via HiddenDataGrader + SqlSandbox
-                                              ├─ manual / hint / ghost-text / challenge checks
-                                              └─ report (true/false per check, no score)
-                                                     │
-                        CI: tools/ci/verify_content.gd (exit 0/1)
-                        Game: loaded/withheld + reference cache
+   ▲    │ content_hash (§3)
+   │    ▼
+   │  ContentVerifier (§4; built with repository, sandbox, grader)
+   │    ├─ 1. reference results (≤ verify_parallelism in flight) ──► SqlSandbox
+   │    ├─ 2. puzzle_valid via HiddenDataGrader + SqlSandbox; chapter checks
+   │    ├─ 3. CI only: manual / hint / ghost-text / challenge checks
+   │    └─ report (true/false per check, no score)
+   │         │
+   └─ set_load_state / set_reference_result (setters; repository holds nothing upstream)
+             CI: tools/ci/verify_content.gd (exit 0/1)
+             Game: loaded/withheld + reference cache
 ```
 
 ### Key Interfaces
@@ -170,7 +195,6 @@ PuzzleRepository ── typed conversion (§2) ──► ChapterDef / PuzzleDef 
 ```gdscript
 class_name PuzzleRepository extends RefCounted
 func load_all(root: String = "res://assets/data/content") -> void        # sync parse + typing
-func verify_all() -> ContentReport                                       # awaitable; runs SQL
 func get_chapter(id: StringName) -> ChapterDef
 func get_puzzle(id: StringName) -> PuzzleDef                             # null if withheld
 func load_state(id: StringName) -> StringName                            # &"loaded" | &"withheld"
@@ -178,6 +202,12 @@ func withheld_reason(id: StringName) -> String
 func resolve_dataset(puzzle: PuzzleDef, dataset_id: StringName) -> ResolvedDataset
 func reference_result(puzzle: PuzzleDef, dataset_id: StringName) -> SqlResult   # from the cache
 func content_hash(puzzle: PuzzleDef) -> String
+func set_load_state(id: StringName, state: StringName, reason: String) -> void   # verifier only
+func set_reference_result(puzzle_id: StringName, dataset_id: StringName, result: SqlResult) -> void  # verifier only
+
+class_name ContentVerifier extends RefCounted
+func _init(repository: PuzzleRepository, sandbox: SqlSandbox, grader: HiddenDataGrader, parallelism: int = 6) -> void
+func verify_all(include_ci_checks: bool) -> ContentReport                # awaitable; runs SQL; false at game load
 
 class_name ContentReport extends RefCounted
 var puzzles: Dictionary        # id -> {checks: {H: bool, R: bool, …}, observations: Dictionary, warnings: PackedStringArray}
@@ -192,6 +222,8 @@ func to_markdown() -> String
 - Must compute the content hash only through `PuzzleRepository.content_hash`; CI and game share it.
 - Must run every content check (puzzles, manual, hints, ghost text, challenges) through `ContentVerifier`; no separate script, Python or otherwise, may decide validity.
 - Must run `verify_all` off the frame thread (via the sandbox) and show a loading state during boot; the frame must not block.
+- Must keep up to `verify_parallelism` executions in flight (never one sequential `await` per execution) and compute every reference result before any trap or `alt_valid` check.
+- `PuzzleRepository` must not hold the verifier, grader or sandbox; only `ContentVerifier` calls its setters (ADR-0006 one-way ownership).
 - Must report observations and true/false checks only — never a score or rating (rule 14).
 - Export presets must include `assets/data/content/*.json` via an include filter; whether `.json` is exported by default as a `JSON` resource is NOT SOURCEABLE — keep the filter and confirm in ADR-0005's first export.
 - `PuzzleDef`, `ResolvedDataset` and every record that feeds the hash must provide `to_canonical() -> Dictionary` with `String` keys only; never pass an object to `JSON.stringify`.
@@ -234,7 +266,7 @@ func to_markdown() -> String
 ### Negative
 - JSON has no comments; designer notes live in `note` fields.
 - CI needs a Godot 4.7.2 binary and an `--import` step (minutes per run on a fresh runner).
-- The verifier runs at every game start (≈ 200 executions for Chapter 1 ≈ 0.1 s on the dev laptop; grows with content).
+- The verifier runs at every game start (≈ 200 executions for Chapter 1; each result arrives on a frame poll, so ≈ 200 / 6 ≈ 34 frames ≈ 0.6 s at 60 fps with `verify_parallelism` = 6 — one-by-one awaiting would be ≈ 3.3 s; grows with content).
 
 ## Risks
 - **JSON float parsing** silently changes types if a code path skips §2. Mitigation: typed records only; a unit test feeds `198` and asserts `int`; the hash test (L-06) would also catch `198.0`.
@@ -263,9 +295,9 @@ func to_markdown() -> String
 | playtest-log.md | Rule 3: `content_hash` on every event | `PuzzleRepository.content_hash` |
 
 ## Performance Implications
-- **CPU**: load-time verification ≈ (references + alt_valid + traps) × datasets executions — ≈ 200 for Chapter 1, ≈ 0.4 ms each on the dev laptop, off the frame thread.
+- **CPU**: load-time verification ≈ (references + alt_valid + traps) × datasets executions — ≈ 200 for Chapter 1, ≈ 0.4 ms each on the dev laptop, on worker threads (≤ 6 at once). CI adds ≈ 400–700 for the non-puzzle checks.
 - **Memory**: Chapter 1 content is tens of KB; the reference cache holds one small result per puzzle × dataset.
-- **Load Time**: + ≈ 0.1 s at boot for Chapter 1 (dev laptop); re-measure on the target PC.
+- **Load Time**: bounded by frame-poll delivery, not SQL: ≈ ⌈200 / 6⌉ frames ≈ 0.6 s at 60 fps for Chapter 1 (≈ 2.3 s at ~50 puzzles — revisit per Risks); headless CI ≈ 6.6 ms per frame. Re-measure on the target PC (ADR-0005). Corrected 2026-10-15 (architecture review C2; the earlier "≈ 0.1 s" ignored per-frame delivery).
 - **Network**: none.
 
 ## Migration Plan

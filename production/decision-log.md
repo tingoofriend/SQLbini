@@ -66,3 +66,21 @@ gate reports and GDD review logs; earlier entries are reconstructed from those.
 | 2026-10-15 | Build flavours dev / playtest / release from feature tags; EventBus validates the catalogue; JSONL recorder flushes per event; report tool in Python | Code structure only | Claude | ADR-0004 |
 | 2026-10-15 | F9 facilitator note recorded as a separate `help_note {note}` event (GDD gap: `help_given` is written at once, the note comes later) | Playtest log format only | User (rec.) | ADR-0004, `playtest-log.md` rule 7 |
 | 2026-10-15 | One composition root builds all services and hands them to each screen; no gameplay autoloads; all time from an injectable Clock | Code structure only; makes timed rules testable instantly | Claude | ADR-0006 |
+
+## Architecture review and acceptance (session 9)
+
+| Date | Decision | Impact | By | Source |
+|---|---|---|---|---|
+| 2026-10-15 | `/architecture-review` (session 9): FAIL — 2 blocking cross-ADR issues (verifier ownership cycle; boot ≈ 3.3 s not 0.1 s), both fixed by ADR text | No game impact | Claude (review) | `docs/architecture/architecture-review-2026-10-15.md` |
+| 2026-10-15 | TR registry: keep the 44 provisional IDs, add 16 (60 total) | Bookkeeping | Claude | `docs/architecture/tr-registry.yaml` |
+| 2026-10-15 | ADR-0001 amended, then **Accepted** (rec.) | Sandbox work can start | User | ADR-0001 |
+| 2026-10-15 | Sandbox GDD worst-case submit formula corrected to include frame delivery and last-set timeout (rec.); ≈ 310 ms at target ceilings, re-check with ADR-0005 | No rule change; GDD Formulas only | User | `sql-execution-sandbox.md` Formulas |
+| 2026-10-15 | ADR-0002 amended (Run supersede, per-request await, extensions off), then **Accepted** (rec.) | Matches workbench GDD | User | ADR-0002 |
+| 2026-10-15 | ADR-0003 amended (separate verifier, 6 queries in flight, non-puzzle checks CI-only, id-list check), then **Accepted** (rec.) | Boot ≈ 0.6 s instead of ≈ 3.3 s | User | ADR-0003 |
+| 2026-10-15 | Accept ADR-0006 before ADR-0004 (ADR-0004 uses its Clock) | Order only | Claude (rec.), user agreed | — |
+| 2026-10-15 | ADR-0006 amended (verifier wiring, tick-sampled rule time, `@abstract` row), then **Accepted** (rec.) | No game impact | User | ADR-0006 |
+| 2026-10-15 | ADR-0004 amended (`hint_counter` Callable, log closes on quit only, `event_name`, report `--config`), then **Accepted** (rec.) | Log keeps post-chapter play | User | ADR-0004 |
+| 2026-10-15 | Implementation details inside the amendments (sequence numbers, `verify_parallelism` = 6, `Main.quit_game()`, setters on the repository) | Code structure only | Claude | ADRs 0002–0006 |
+| 2026-10-15 | New should-have ADR-0010 Gameplay signal contracts proposed | One more ADR before the Grader/Hint/Dialogue stories | Claude (review) | review report |
+| 2026-10-16 | Install gdUnit4 **v6.2.2** from the official GitHub tag into `addons/gdUnit4/`; CI via `gdUnit4-action@v1` pinned to Godot 4.7.2 and the committed addon (rec.) | No game impact; tests run on every push | User | `tests/README.md` |
+| 2026-10-16 | Example tests double as ADR-0006 checks (no autoloads; `scene_runner` with a set-up instance) | Bookkeeping | Claude | ADR-0006 Verification |
