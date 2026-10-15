@@ -2,8 +2,8 @@
 
 > 선행 세션: 세션 7(6g 확인 + Systems Design → Technical Setup 게이트, CONCERNS 수용 → 단계 전환, 커밋 `e247dc0`)
 > 진행 상태 (2026-10-15): 🔄 **진행 중** — 같은 세션에서 계속
-> - 완료: `docs/architecture/architecture.md` v1 (TR 44개, 계층 구조, ADR 계획 9개) · 타임아웃 스파이크 `prototypes/sandbox-timeout-spike-2026-10-15/` · ADR-0001 샌드박스 실행·타임아웃(워커 스레드 + 버리기, **Proposed**) · 레지스트리 6건
-> - 남음: ADR-0002 Sandbox API·lexer → ADR-0003 퍼즐 형식·검증기 → `/estimate` 재실행 · ADR-0004 이벤트 버스·로그 · ADR-0006 구성 루트 · Windows .dll 스파이크(ADR-0005 직전) → ADR-0005 플랫폼 기준(viewport 1280×720·렌더러·64 MB) · `/test-setup`(gdUnit4) · `commands.build`
+> - 완료: `docs/architecture/architecture.md` v1 (TR 44개, 계층 구조, ADR 계획 9개) · 타임아웃 스파이크 `prototypes/sandbox-timeout-spike-2026-10-15/` · ADR-0001 샌드박스 실행·타임아웃(워커 스레드 + 버리기) · ADR-0002 Sandbox API·lexer · ADR-0003 퍼즐 데이터 형식·검증기(JSON + Godot 검증기) — 모두 **Proposed** · 레지스트리 16건 · 결정 기록 `production/decision-log.md` · `/estimate` 재추정: **남은 기간 ≈ 17주(12~26주), 새 기준으로 수용** (game-concept·systems-index 일정 문구 갱신)
+> - 남음: ADR-0004 이벤트 버스·로그(진행 중) · ADR-0006 구성 루트 · Windows .dll 스파이크(ADR-0005 직전) → ADR-0005 플랫폼 기준(viewport 1280×720·렌더러·64 MB) · `/test-setup`(gdUnit4) · `commands.build` · 이후 새 세션에서 `/architecture-review`
 > - 새 세션에서 이어갈 때: 이 문서의 프롬프트 대신 `production/session-state/active.md`의 Session 8 항목을 읽고 남은 항목부터 진행
 
 > 사용법: **새 Claude Code 세션**(`06.Game_Studio` 폴더에서 시작)을 열고, 아래 블록 전체를 그대로 복사해 첫 메시지로 붙여 넣으세요.

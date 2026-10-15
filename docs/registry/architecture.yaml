@@ -55,6 +55,17 @@ state_ownership:
     added: 2026-10-15
     revised: ""
 
+  - state: puzzle_content_and_reference_cache
+    status: active
+    owner_system: puzzle-definition-and-datasets
+    adr: docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    interface: "PuzzleRepository: get_chapter / get_puzzle / load_state / resolve_dataset / reference_result / content_hash (read-only typed records)"
+    write_access: puzzle-definition-and-datasets-only
+    referenced_by:
+      - docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    added: 2026-10-15
+    revised: ""
+
 # Example:
 #
 # state_ownership:
@@ -94,6 +105,39 @@ interfaces:
     signal_signature: "ExecutionRunner.run(work: Callable, limit_ms: float, on_done: Callable) — on_done(value: Dictionary, timed_out: bool) called exactly once on the main thread"
     referenced_by:
       - docs/architecture/adr-0001-sandbox-execution-and-timeout.md
+    added: 2026-10-15
+    revised: ""
+
+  - contract: sandbox_public_api
+    status: active
+    pattern: direct_call
+    producer: sql-execution-sandbox
+    consumers:
+      - hidden-data-grader
+      - query-workbench
+      - content-verifier
+      - hint-system
+      - constraint-challenges
+    adr: docs/architecture/adr-0002-sandbox-api-and-lexer-contract.md
+    signal_signature: "await SqlSandbox.execute(request: SqlRequest) -> SqlResult; SqlSandbox.tokenize(sql: String) -> Array[SqlToken] (sync, total; kinds WORD NUMBER STRING QUOTED_IDENT COMMENT PUNCT)"
+    referenced_by:
+      - docs/architecture/adr-0002-sandbox-api-and-lexer-contract.md
+    added: 2026-10-15
+    revised: ""
+
+  - contract: content_validity
+    status: active
+    pattern: direct_call
+    producer: puzzle-definition-and-datasets
+    consumers:
+      - hidden-data-grader
+      - shift-and-chapter-progression
+      - playtest-log
+      - ci
+    adr: docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    signal_signature: "await PuzzleRepository.verify_all() -> ContentReport; same ContentVerifier for CI (tools/ci/verify_content.gd) and game load"
+    referenced_by:
+      - docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
     added: 2026-10-15
     revised: ""
 
@@ -176,6 +220,28 @@ api_decisions:
     added: 2026-10-15
     revised: ""
 
+  - purpose: sql_statement_splitting_and_keyword_matching
+    status: active
+    api: "SqlLexer (hand-written GDScript lexer owned by the sandbox)"
+    not: "sqlite3_complete / prepare-tail (not exposed by godot-sqlite v4.9); regex or substring search on SQL text"
+    adr: docs/architecture/adr-0002-sandbox-api-and-lexer-contract.md
+    reason: "One lexer for the statement check, Constraint Challenges keyword rules and Hint normalization, so they never disagree"
+    referenced_by:
+      - docs/architecture/adr-0002-sandbox-api-and-lexer-contract.md
+    added: 2026-10-15
+    revised: ""
+
+  - purpose: content_file_format
+    status: active
+    api: "JSON (JSON.new().parse) + schema-typed conversion; SHA-256 over to_canonical() via JSON.stringify(sort_keys, full_precision)"
+    not: ".tres resources, YAML, SQL-script datasets, Python verifier"
+    adr: docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    reason: "Diffable one-file-per-puzzle text; one parser and one verifier shared by CI and the game"
+    referenced_by:
+      - docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    added: 2026-10-15
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -213,6 +279,41 @@ forbidden_patterns:
     description: "A godot-sqlite SQLite object must be created, used and closed on one thread; never passed between threads."
     why: "Each execution owns its database; an abandoned worker may still be inside SQLite when the next request starts."
     adr: docs/architecture/adr-0001-sandbox-execution-and-timeout.md
+    added: 2026-10-15
+
+  - pattern: sql_text_search_outside_lexer
+    status: active
+    description: "No module may split, regex or substring-search player SQL for keywords or statements; use SqlSandbox.tokenize."
+    why: "Keywords inside strings, quoted identifiers or comments would match, and systems would disagree on what a keyword is."
+    adr: docs/architecture/adr-0002-sandbox-api-and-lexer-contract.md
+    added: 2026-10-15
+
+  - pattern: row_values_by_dictionary_order
+    status: active
+    description: "godot-sqlite query_result rows must be converted to positional arrays by the PRAGMA column list, never by Dictionary iteration order."
+    why: "Column order is significant for grading (grader rule 16)."
+    adr: docs/architecture/adr-0002-sandbox-api-and-lexer-contract.md
+    added: 2026-10-15
+
+  - pattern: raw_json_numbers
+    status: active
+    description: "Values from JSON.parse_string / JSON.parse must be converted through their declared type before reaching SQLite, the grader or the hash."
+    why: "Godot 4.7.2 parses every JSON number as float (198 -> 198.0)."
+    adr: docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    added: 2026-10-15
+
+  - pattern: content_check_outside_verifier
+    status: active
+    description: "No script (Python or GDScript) other than ContentVerifier may decide puzzle or content validity."
+    why: "CI and the game must reach the same verdict (puzzle L-04)."
+    adr: docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    added: 2026-10-15
+
+  - pattern: hashing_objects_with_json_stringify
+    status: active
+    description: "Never pass a RefCounted/Object to JSON.stringify for hashing; use to_canonical() Dictionaries with String keys."
+    why: "Objects print as instance ids, so the hash changes every run."
+    adr: docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
     added: 2026-10-15
 
 # Example:

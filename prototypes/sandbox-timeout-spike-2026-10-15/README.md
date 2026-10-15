@@ -16,6 +16,7 @@ godot --headless --path . -s res://thread_probe.gd
 godot --headless --path . -s res://quit_probe.gd -- quit
 godot --headless --path . -s res://quit_probe.gd -- sort
 godot --headless --path . -s res://process_probe.gd
+godot --headless --path . -s res://probe_keys.gd
 ```
 
 Fixture: 24-row `products`; long query = 6-way self-join `COUNT(*)` (24⁶ ≈ 191M
@@ -36,6 +37,7 @@ combinations); `limit` = 100 ms (the GDD default).
 | Round trip, short query | (b) process | p50 **0.50 ms**, p95 0.69 ms (stdin/stdout lines, 100 µs polling) |
 | TIMEOUT + kill + respawn | (b) process | TIMEOUT at 100.0 ms; `OS.kill` 3.8 ms; respawn 144 ms → next request can wait up to ≈ 150 ms |
 | Value types over the pipe | (b) process | JSON turns integers into floats (`cols=2.0`); TEXT/number survive, but int64 > 2⁵³ and BLOB need a typed encoding (e.g. `var_to_bytes`) |
+| `query_result` keys through the temp view (ADR-0002, `probe_keys.gd`) | — | Keys equal `PRAGMA table_info` names in every case: duplicates `name`/`name:1`/`name:2`, case variants (`NAME` → `name:1`), empty aliases (`""`, `:1`), aliases with `:`, expressions; NULL keeps its key; `X'00FF'` and a bound `PackedByteArray` return `PackedByteArray`, bound `null` returns `null` |
 | Step cap / `sqlite3_interrupt` | (c) fork | **Not probed** — needs a godot-sqlite fork (godot-cpp + SCons, Linux + Windows builds) |
 
 ## Observations for the ADR (not a verdict)

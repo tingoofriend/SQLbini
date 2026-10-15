@@ -1,7 +1,7 @@
 # 다음 세션 프롬프트 모음
 
 > 작성: 2026-10-14 (갱신 2026-10-15) · 프로젝트: SQLbini (Godot 4.7.2 / GDScript)
-> 현재 단계: **Technical Setup** — 세션 7 게이트 통과(CONCERNS 수용) → 세션 8 진행 중: 아키텍처 문서 v1 + ADR-0001(샌드박스 타임아웃, Proposed) 완료, ADR-0002부터 이어서 작업
+> 현재 단계: **Technical Setup** — 세션 7 게이트 통과(CONCERNS 수용) → 세션 8 진행 중: 아키텍처 문서 v1 + ADR-0001~0003(Proposed) 완료, MVP 재추정 ≈ 17주 남음(수용), ADR-0004부터 이어서 작업
 > 마지막 커밋: 세션 8 1차(아키텍처 문서 + ADR-0001) — `git log -1` 참고
 
 > 세션별 문서(공통 프롬프트 포함, 블록 하나만 복사): `production/session-prompts/session-N-*.md`
@@ -325,7 +325,7 @@ Concept 게이트에서 받아들인 위험(production/gate-checks/2026-10-14-co
 
 ---
 
-## 세션 8 — 아키텍처 작성 (Technical Setup 시작) — 🔄 진행 중 2026-10-15 (아키텍처 문서 v1, 타임아웃 스파이크, ADR-0001 Proposed 완료; 다음 ADR-0002 → ADR-0003 → /estimate)
+## 세션 8 — 아키텍처 작성 (Technical Setup 시작) — 🔄 진행 중 2026-10-15 (아키텍처 문서 v1, 타임아웃 스파이크, ADR-0001~0003 Proposed, /estimate ≈ 17주 수용; 다음 ADR-0004 → 0006 → Windows 스파이크 → 0005)
 
 > 세션 문서: `production/session-prompts/session-8-create-architecture.md`
 

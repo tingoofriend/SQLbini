@@ -97,7 +97,7 @@ wage is a narrative beat, not a currency.
 >
 > **Scope note** (map-systems, 2026-10-14 — *historical*: superseded by the Back
 > Room move above, so MVP is now **11** of 19 systems; the concept's MVP
-> estimate is now ~11 weeks, `game-concept.md` Scope Tiers): MVP held 12 of 19 systems, including
+> estimate is now ≈ 17 weeks remaining from 2026-10-15 (12–26; re-estimated after architecture v1, superseding ~11 weeks), `game-concept.md` Scope Tiers): MVP held 12 of 19 systems, including
 > three added by the 2026-10-14 concept revision (Back Room, Store Manual, and the
 > escalating feedback inside the Grader) plus the inferred Playtest Log the MVP
 > thresholds need. The concept's "4–6 weeks" MVP estimate predates these; run

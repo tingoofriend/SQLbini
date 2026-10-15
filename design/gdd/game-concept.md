@@ -423,8 +423,8 @@ and zero-SQL players remain untested (`prototypes/sqlbini-web/REPORT.md`).
 
 | Tier | Content | Features | Timeline |
 | ---- | ---- | ---- | ---- |
-| **MVP** | Chapter 1 (13 puzzles), placeholder art | Workbench, grader (feedback level 1), reactions, hints, a few constraint challenges, store manual, onboarding, playtest log | ~11 weeks expected (7–18) in focused full-time days, incl. ~2–3 weeks of design — `/estimate` 2026-10-14, confidence Low (no velocity history; GDDs not yet written) |
-| **Vertical Slice / Demo** | Chapter 1, final art and audio | MVP + polish, achievements, failure feedback levels 2–3 (clause highlight, synthetic counter-example); Steam Next Fest demo | +6–8 weeks (~3 months total) |
+| **MVP** | Chapter 1 (13 puzzles), placeholder art | Workbench, grader (feedback level 1), reactions, hints, a few constraint challenges, store manual, onboarding, playtest log | ≈ 17 weeks remaining from 2026-10-15 (≈ 84 focused full-time days; range 12–26 weeks), design done — `/estimate` 2026-10-15 after architecture v1 + ADR-0001…0003, confidence Low (no velocity history). Supersedes ~11 weeks (7–18, incl. design) from 2026-10-14 |
+| **Vertical Slice / Demo** | Chapter 1, final art and audio | MVP + polish, achievements, failure feedback levels 2–3 (clause highlight, synthetic counter-example); Steam Next Fest demo | +6–8 weeks after MVP (≈ 23–25 weeks from 2026-10-15; not re-estimated) |
 | **Alpha** | Chapters 1–3 (~35 puzzles), placeholder where needed | + modify puzzles (`UPDATE`/`DELETE`) with rewind, back room, aggregates | +2–3 months |
 | **Full Vision** | Chapters 1–4 (~50 puzzles, through `JOIN`), polished | All of the above + full constraint-challenge set | +1–2 months (6–9 months total) |
 
