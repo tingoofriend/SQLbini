@@ -331,8 +331,6 @@ Concept 게이트에서 받아들인 위험(production/gate-checks/2026-10-14-co
   `design/gdd/game-concept.md` → MVP Definition의 측정 표 참고.
   1챕터 요청 1-4/1-5/1-7/1-8은 아직 "경계값을 말해 주는" 옛 문구이니, 가능하면
   다시 쓴 뒤에 테스트하는 것이 좋습니다(퍼즐 문구 재작성은 레벨 디자인 단계에서 진행).
-- 필요 없으면 `prototypes/sqlbini-web/production/`, `design/gdd/production/` 폴더(세션 종료 훅이
-  작업 폴더 기준으로 남긴 로그) 삭제.
 
 ## 참고 위치
 
