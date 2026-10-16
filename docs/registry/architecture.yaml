@@ -78,6 +78,62 @@ state_ownership:
     added: 2026-10-15
     revised: ""
 
+  - state: per_cause_counter_set
+    status: active
+    owner_system: "query-workbench (WorkbenchController, main request); constraint-challenges (each challenge)"
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    interface: "Caller-supplied to HiddenDataGrader.grade/submit(puzzle, sql, counters) (grader rule 5); the Workbench controller resets the main request's set in its request_restarted handler; challenge sets are untouched by Restart (CC 6c) — ADR-0010 §6"
+    write_access: owner-only (the grader updates only the set it is given)
+    referenced_by:
+      - docs/architecture/adr-0010-gameplay-signal-contracts.md
+    added: 2026-10-16
+    revised: ""
+
+  - state: hint_state
+    status: active
+    owner_system: hint-system
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    interface: "HintSystem state (Locked / counters / rule 4a comparison / exhausted / active_time); written through hint_counter(verdict, sql) -> bool and its own handlers of request_opened, request_shown, request_restarted, challenge_mode_changed; announces hints_exhausted(puzzle_id) — ADR-0010 §3, §4, §6, §7"
+    write_access: hint-system-only
+    referenced_by:
+      - docs/architecture/adr-0010-gameplay-signal-contracts.md
+      - docs/architecture/adr-0004-event-bus-and-playtest-log.md
+    added: 2026-10-16
+    revised: ""
+
+  - state: challenge_mode
+    status: active
+    owner_system: constraint-challenges
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    interface: "Signals challenge_mode_changed(open: bool, puzzle_id: StringName), challenge_offered, challenge_offer_expired, challenge_resolved; consumers keep their own derived state (Hint pause, Dialogue dimming, Workbench banner, Progression hold) — ADR-0010 §4"
+    write_access: constraint-challenges-only
+    referenced_by:
+      - docs/architecture/adr-0010-gameplay-signal-contracts.md
+    added: 2026-10-16
+    revised: ""
+
+  - state: session_settings
+    status: active
+    owner_system: foundation-settings
+    adr: docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    interface: "Settings (RefCounted, plain data): ui_scale, reduced_motion, coach_marks, reveal_cps, effective_reveal_cps(); writes only through set_value(key, value) (validated by ConfigSchema); setting_changed(key: StringName) — ADR-0007 §3"
+    write_access: "via Settings.set_value only (onboarding options panel; VS Accessibility Options)"
+    referenced_by:
+      - docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    added: 2026-10-16
+    revised: ""
+
+  - state: request_state
+    status: active
+    owner_system: shift-and-chapter-progression
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    interface: "ShiftProgression signals request_opened(puzzle_id, kind) (state -> Open, logged request_open) and request_shown(puzzle_id, kind) (the workbench displays the request); request_passed, request_restarted, skip_offered / skip_accepted; entry point request_restart(puzzle_id) — ADR-0010 §4, §6"
+    write_access: shift-and-chapter-progression-only
+    referenced_by:
+      - docs/architecture/adr-0010-gameplay-signal-contracts.md
+    added: 2026-10-16
+    revised: ""
+
 # Example:
 #
 # state_ownership:
@@ -215,7 +271,7 @@ interfaces:
     consumers:
       - request-and-reaction-dialogue
     adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
-    signal_signature: "DialogueFeedback {kind, cause, level, error_kind, error_text} from Verdict; error_text only for SQL_ERROR; lines ordered by the Dialogue reaction queue (per synchronous batch, priority reaction < start-over < offers < skip.accept)"
+    signal_signature: "DialogueFeedback {puzzle_id, source, kind, cause, level, error_kind, error_text, challenge} from Verdict or a Run SqlResult; error_text blank for CONTENT_ERROR, TOO_MANY_ROWS, UNAVAILABLE, else the sandbox text; lines ordered by the Dialogue reaction queue (per synchronous batch: reaction/pass line (challenge offer merged) < first-Submit explainer < start-over < skip.offer < skip.accept)"
     referenced_by:
       - docs/architecture/adr-0010-gameplay-signal-contracts.md
     added: 2026-10-16
@@ -257,6 +313,47 @@ interfaces:
       - onboarding-first-shift
     adr: docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
     signal_signature: "Settings (RefCounted, plain data): ui_scale, reduced_motion, coach_marks, reveal_cps; set_value(key, value) validates; setting_changed(key: StringName); to_dict / from_dict for VS Save/Load"
+    referenced_by:
+      - docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    added: 2026-10-16
+    revised: ""
+
+  - contract: grader_grade_vs_submit
+    status: active
+    pattern: direct_call
+    producer: hidden-data-grader
+    consumers:
+      - content-verifier
+      - query-workbench
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    signal_signature: "await HiddenDataGrader.grade(puzzle, sql, counters) -> Verdict (no side effects: no hint_counter, no event, no signal; ContentVerifier and tests); await HiddenDataGrader.submit(puzzle, sql, counters) -> Verdict (player path only: grade -> hint_counter -> submit event -> verdict_given -> return, no await after grade)"
+    referenced_by:
+      - docs/architecture/adr-0010-gameplay-signal-contracts.md
+      - docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
+    added: 2026-10-16
+    revised: ""
+
+  - contract: input_activity
+    status: active
+    pattern: direct_call
+    producer: foundation-input-activity
+    consumers:
+      - hint-system
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    signal_signature: "InputActivity.last_input_ms() -> float (Clock.now_ms() of the last key / mouse button / wheel / pan-gesture event from get_tree().root.window_input, F9 ignored; draft_edited stamps as IME backup)"
+    referenced_by:
+      - docs/architecture/adr-0010-gameplay-signal-contracts.md
+    added: 2026-10-16
+    revised: ""
+
+  - contract: string_table_substitution
+    status: active
+    pattern: direct_call
+    producer: foundation-string-table
+    consumers:
+      - all-presentation-systems
+    adr: docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    signal_signature: "StringTable.text(id, args) substitutes {name} placeholders in a single pass (an inserted value is never rescanned); String.format is never used on player-facing text; dev builds warn on a {name} with no argument"
     referenced_by:
       - docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
     added: 2026-10-16

@@ -99,3 +99,19 @@ gate reports and GDD review logs; earlier entries are reconstructed from those.
 | 2026-10-16 | Shift-flow screens replace the work surface only; the counter strip stays visible | Layout only | Claude | `design/ux/shift-flow.md` |
 | 2026-10-16 | Renderer spike on Linux (data only; renderer choice left to ADR-0005 after the Windows run) | — | Claude | `prototypes/renderer-spike-2026-10-16/` |
 
+
+## Architecture re-review and acceptance (session 10)
+
+| Date | Decision | Impact | By | Source |
+|---|---|---|---|---|
+| 2026-10-16 | `/architecture-review` (session 10): CONCERNS — no conflict among Accepted ADRs; ADR-0007/0010 need amendments; 3 engine issues probed (dialogs block `_input` and F9; `String.format` cannot escape) | No game impact | Claude (review) | `docs/architecture/architecture-review-2026-10-16.md` |
+| 2026-10-16 | First-Submit explainer shows after the verdict reaction (rec.) | Player sees the result first | User | ADR-0010 §5 |
+| 2026-10-16 | Invalid per-puzzle hint override: CI failure, global value at load, puzzle never withheld (rec.) | A typo in a hint number cannot remove a puzzle | User | ADR-0007 §1 |
+| 2026-10-16 | Amend ADR-0007, then **Accepted** (rec.) | Dialogue / Hint / config stories unblocked | User | ADR-0007 |
+| 2026-10-16 | Amend ADR-0010 + text fixes to ADR-0001…0006 + architecture.md v2, then ADR-0010 **Accepted** (rec.) | Cross-system stories unblocked | User | ADR-0010 |
+| 2026-10-16 | Amendment details: `grade()`/`submit()` split, `request_opened`/`request_shown`, challenge signals, `line_requested`, input and F9 via `root.window_input`, F9 note only without an open dialog, own `{name}` substitution, `verify_parallelism` in `content.json` | Code structure only; F9 during a dialog records the help marker without a note | Claude | ADRs 0003, 0004, 0006, 0007, 0010 |
+| 2026-10-16 | Workbench SUBMIT_ERROR strip sits directly under the editor (GDD placement), not on the receipt (rec.) | Error read next to the query; editor a line or two shorter; UX spec changes, GDD unchanged | User | `/ux-review` query-workbench S1 |
+| 2026-10-16 | Verdict stamp and strip clear on any editor edit (GDD rule 12) (rec.) | No stale PASS beside an edited query; UX spec + IP-08 change | User | `/ux-review` query-workbench S2 |
+| 2026-10-16 | After the Closing shift: shift screen shows "Chapter complete" with the chapter list as its action (no *Stop for today*) (rec.) | Replays/challenges stay reachable; UX spec only | User | `/ux-review` shift-flow S3 |
+| 2026-10-16 | Shift button disabled in challenge mode with a visible reason ("Leave the dare first") (rec.) | UX specs (shift-flow + workbench) | User | `/ux-review` shift-flow S5 |
+| 2026-10-16 | Shift-flow spec follows the GDD for cross-shift challenge clears (separate payslip line), side requests + dare start on the chapter list, all-unavailable payslip note; "unavailable" mark = word only, no en dash (rec. for OQ2) | Spec catches up with Approved GDD rules; GDD Visual wording "– unavailable" → recommendation | Claude | `/ux-review` shift-flow |

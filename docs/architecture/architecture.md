@@ -2,13 +2,13 @@
 
 ## Document Status
 
-- Version: 1
-- Last Updated: 2026-10-15
+- Version: 2
+- Last Updated: 2026-10-16
 - Engine: Godot 4.7.2 (GDScript) + godot-sqlite v4.9 (GDExtension, `compatibility_minimum = "4.7"`)
 - Workflow tier: `standard` — system layer map + critical ADR list (module ownership, data flow and API boundaries kept to what the Foundation ADRs need)
 - GDDs Covered: all 11 MVP GDDs (Approved) — hidden-data-grader, puzzle-definition-and-datasets, sql-execution-sandbox, query-workbench, hint-system, constraint-challenges, shift-and-chapter-progression, request-and-reaction-dialogue, store-manual, onboarding-first-shift, playtest-log; plus `game-concept.md`, `systems-index.md`, `design/art/art-bible.md` §8 (display chain, budgets)
-- ADRs Referenced: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0006 — all **Accepted** 2026-10-15 after `/architecture-review` (amended per `architecture-review-2026-10-15.md`); ADR-0005 pending the Windows spike; rest planned in [Required ADRs](#required-adrs)
-- Review: `docs/architecture/architecture-review-2026-10-15.md`; permanent requirement IDs: `docs/architecture/tr-registry.yaml` (60), matrix: `docs/architecture/requirements-traceability.md`
+- ADRs Referenced: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0006 — **Accepted** 2026-10-15 after `/architecture-review` (amended per `architecture-review-2026-10-15.md` and the 2026-10-16 re-review); ADR-0007 (tuning config, string tables, settings) and ADR-0010 (gameplay signal contracts) — **Accepted** 2026-10-16 (amended per `architecture-review-2026-10-16.md`); ADR-0005 not written (pending the Windows spike); ADR-0008, ADR-0009 planned in [Required ADRs](#required-adrs)
+- Reviews: `docs/architecture/architecture-review-2026-10-16.md` (latest), `architecture-review-2026-10-15.md`; permanent requirement IDs: `docs/architecture/tr-registry.yaml` (60), matrix: `docs/architecture/requirements-traceability.md`
 - Inputs carried forward: Technical Director items from `production/gate-checks/2026-10-15-systems-design-to-technical-setup.md`
 - TD-ARCHITECTURE: 2026-10-15 — skipped — lean mode
 - LP-FEASIBILITY: 2026-10-15 — skipped — lean mode
@@ -122,16 +122,18 @@ or is covered by its GDD's own formulas (pure logic, no architectural decision).
 │                ManualView · HintPanel · Payslip / chapter list · Coach   │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ FEATURE        HintSystem · ConstraintChallenges · ShiftProgression      │
-│                DialogueDirector · StoreManual · Onboarding               │
-│                PlaytestRecorder (subscriber)                             │
+│                DialogueDirector (+ reaction queue) · StoreManual         │
+│                Onboarding · PlaytestRecorder (subscriber)                │
+│                GameplayWiring (connects every gameplay signal, ADR-0010) │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ CORE           HiddenDataGrader · WorkbenchController (draft/Run/Submit) │
 │                RunMatcher (visible match bit, via the grader)            │
+│                ContentVerifier (separate object above the grader)        │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ FOUNDATION     SqlSandbox (+ SqlLexer, ExecutionRunner) · PuzzleRepository│
-│                (loader, dataset resolver, ContentVerifier, content hash) │
-│                EventBus · GameConfig (tuning) · StringTable · Clock      │
-│                BuildFlavour (dev / playtest / release)                   │
+│                (loader, dataset resolver, content hash, reference cache) │
+│                EventBus · GameConfig (tuning) · StringTable · Settings   │
+│                Clock · InputActivity · BuildFlavour (dev/playtest/rel.)  │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ PLATFORM       Godot 4.7.2 (Forward+ today — ADR-0005) · godot-sqlite 4.9│
 │                user:// filesystem · OS process/thread primitives         │
@@ -155,6 +157,15 @@ or is covered by its GDD's own formulas (pure logic, no architectural decision).
    rule 9), `Clock` (monotonic time, injectable for the fake-clock tests that the
    Hint, Dialogue and Log ACs require), and `BuildFlavour` (dev / playtest /
    release — Puzzle Definition load states and the Playtest flag both depend on it).
+   ADR-0007 adds `Settings` (session player settings) and ADR-0010 adds
+   `InputActivity` (hint input-activity feed) to this group.
+
+`ContentVerifier` sits in Core, not inside `PuzzleRepository`: it is built with
+`(repository, sandbox, grader)` and pushes load states and reference results into
+the repository through setters, so the repository holds nothing upstream
+(ADR-0003 §4, ADR-0006). `GameplayWiring` is the one function that connects
+gameplay signals (ADR-0010 §1); it is listed with the Feature layer because it
+runs after every feature system exists.
 
 **Engine-risk flags for Core and Foundation**
 
@@ -175,23 +186,25 @@ Presentation modules follow their GDD's "Interactions" table.
 |---|---|---|---|---|
 | **SqlSandbox** | Statement check, DB build from a resolved dataset, temp-view wrapper, fetch, result record, execution thread/process, timeout | `execute(request) -> SqlResult` (async), `tokenize(sql)` | Resolved dataset (PuzzleRepository), `GameConfig` (`grader_row_cap`, `exec_time_limit_ms`) | godot-sqlite `SQLite` (`open_db`, `query`, `query_with_bindings`, `query_result`, `close_db`); `Thread` or `OS.create_process`/`OS.execute_with_pipe` (ADR-0001) |
 | **SqlLexer** (part of Sandbox) | Token kinds `WORD, NUMBER, STRING, QUOTED_IDENT, COMMENT, PUNCT` | `tokenize`, `statement_shape(tokens)` (count, verb, recursive) | — | none (pure GDScript) |
-| **PuzzleRepository** | Chapter + puzzle files, dataset resolution, content hash, load state, reference-result cache | `get_puzzle(id)`, `get_chapter(id)`, `resolve_dataset(puzzle, dataset_id)`, `reference_result(puzzle, dataset_id)` | SqlSandbox (verifier + reference runs), `BuildFlavour`, `GameConfig` | `FileAccess`, `DirAccess`, `JSON` (if JSON is chosen) |
-| **ContentVerifier** (part of Repository) | `puzzle_valid` checks + report; also the manual/hint/ghost-text content checks | `verify_all() -> Report` (headless CLI + load) | Grader (cause selection), Sandbox | runs under `godot --headless -s` in CI |
-| **EventBus** | Event catalogue (declared names + required fields), dispatch | `emit_event(name, puzzle_id, data)`, typed signals | `Clock`, `BuildFlavour` | Signals |
+| **PuzzleRepository** | Chapter + puzzle files, dataset resolution, content hash, load state, reference-result cache | `get_puzzle(id)`, `get_chapter(id)`, `resolve_dataset(puzzle, dataset_id)`, `reference_result(puzzle, dataset_id)`, `content_hash(puzzle)`; setters `set_load_state` / `set_reference_result` (ContentVerifier only) | `BuildFlavour`, `GameConfig` — no upstream service (ADR-0003 §4) | `FileAccess`, `JSON` (`JSON.new().parse()`) |
+| **ContentVerifier** (Core, separate object) | `puzzle_valid` + chapter checks + report; CI-only manual/hint/ghost-text/challenge check modules | `verify_all(include_ci_checks) -> ContentReport` (awaitable; headless CLI + load) | PuzzleRepository (setters), Sandbox, Grader `grade()` (never `submit()`); ≤ `verify_parallelism` in flight | runs under `godot --headless -s` in CI |
+| **EventBus** | Event catalogue (declared names + required fields), dispatch | `emit_event(event_name, puzzle_id: Variant, data)`, `event_recorded(record)`, `undeclared_count()` | `Clock`, `PuzzleRepository` (hash) | Signals |
 | **GameConfig** | All tuning-knob values, defaults, clamps, validation errors | typed getters | data files | `FileAccess`, `JSON` |
-| **StringTable** | Player-facing text by id; missing-id behaviour | `text(id, args)` | `BuildFlavour`, EventBus (missing-id report) | `TranslationServer` / `tr()` — see ADR-0007 |
+| **StringTable** | Player-facing text by id (own table over English JSON); missing-id behaviour | `text(id, args)` (single-pass `{name}` substitution), `grapheme_len(text)` | `BuildFlavour`, `PuzzleRepository` (`puzzle:<id>:<field>` ids); missing ids reported with `push_warning` (dev) / `push_error` (others), not log events | `TextServerManager` (graphemes); **no** `tr()` / `TranslationServer` at MVP (ADR-0007 §2) |
+| **Settings** | Session player settings (`ui_scale`, `reduced_motion`, `coach_marks`, `reveal_cps`) | getters, `effective_reveal_cps()`, `set_value(key, value)`, `setting_changed(key)`, `to_dict` / `from_dict` | `GameConfig` (`ConfigSchema` validation) | none (plain data, ADR-0007 §3) |
+| **InputActivity** | Time of the last player input (hint `last_input_t`) | `last_input_ms() -> float` | `Clock` | `get_tree().root.window_input` (not `_input`), `PROCESS_MODE_ALWAYS` (ADR-0010 §7) |
 | **Clock** | Monotonic ms, window focus state, UTC wall time (ADR-0006) | `now_ms()`, `is_focused()`, `wall_iso()` | — | `Time.get_ticks_usec`, `NOTIFICATION_APPLICATION_FOCUS_*` |
-| **HiddenDataGrader** | Verdict pipeline, cause selection, per-cause counters (in the caller's set), neutral statements | `submit(puzzle, sql, counters) -> Verdict` (async), `run_match(puzzle, result) -> bool` | Sandbox, Repository, EventBus | none |
-| **WorkbenchController** | Draft text per puzzle, last Run result, last verdict, "checking…" state | `run()`, `submit()`, `restart()`, `draft_is_empty()` | Sandbox, Grader, Progression (open request, Restart), EventBus | none |
+| **HiddenDataGrader** | Verdict pipeline, cause selection, per-cause counters (in the caller's set), neutral statements | `grade(puzzle, sql, counters) -> Verdict` (async, no side effects), `submit(puzzle, sql, counters) -> Verdict` (async: `grade` → `hint_counter` → `submit` event → `verdict_given`), `run_match(puzzle, result) -> bool` | Sandbox, Repository, EventBus, `hint_counter` Callable | none |
+| **WorkbenchController** | Draft text per puzzle, last Run result, last verdict, "checking…" state, the main request's per-cause counter set | `run()`, `submit()`, `restart()` (the `request_restarted` handler), `draft_is_empty()` (bound as Progression's Callable); signals `run_started`, `run_finished`, `submit_started`, `draft_edited`, `line_requested` (ADR-0010 §4) | Sandbox, Grader, Progression signals (`request_shown`, `request_restarted`), EventBus | none |
 
 ```
-            WorkbenchView ─────► WorkbenchController ─────► HiddenDataGrader
-                 │                     │   │                     │
-  Dialogue/Hint/ │                     │   └──────► SqlSandbox ◄─┘
-  Challenges/    ▼                     ▼               ▲   ▲
-  Manual   ─► EventBus ◄──── every module        PuzzleRepository
-                 │                                     │
-          PlaytestRecorder                    GameConfig · StringTable · Clock
+            WorkbenchView ─────► WorkbenchController ─────► HiddenDataGrader ◄── grade() ── ContentVerifier
+                 │                     │   │                     │                      │   │ setters
+  Dialogue/Hint/ │                     │   └──────► SqlSandbox ◄─┴──────────────────────┘   ▼
+  Challenges/    ▼                     ▼                                          PuzzleRepository
+  Manual   ─► EventBus ◄──── every module            (repository holds nothing upstream)
+                 │
+          PlaytestRecorder            GameConfig · StringTable · Settings · Clock · InputActivity
 ```
 
 ## Data Flow
@@ -203,10 +216,11 @@ CodeEdit ──Ctrl+Enter──► WorkbenchController.run()        [main thread
    └─► SqlSandbox.execute({sql, dataset: visible, mode: query})
           ├─ lexer check (sync, main thread, µs)           → error result at once
           └─ build DB + view + fetch  ═══ worker/process ═══►  (crosses thread boundary)
-   ◄── SqlResult (signal, delivered on main thread via call_deferred)
+   ◄── SqlResult (main thread: the runner's next `_process` poll completes a per-request completion object — ADR-0001 §3, ADR-0002 §4)
    ├─► Grader.run_match(puzzle, result) → bool (reference from cache)
    ├─► WorkbenchView shows table + marks + note
-   ├─► DialogueDirector (error_kind / error_text only)
+   ├─► run_finished(puzzle_id, result_ok, rows_match, feedback) → Dialogue
+   │     (Kenji's Run-error reaction from `DialogueFeedback.from_run_result`), Onboarding
    └─► EventBus "run" {sql, dataset, ok, error_kind, rows, match}
 ```
 
@@ -215,11 +229,13 @@ If no result arrives within 200 ms, the view shows "checking…" (QW Game Feel);
 
 ### Submit — the 300 ms path
 
-`WorkbenchController.submit()` → `HiddenDataGrader.submit()` awaits
+`WorkbenchController.submit()` → `HiddenDataGrader.submit()` → `grade()` awaits
 `2 + D` sandbox executions **sequentially** (pre-check, determinism, then each
-dataset; references from the cache) → `Verdict` → Hint System (verdict + SQL,
-returns `hint_counted`) → EventBus `submit` → Dialogue (feedback key only) and
-Progression (PASS / UNAVAILABLE). Missing/extra rows travel **only** inside the
+dataset; references from the cache) → `Verdict` → Hint System through the
+`hint_counter` Callable (verdict + SQL, returns `hint_counted`) → EventBus
+`submit` → `verdict_given` → Dialogue (`DialogueFeedback` only), Progression
+(PASS / UNAVAILABLE), Constraint Challenges → `Verdict` returned to the
+controller (ADR-0010 §3; no `await` after `grade()`). Missing/extra rows travel **only** inside the
 `submit` event to the recorder (grader rule 11; enforced by the event's field
 schema — ADR-0004). While a submit is in flight a second Run/Submit is
 refused by the controller; a newer **Run** may start while an older Run is in
@@ -228,22 +244,75 @@ back through an injected `hint_counter` Callable (ADR-0004 §2).
 
 ### Event path
 
-Every system emits through `EventBus.emit_event(name, puzzle_id, data)`. The
-bus validates `name` against the catalogue (playtest-log rule 4), stamps
-`t_ms` (Clock) and forwards to typed signals. Gameplay subscribers (Hint ←
-verdict, Progression ← PASS, Workbench ← Restart) use **direct typed signals
-between modules**, not the bus — the bus is the record, not the control path.
+Every system emits through `EventBus.emit_event(event_name, puzzle_id, data)`
+(`puzzle_id: Variant`, `null` when no puzzle applies). The bus validates
+`event_name` against the catalogue (playtest-log rule 4), stamps `t_ms` and
+`wall` (Clock) and emits `event_recorded` for the recorder. Gameplay
+(Progression ← PASS, Workbench ← Restart — ADR-0010) uses **producer-owned
+typed signals connected in `GameplayWiring`**, not the bus; the Hint System gets
+each verdict only through the grader's `hint_counter` Callable (ADR-0004 §2) —
+the bus is the record, not the control path.
 This keeps gameplay working when the recorder is disabled (release) or stopped
 (write failure).
 
+### Gameplay signal flows
+
+The contract is ADR-0010 §4 (signal catalogue — names, payloads and owners are
+binding); this is a summary. Every connection is made once, in
+`GameplayWiring.connect_all(services)`; synchronous answers use injected
+Callables (`hint_counter`, `draft_is_empty`).
+
+- **Verdict fan-out**: `verdict_given(Verdict)` → Progression (PASS /
+  UNAVAILABLE; ignores challenge verdicts), Dialogue (`DialogueFeedback` only),
+  Constraint Challenges (challenge verdicts), Onboarding (Guided "start over").
+  The Workbench gets the full `Verdict` as the return of `await submit()`.
+- **`request_opened` vs `request_shown`**: `request_opened` is the state change
+  to `Open` (logged `request_open`) → Hint, Constraint Challenges (offer expiry),
+  Dialogue (side messages only). `request_shown` is the workbench displaying the
+  request (after the PASS hold, after the briefing, or when the player opens a
+  side / replay; never while challenge mode is open) → Workbench, Dialogue
+  (request line), Hint (`shown(p)`), Store Manual (page unlock), Onboarding.
+- **Briefing end → first request**: `shift_started` → Dialogue briefing →
+  `briefing_finished` → Progression opens the first main request and the side
+  requests; on Day One's Morning the main request waits for the onboarding answer.
+- **Onboarding answer**: Onboarding `line_requested` ("Ever used SQL?") →
+  Dialogue renders the choice → `choice_made` → Onboarding →
+  `sql_question_answered(knows_sql)` → Progression (1-1 opens).
+- **Restart**: the Workbench view confirms, then calls
+  `ShiftProgression.request_restart(puzzle_id)` → logs `request_restart`
+  (`draft_was_empty` from the `draft_is_empty` Callable) → `request_restarted` →
+  Workbench controller (draft, Run, verdict, per-cause counters, "↷ Leave it for
+  Kenji"), Hint System, Onboarding, Dialogue (drops `skip.offer`). Each resets only
+  its own state; Constraint Challenges is not a consumer (CC 6c).
+- **Challenge mode**: `request_passed` → Constraint Challenges →
+  `challenge_offered` (merged into the pass-line bubble) → `choice_made` (Try it /
+  Later) → `challenge_mode_changed(open, puzzle_id)` → Hint (hidden, `active_time`
+  paused), Dialogue (tickets dimmed), Workbench (banner, own draft), Progression
+  (shift never advances while open); `challenge_resolved` → Dialogue, Progression;
+  `challenge_offer_expired` → Dialogue.
+- **Reaction queue** (ADR-0010 §5): Dialogue enqueues every character line and
+  flushes once per synchronous batch with `call_deferred`, ordered by priority —
+  verdict / error reaction and pass line (a challenge offer merges into it) →
+  first-Submit explainer → onboarding "start over" → `skip.offer` → `skip.accept`.
+  Same-frame line order never depends on signal connection order.
+- **Input activity** (ADR-0010 §7): `InputActivity` reads `root.window_input`;
+  the Hint System pulls `last_input_ms()` and `Clock.is_focused()`; its pause comes
+  from its own state (`challenge_mode_changed`, `request_shown`).
+
 ### Boot order
 
-1. `BuildFlavour`, `Clock`, `GameConfig` (validation errors are fatal in dev, logged + defaults in release)
-2. `StringTable`
-3. `EventBus` (+ `PlaytestRecorder` if the playtest flag is on → `AwaitingSetup`)
-4. `SqlSandbox` (start worker / helper process — ADR-0001)
-5. `PuzzleRepository` → load chapter, resolve datasets; `HiddenDataGrader`; then `ContentVerifier(repository, sandbox, grader)` computes references, runs puzzle checks, pushes load states and the reference cache into the repository — executions on workers, 6 in flight (≈ 200 for Chapter 1 ≈ 0.6 s at 60 fps, ADR-0003); withheld puzzles reported
-6. Progression → Dialogue → Workbench scene
+`ServicesFactory.build` (ADR-0006 §2): BuildFlavour → Clock + FocusListener
+→ GameConfig → StringTable → Settings → EventBus (+ PlaytestRecorder) →
+SqlSandbox → PuzzleRepository → HintSystem → HiddenDataGrader(`hint_counter`
+bound to the Hint System) → ContentVerifier → `await verify_all(false)` →
+other feature systems → `GameplayWiring.connect_all(services)` (ADR-0010 §1)
+→ InputActivity (last child of `Main`) → play scenes. Wiring runs after
+verification, so nothing the verifier does can reach a gameplay consumer.
+
+Notes: `GameConfig` validation errors are fatal in dev, defaults + `push_error`
+in playtest/release (ADR-0007 §1). The verifier keeps up to `verify_parallelism`
+executions in flight (default 6; ≈ 200 for Chapter 1 ≈ 0.6 s at 60 fps,
+ADR-0003) and calls the grader's side-effect-free `grade()`.
 
 ### Save/load
 
@@ -261,7 +330,7 @@ the shapes the ADRs start from.
 class_name SqlRequest  # RefCounted
 var sql: String
 var dataset: ResolvedDataset      # schema + rows, from PuzzleRepository
-var mode: StringName              # &"query" | &"scratch" (Alpha)
+var mode: StringName              # &"query" (MVP) | &"scratch" (Alpha) | &"modify" (Alpha)
 
 class_name SqlResult   # RefCounted, immutable after creation
 var status: StringName            # &"ok" | &"error"
@@ -284,6 +353,9 @@ func execute(request: SqlRequest) -> SqlResult   # awaitable coroutine
 # Pure, synchronous, main-thread safe.
 func tokenize(sql: String) -> Array[SqlToken]   # SqlToken {kind, text}
 
+# Internally: execute() awaits a per-request completion object that the
+# runner's _process poll completes (ADR-0001 §3, ADR-0002 §4).
+
 # --- PuzzleRepository (Foundation) — ADR-0003 ---
 func get_chapter(id: StringName) -> ChapterDef
 func get_puzzle(id: StringName) -> PuzzleDef        # null if withheld
@@ -292,18 +364,20 @@ func resolve_dataset(puzzle: PuzzleDef, dataset_id: StringName) -> ResolvedDatas
 func reference_result(puzzle: PuzzleDef, dataset_id: StringName) -> SqlResult  # cached
 
 # --- EventBus (Foundation) — ADR-0004 ---
-func emit_event(name: StringName, puzzle_id: StringName, data: Dictionary) -> void
-# Invariant: name ∈ catalogue and data has exactly the declared fields,
+func emit_event(event_name: StringName, puzzle_id: Variant, data: Dictionary) -> void
+# Invariant: event_name ∈ catalogue and data has exactly the declared fields,
 # else the event is rejected and counted. Never throws into gameplay.
 signal event_recorded(record: Dictionary)
 
-# --- HiddenDataGrader (Core) ---
-func submit(puzzle: PuzzleDef, sql: String, counters: CauseCounters) -> Verdict  # awaitable
+# --- HiddenDataGrader (Core) — ADR-0010 §3 ---
+func grade(puzzle: PuzzleDef, sql: String, counters: CauseCounters) -> Verdict   # awaitable; no side effects (verifier, tests)
+func submit(puzzle: PuzzleDef, sql: String, counters: CauseCounters) -> Verdict  # awaitable; player path: grade → hint_counter → submit event → verdict_given
 func run_match(puzzle: PuzzleDef, visible_result: SqlResult) -> bool
 ```
 
-**Invariants callers must respect:** one in-flight `execute` per workbench (the
-controller enforces it); no caller reads hidden-dataset rows except the grader
+**Invariants callers must respect:** a Submit is exclusive (no Run or Submit
+while one is in flight); a newer Run may start while an older Run is in flight
+and the older result is discarded by sequence number (ADR-0002 §6); no caller reads hidden-dataset rows except the grader
 and the verifier; `SqlResult` and `PuzzleDef` are treated as immutable.
 
 **Engine type check:** `RefCounted`, `PackedStringArray`, typed `Array[...]`,
@@ -315,10 +389,13 @@ and the verifier; `SqlResult` and `PuzzleDef` are treated as immutable.
 v1 snapshot: no ADRs existed when this document was written. Current state:
 see `docs/architecture/architecture-review-2026-10-15.md` (5 ADRs reviewed,
 2 blocking conflicts fixed, all 5 Accepted) and
-`docs/architecture/requirements-traceability.md` (33 / 60 covered).
-New from the review: **ADR-0010 Gameplay signal contracts** (verdict fan-out,
-challenge mode, reaction queue, input-activity feed) — should-have before the
-first Grader/Hint/Dialogue story.
+`docs/architecture/requirements-traceability.md`.
+Written 2026-10-16: **ADR-0007 Tuning config, string tables and session
+settings** (`GameConfig` + `ConfigSchema`, own `StringTable`, `Settings`) and
+**ADR-0010 Gameplay signal contracts** (signal catalogue, `grade()` / `submit()`
+split, reaction queue, Restart, `InputActivity`), both re-reviewed, amended and **Accepted** the same day.
+ADR-0005 is not written (pending the Windows spike); ADR-0008 and ADR-0009 are
+planned.
 
 ## Required ADRs
 
@@ -339,7 +416,8 @@ Numbering is provisional (`/architecture-decision` assigns the final number).
 
 | # | ADR | Before | Covers |
 |---|---|---|---|
-| ADR-0007 | Tuning config and string tables (data-file format, range validation and clamping, `tr()`/`TranslationServer` vs own table, missing-id behaviour, grapheme-count lengths) | First Dialogue / Hint story | TR-config-001, TR-dialogue-001 |
+| ADR-0007 | Tuning config, string tables and session settings — **Accepted** 2026-10-16 (`docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md`) | First Dialogue / Hint story | TR-config-001, TR-dialogue-001, -005, TR-onboarding-002 |
+| ADR-0010 | Gameplay signal contracts — **Accepted** 2026-10-16 (`docs/architecture/adr-0010-gameplay-signal-contracts.md`) | First story that emits or consumes a cross-system signal | TR-grader-006, -007, TR-challenge-003, TR-dialogue-006, TR-hint-003 |
 | ADR-0008 | Workbench editor: `CodeEdit` setup, SQL highlighting, keyboard map and dual-focus handling, IME commit, `ui_scale` via Theme | First Workbench story (after the IME probe, QW OQ4) | TR-workbench-001…004 |
 | ADR-0009 | Counter strip rendering: 320×30 `SubViewport`, palette-LUT `canvas_item` shader, integer ×k placement, `strip_to_ui()` | First strip / Dialogue presentation story | TR-dialogue-003 |
 

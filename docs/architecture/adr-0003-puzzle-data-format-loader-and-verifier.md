@@ -7,7 +7,7 @@ Accepted
 2026-10-15
 
 ## Last Verified
-2026-10-15
+2026-10-16 (text amendments after `/architecture-review` 2026-10-16 — no decision changed)
 
 ## Decision Makers
 tingoofriend (developer) + Claude (`/architecture-decision`, autonomous mode, lean review)
@@ -76,7 +76,7 @@ assets/data/content/
   chapters/ch1/chapter.json        # id, today, schema, base datasets, hidden datasets (as ops), shifts
   chapters/ch1/puzzles/1-05.json   # one puzzle per file; file stem = puzzle id
   manual/pages.json                # Store Manual pages + trap_rules (SM rules 1–4)
-  config/content.json              # visible_rows_max, traps_min, alt_min, feedback_max_level
+  config/content.json              # visible_rows_max, traps_min, alt_min, feedback_max_level, verify_parallelism (4–8, default 6)
 ```
 - **Puzzle list** in `chapter.json`: the ordered puzzle ids of the chapter. The
   loader opens `puzzles/<id>.json` for each listed id and never relies on
@@ -145,7 +145,10 @@ sequential chain costs one frame per execution.
 
 It runs:
 - `puzzle_valid` (H, R, A, T, F, K, O, V, C) using the real `HiddenDataGrader`
-  for cause selection and the real `SqlSandbox` for every query;
+  for cause selection — through its side-effect-free `grade()`, never
+  `submit()` (ADR-0010 §3: no `hint_counter`, no `submit` event, no
+  `verdict_given` at boot); several `grade()` calls run concurrently, bounded
+  by `verify_parallelism` — and the real `SqlSandbox` for every query;
 - chapter checks (duplicate ids, `boss` flag vs position — R-04, constraint
   field shape — R-03, and the ordered puzzle-id list in `chapter.json` agrees
   with each puzzle's `order`);
@@ -206,7 +209,7 @@ func set_load_state(id: StringName, state: StringName, reason: String) -> void  
 func set_reference_result(puzzle_id: StringName, dataset_id: StringName, result: SqlResult) -> void  # verifier only
 
 class_name ContentVerifier extends RefCounted
-func _init(repository: PuzzleRepository, sandbox: SqlSandbox, grader: HiddenDataGrader, parallelism: int = 6) -> void
+func _init(repository: PuzzleRepository, sandbox: SqlSandbox, grader: HiddenDataGrader, parallelism: int) -> void  # parallelism from content.json (ADR-0007 schema)
 func verify_all(include_ci_checks: bool) -> ContentReport                # awaitable; runs SQL; false at game load
 
 class_name ContentReport extends RefCounted
@@ -315,7 +318,7 @@ migrated.
 
 ## Related
 - ADR-0001, ADR-0002 — sandbox runner and API the verifier uses
-- ADR-0004 (planned) — build flavour (`withheld` rules), content hash in log events
-- ADR-0005 (planned) — export include filter for JSON
+- ADR-0004 — build flavour (`withheld` rules), content hash in log events
+- ADR-0005 (not yet written — after the Windows spike) — export include filter for JSON
 - `design/gdd/puzzle-definition-and-datasets.md`, `hidden-data-grader.md`, `store-manual.md`, `onboarding-first-shift.md`, `constraint-challenges.md`, `playtest-log.md`
 - `design/levels/chapter-1-puzzles.md`, `prototypes/sqlbini-web/ch1.py` — Chapter 1 source content

@@ -30,7 +30,7 @@
 #
 # STATUS VALUES: active | deprecated | "superseded-by: TR-[system]-NNN"
 version: 1
-last_updated: "2026-10-15"
+last_updated: "2026-10-16"  # session-10 review: no new IDs, no wording change
 
 requirements:
   - id: TR-sandbox-001

@@ -7,7 +7,7 @@ Accepted
 2026-10-15
 
 ## Last Verified
-2026-10-15
+2026-10-16 (text amendments after `/architecture-review` 2026-10-16 — no decision changed)
 
 ## Decision Makers
 tingoofriend (developer) + Claude (`/architecture-decision`, autonomous mode, lean review)
@@ -72,19 +72,29 @@ progression → dialogue → workbench) must also be enforced somewhere.
    var clock: Clock
    var config: GameConfig
    var strings: StringTable
+   var settings: Settings          # ADR-0007 §3
    var bus: EventBus
+   var input_activity: InputActivity   # ADR-0010 §7
    var sandbox: SqlSandbox
    var puzzles: PuzzleRepository
+   var hints: HintSystem           # before the grader: it backs `hint_counter`
    var grader: HiddenDataGrader
    var verifier: ContentVerifier   # built after the grader: (puzzles, sandbox, grader) — ADR-0003 §4
-   # feature systems (hints, progression, challenges, dialogue, manual, onboarding) added by their epics
+   # other feature systems (progression, challenges, dialogue, manual, onboarding) added by their epics
    ```
+   **Boot order** (`ServicesFactory.build`): BuildFlavour → Clock + FocusListener
+   → GameConfig → StringTable → Settings → EventBus (+ PlaytestRecorder) →
+   SqlSandbox → PuzzleRepository → HintSystem → HiddenDataGrader(`hint_counter`
+   bound to the Hint System) → ContentVerifier → `await verify_all(false)` →
+   other feature systems → `GameplayWiring.connect_all(services)` (ADR-0010 §1)
+   → InputActivity (last child of `Main`) → play scenes. Wiring runs after
+   verification, so nothing the verifier does can reach a gameplay consumer.
    Node services (`SqlSandbox` with its runner, `EventBus`, the clock's focus
    listener, `PlaytestRecorder`) are children of `Main`, so they live for the
    whole run (ADR-0002: the sandbox is never freed with a request in flight).
 3. **Injection rules.**
    - `RefCounted` systems take their dependencies in `_init(...)` (e.g.
-     `HiddenDataGrader.new(sandbox, puzzles, bus)`).
+     `HiddenDataGrader.new(sandbox, puzzles, bus, hint_counter)`).
    - Scene scripts expose `func setup(services: Services) -> void`, store what
      they need in typed fields, and pass narrower dependencies to their
      children. A scene must work with any `Services` it is given, real or fake.
@@ -104,7 +114,10 @@ progression → dialogue → workbench) must also be enforced somewhere.
    (`@abstract` is a 4.5 feature recorded in `current-best-practices.md`; it
    avoids typed-return bodies on the base class under the 4.7 rule.)
    `RealClock` uses `Time.get_ticks_usec()` and a small `FocusListener` node
-   under `Main` that tracks `NOTIFICATION_APPLICATION_FOCUS_IN/OUT`.
+   under `Main` that tracks `NOTIFICATION_APPLICATION_FOCUS_IN/OUT`, seeded at
+   boot from `DisplayServer.window_is_focused()` (the notifications only report
+   changes — architecture review 2026-10-16, E6; check on desktop, headless
+   disagrees with `root.has_focus()`).
    `FakeClock` (tests) exposes `advance(ms)` and `set_focused(bool)`. Every
    time-based rule reads `Clock`: the hint `active_time`, Dialogue hold/reveal
    timers, the sandbox timeout watchdog, log `t_ms`. The engine's `_process`
@@ -133,9 +146,13 @@ main.tscn (Main) ── _ready ──► ServicesFactory.build()
   ├─ SqlSandbox (Node, runner) ← GameConfig
   ├─ EventBus (Node)           ← Clock, PuzzleRepository (hash)
   ├─ PlaytestRecorder (Node, playtest only) ← EventBus, BuildFlavour
+  │   config, strings, settings (ADR-0007)
+  │   hints = HintSystem.new(…)
   │   grader = HiddenDataGrader.new(sandbox, puzzles, bus, hint_counter)
-  │   verifier = ContentVerifier.new(puzzles, sandbox, grader)
+  │   verifier = ContentVerifier.new(puzzles, sandbox, grader, parallelism)
   │   await verifier.verify_all(false)  (loading state)
+  │   other feature systems; GameplayWiring.connect_all(services)  (ADR-0010)
+  ├─ InputActivity (Node, last child) ← Clock, root.window_input
   └─ play scenes: chapter list / workbench / payslip
        scene.setup(services) → add_child(scene)
 ```
@@ -150,7 +167,9 @@ scene script, `ServicesFactory.build(flavour, clock) -> Services`.
 - `RefCounted` systems must receive dependencies through `_init` arguments.
 - Every rule that depends on time must read `Clock`; `Time.*` may be called only inside `RealClock` (incl. `wall_iso()` for ADR-0004's `wall` field). The CI grep checks `src/` excluding `real_clock.gd`; tests and `FakeClock` are not scanned.
 - `ContentVerifier` is built by `ServicesFactory` after the grader; `PuzzleRepository` receives no upstream service (ADR-0003 §4).
-- The grader's `hint_counter: Callable` (ADR-0004 §2) is bound by `ServicesFactory` once the Hint System exists; until its epic lands it is a stub returning `false`.
+- The grader's `hint_counter: Callable` (ADR-0004 §2) is bound by `ServicesFactory` to the Hint System, which is therefore built before the grader; until the Hint epic lands it is a stub returning `false`.
+- A service must never be passed as a `Callable.bind()` argument to another service (bound arguments are held strongly — architecture review 2026-10-16, E8).
+- Gameplay signals are connected only in `GameplayWiring.connect_all`, after `verify_all` (ADR-0010 §1).
 - **Ownership is one-way** (probed: two `RefCounted` objects referencing each other are never freed and leak at exit): `Main` / `ServicesFactory` own the services; no service holds the `Services` container; a service that must notify an upstream one does it with a signal (or a `WeakRef`), never a stored strong reference back. EventBus (a Node) may read `PuzzleRepository`; `PuzzleRepository` must not hold the bus.
 - Nothing may wait on `Main.ready`: `_ready` returns at its first `await` (probed), before the services exist. Input is blocked by the loading state until `verify_all(false)` completes and the play scenes are set up.
 - The `FocusListener` node (and the sandbox runner, ADR-0001) must use `process_mode = PROCESS_MODE_ALWAYS` so a paused tree does not freeze focus tracking.

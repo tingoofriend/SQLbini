@@ -7,7 +7,7 @@ Accepted
 2026-10-15
 
 ## Last Verified
-2026-10-15
+2026-10-16 (text amendments after `/architecture-review` 2026-10-16 — no decision changed)
 
 ## Decision Makers
 tingoofriend (developer) + Claude (`/architecture-decision`, autonomous mode, lean review)
@@ -36,7 +36,7 @@ tool is a stdlib-only Python script.
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0003 (`content_hash` on every event). ADR-0006 (composition root) is assumed for wiring but not required to accept this ADR |
+| **Depends On** | ADR-0003 (`content_hash` on every event), ADR-0006 (composition root; `Clock.now_ms()` / `wall_iso()` for `t_ms` and `wall`) |
 | **Enables** | Every system story that emits a declared event; puzzle load states that depend on the build flavour (ADR-0003); the zero-SQL playtest |
 | **Blocks** | Playtest Log epic; `tools/playtest-report`; any story whose AC asserts a log event |
 | **Ordering Note** | Export presets with the `playtest` feature tag are created with ADR-0005 |
@@ -91,7 +91,7 @@ func undeclared_count() -> int
 (The parameter is `event_name`, not `name`: `EventBus` is a `Node`, and `name`
 would shadow `Node.name` — SHADOWED_VARIABLE_BASE_CLASS.)
 `emit_event`:
-1. If `name` is not in the catalogue, or `data` lacks a required field, has an
+1. If `event_name` is not in the catalogue, or `data` lacks a required field, has an
    undeclared field, or a field has the wrong type → **not dispatched**;
    `undeclared_events` += 1 (dev builds also push a warning naming the event).
 2. Builds the record `{t_ms, wall, session, build, event, puzzle, content_hash, data}`:
@@ -103,14 +103,15 @@ would shadow `Node.name` — SHADOWED_VARIABLE_BASE_CLASS.)
 The catalogue is the **only** place event names and fields are declared; a
 system that adds an event edits its GDD, `playtest-log.md` rule 4 and
 `EventCatalog` together. Gameplay systems never subscribe to `event_recorded`;
-they talk through their own typed signals (Hint ← verdict, Progression ← PASS,
-Workbench ← Restart).
+they talk through their own typed signals (ADR-0010: Progression ← PASS,
+Workbench ← Restart; the Hint System gets the verdict only through
+`hint_counter`, below).
 
 **One exception — a value the grader needs back (`hint_counted`).** Hint rule
 4b requires the grader to receive `hint_counted` for each submit before it
 emits the `submit` event, and a signal cannot return a value. The grader
 therefore takes a narrow injected `hint_counter: Callable` —
-`func(verdict: Verdict, sql: String) -> bool` — in its `_init`, bound by
+`func(verdict: Verdict, sql: String) -> bool` (`Verdict` is defined by ADR-0010 §2) — in its `_init`, bound by
 `ServicesFactory` to the Hint System (ADR-0006). The grader depends on the
 callable's shape, not on the Hint type (no Core → Feature dependency). This is
 the pattern for any future synchronous answer between systems; one-way
@@ -150,16 +151,21 @@ second at most; `edit_burst` is coalesced by the Workbench), and one line plus
 move the writer to a dedicated thread with a queue (same file format).
 
 ### 4. F9 facilitator key
-The recorder's `CanvasLayer` handles F9 in `_input()` (before GUI, so it works
-while `CodeEdit` has focus), consumes the event, emits `help_given` at once with
-the current puzzle (or `null`), and opens a one-line note field. Enter, Esc or
+The recorder listens to F9 on **`get_tree().root.window_input`** — not `_input()`:
+with an embedded dialog or popup open (setup prompt, Restart confirmation, the
+`CodeEdit` context menu) the main tree's `_input` receives nothing, while
+`root.window_input` still does (probed 2026-10-16, architecture review E2). It
+works while `CodeEdit` has focus too. It emits `help_given` at once with
+the current puzzle (or `null`), and opens a one-line note field — only when no embedded subwindow is open
+(`get_tree().root.get_embedded_subwindows().is_empty()`); with a dialog open the
+marker is recorded without a note. Enter, Esc or
 5 s without a key closes it, writes a non-empty note as a separate
 `help_note {note}` event (user decision 2026-10-15; `playtest-log.md` rule 7
 updated), and calls `grab_focus()` on the editor —
 keyboard focus only, which is what is needed (4.6 dual focus). F9 must be
 checked by key event type (`InputEventKey`, `keycode == KEY_F9`,
-`pressed and not echo`), never by `event.device` (4.7 device-ID change), and
-consumed with `get_viewport().set_input_as_handled()`. F9 is ignored while the
+`pressed and not echo`), never by `event.device` (4.7 device-ID change). F9 has
+no other binding, so consuming it is not relied on. F9 is ignored while the
 note field is open. Focus returns with a deferred `grab_focus()` on the editor
 after the note field is hidden.
 
@@ -207,7 +213,7 @@ See §2 (`EventBus.emit_event`, `event_recorded`, `undeclared_count`) and §1
 - Hidden-dataset details (`per_dataset`, `missing_count`, `extra_count`) may only appear in `submit` event data; no UI may read them from the bus.
 - Must not check feature tags outside `BuildFlavour`.
 - Release export presets must not carry the `playtest` or `dev` tag.
-- Must handle F9 by key type and keycode in `_input`, never by `event.device`.
+- Must handle F9 from `root.window_input` by key type and keycode, never in `_input` and never by `event.device`.
 - `t_ms` must come from the injectable `Clock` so PL-03 runs with a fake clock.
 
 ## Alternatives Considered
@@ -288,6 +294,7 @@ No production code exists.
 
 ## Related
 - ADR-0003 — `content_hash`, build-dependent `withheld`
-- ADR-0005 (planned) — export presets with feature tags
-- ADR-0006 (planned) — composition root wiring `EventBus`, `Clock`, `BuildFlavour`
+- ADR-0005 (not yet written — after the Windows spike) — export presets with feature tags
+- ADR-0006 — composition root wiring `EventBus`, `Clock`, `BuildFlavour`
+- ADR-0010 — gameplay signal contracts; `Verdict`
 - `design/gdd/playtest-log.md` and every GDD that declares events

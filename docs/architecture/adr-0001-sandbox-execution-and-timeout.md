@@ -7,7 +7,7 @@ Accepted
 2026-10-15
 
 ## Last Verified
-2026-10-15
+2026-10-16 (text amendments after `/architecture-review` 2026-10-16 — no decision changed)
 
 ## Decision Makers
 tingoofriend (developer) + Claude (`/architecture-decision`, autonomous mode, lean review)
@@ -209,7 +209,7 @@ func abandoned_count() -> int
 - **CPU**: ≈ 0.4 ms per execution on a worker (spike); thread start is negligible at this rate. Abandoned workers consume a core each until SQLite returns.
 - **Latency**: each result arrives on the next frame poll — ≥ one frame (≈ 16.7 ms at 60 fps, ≈ 6.6 ms headless) per sequential execution (architecture review 2026-10-15, C2).
 - **Memory**: per execution, one in-memory database (Chapter 1 ≈ tens of KB); an abandoned `ORDER BY` over 8M rows peaked at 113 MB RSS (≈ +7 MB over baseline).
-- **Load Time**: none at start-up beyond the content verifier's executions (≈ 200, sequential, off the frame thread).
+- **Load Time**: none at start-up beyond the content verifier's executions (≈ 200, up to `verify_parallelism` = 6 in flight, off the frame thread — ≈ 0.6 s, ADR-0003 §4).
 - **Network**: none.
 
 ## Migration Plan
@@ -226,4 +226,4 @@ No production code exists. The spike code in `prototypes/sandbox-timeout-spike-2
 - `design/gdd/sql-execution-sandbox.md` — rules 2, 9, 12, 15; SB-17…19; Open Question 1
 - `design/gdd/hidden-data-grader.md` — rule 8, AC-26
 - `prototypes/sandbox-timeout-spike-2026-10-15/README.md` — measurements
-- ADR-0002 (planned) — public sandbox API built on this runner
+- ADR-0002 — public sandbox API built on this runner

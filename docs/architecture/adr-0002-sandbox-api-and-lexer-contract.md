@@ -7,7 +7,7 @@ Accepted
 2026-10-15
 
 ## Last Verified
-2026-10-15
+2026-10-16 (text amendments after `/architecture-review` 2026-10-16 — no decision changed)
 
 ## Decision Makers
 tingoofriend (developer) + Claude (`/architecture-decision`, autonomous mode, lean review)
@@ -160,7 +160,11 @@ completion object — a small `RefCounted` with its own `done(result)` signal,
 created for that request only. A shared runner signal is forbidden: with
 concurrent requests every pending `await` would resume on the first emission
 and receive the wrong result (engine review N1, 2026-10-15). Error-only results (`EMPTY`, `MULTI_STATEMENT`, …) still go through
-`await` so callers have one code path.
+`await` so callers have one code path: `execute` **returns** such a result
+directly (a coroutine that returns without awaiting is still awaited by the
+caller), and never emits a completion object's `done` before something awaits
+it — an early emission is lost and the caller hangs (architecture review
+2026-10-16, E9).
 
 ### 5. Inside the worker (`query` mode)
 1. `SQLite.new()`, `path = ":memory:"`, `verbosity_level = QUIET`, `open_db()`.
@@ -308,6 +312,6 @@ No production code exists. Prototype `grader.gd` / probe code is not migrated.
 
 ## Related
 - ADR-0001 — execution runner and TIMEOUT
-- ADR-0003 (planned) — `ResolvedDataset` producer, content verifier
+- ADR-0003 — `ResolvedDataset` producer, content verifier
 - `design/gdd/sql-execution-sandbox.md`, `hidden-data-grader.md`, `hint-system.md`, `constraint-challenges.md`, `query-workbench.md`
 - `docs/architecture/architecture.md` — API Boundaries
