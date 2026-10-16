@@ -94,4 +94,8 @@ gate reports and GDD review logs; earlier entries are reconstructed from those.
 | 2026-10-16 | Editor/table base font range narrowed 14–32 → 14–24 (max 48 px at 2.0) (rec.) | Defaults unchanged | User | workbench OQ9, QW-24 |
 | 2026-10-16 | `H_table` uses the logical viewport height `h_view`; receipt grows by shrinking Target (≥ 2 rows); "Leave it for Kenji" on the receipt; tab cluster ≥ 1.5 moves Log into the Shift menu (provisional); opening question takes focus | Layout only | Claude | `design/ux/query-workbench.md` |
 | 2026-10-16 | Apply the UX decisions to the GDDs, art bible and registry (rec.) | Docs aligned | User | — |
+| 2026-10-16 | ADR-0010: producer-owned typed signals wired in one `GameplayWiring`; Dialogue reaction queue fixes same-frame line order; `InputActivity` node feeds hint idle time | Code structure only; no rule change | Claude | ADR-0010 (Proposed) |
+| 2026-10-16 | ADR-0007: typed JSON config with per-key reject/clamp; own English JSON string table (not `TranslationServer` at MVP); session `Settings` service | Localisation later needs a file conversion, not code change | Claude | ADR-0007 (Proposed) |
+| 2026-10-16 | Shift-flow screens replace the work surface only; the counter strip stays visible | Layout only | Claude | `design/ux/shift-flow.md` |
+| 2026-10-16 | Renderer spike on Linux (data only; renderer choice left to ADR-0005 after the Windows run) | — | Claude | `prototypes/renderer-spike-2026-10-16/` |
 

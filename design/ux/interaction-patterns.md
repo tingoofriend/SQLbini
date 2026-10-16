@@ -500,9 +500,10 @@ uses it.
 **Description**: A destructive action asks once, in place, without a modal.
 
 **Specification**:
-- The row expands to one line: "Clear your draft and start over?  [Restart]
-  [Keep draft]" — "Keep draft" is focused by default.
-- Esc = Keep draft. No confirmation when there is nothing to lose (empty draft).
+- The row expands to one line with the GDD's text: "Start this request over?
+  Your query will be cleared."  [Restart] [Cancel] (`shift-and-chapter-progression.md`
+  rule 12a) — "Cancel" is focused by default.
+- Esc = Cancel. No confirmation when there is nothing to lose (empty draft).
 - The destructive button is plain text weight, not red (red = verdict only).
 
 **When to Use**: Actions that discard the player's own text.

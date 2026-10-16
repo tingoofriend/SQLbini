@@ -30,7 +30,7 @@
 #   Superseded entries:     Grep pattern="status: superseded"
 
 version: 1
-last_updated: "2026-10-15"
+last_updated: "2026-10-16"
 
 # ─── STATE OWNERSHIP ─────────────────────────────────────────────────────────
 # Who is the authoritative owner of each piece of shared game state.
@@ -147,7 +147,7 @@ interfaces:
       - playtest-log
       - ci
     adr: docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
-    signal_signature: "await PuzzleRepository.verify_all() -> ContentReport; same ContentVerifier for CI (tools/ci/verify_content.gd) and game load"
+    signal_signature: "await ContentVerifier.verify_all(include_ci_checks: bool) -> ContentReport; ContentVerifier built by ServicesFactory with (repository, sandbox, grader), pushes load states and reference results into PuzzleRepository via setters; same code for CI (tools/ci/verify_content.gd, true) and game load (false)"  # revised 2026-10-15 (architecture review C1)
     referenced_by:
       - docs/architecture/adr-0003-puzzle-data-format-loader-and-verifier.md
     added: 2026-10-15
@@ -160,7 +160,7 @@ interfaces:
     consumers:
       - playtest-log
     adr: docs/architecture/adr-0004-event-bus-and-playtest-log.md
-    signal_signature: "EventBus.emit_event(name: StringName, puzzle_id: Variant, data: Dictionary) -> void; validated against EventCatalog (= playtest-log.md rule 4); event_recorded(record: Dictionary)"
+    signal_signature: "EventBus.emit_event(event_name: StringName, puzzle_id: Variant, data: Dictionary) -> void; validated against EventCatalog (= playtest-log.md rule 4); event_recorded(record: Dictionary)"  # revised 2026-10-15 (engine review N2)
     referenced_by:
       - docs/architecture/adr-0004-event-bus-and-playtest-log.md
     added: 2026-10-15
@@ -178,6 +178,88 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0006-composition-root-and-service-wiring.md
     added: 2026-10-15
+    revised: ""
+
+  - contract: gameplay_signals
+    status: active
+    pattern: signal
+    producer: per-signal owner (grader, workbench, hint, progression, dialogue, onboarding, store-manual, constraint-challenges)
+    consumers:
+      - all-mvp-gameplay-systems
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    signal_signature: "Producer-owned typed past-tense signals per ADR-0010 §4 (e.g. HiddenDataGrader.verdict_given(verdict: Verdict), ShiftProgression.request_restarted(puzzle_id: StringName), ConstraintChallenges.challenge_mode_changed(open: bool, puzzle_id: StringName)); connected only in GameplayWiring.connect_all(services)"
+    referenced_by:
+      - docs/architecture/adr-0010-gameplay-signal-contracts.md
+    added: 2026-10-16
+    revised: ""
+
+  - contract: synchronous_answers
+    status: active
+    pattern: direct_call
+    producer: hint-system, query-workbench
+    consumers:
+      - hidden-data-grader
+      - shift-and-chapter-progression
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    signal_signature: "Injected Callables bound by ServicesFactory: hint_counter(verdict: Verdict, sql: String) -> bool (grader); draft_is_empty(puzzle_id: StringName) -> bool (progression)"
+    referenced_by:
+      - docs/architecture/adr-0004-event-bus-and-playtest-log.md
+      - docs/architecture/adr-0010-gameplay-signal-contracts.md
+    added: 2026-10-16
+    revised: ""
+
+  - contract: dialogue_feedback
+    status: active
+    pattern: signal
+    producer: hidden-data-grader
+    consumers:
+      - request-and-reaction-dialogue
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    signal_signature: "DialogueFeedback {kind, cause, level, error_kind, error_text} from Verdict; error_text only for SQL_ERROR; lines ordered by the Dialogue reaction queue (per synchronous batch, priority reaction < start-over < offers < skip.accept)"
+    referenced_by:
+      - docs/architecture/adr-0010-gameplay-signal-contracts.md
+    added: 2026-10-16
+    revised: ""
+
+  - contract: tuning_config
+    status: active
+    pattern: direct_call
+    producer: foundation-game-config
+    consumers:
+      - all-mvp-systems
+      - tools-playtest-report
+    adr: docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    signal_signature: "GameConfig typed getters per system (immutable), loaded from assets/data/config/*.json through ConfigSchema {type, default, min, max, on_invalid, on_out_of_range}; per-puzzle overrides validated by ContentVerifier"
+    referenced_by:
+      - docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    added: 2026-10-16
+    revised: ""
+
+  - contract: string_table
+    status: active
+    pattern: direct_call
+    producer: foundation-string-table
+    consumers:
+      - all-presentation-systems
+    adr: docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    signal_signature: "StringTable.text(id: StringName, args: Dictionary = {}) -> String (missing id: dev [id], playtest/release family generic line); StringTable.grapheme_len(text) -> int via TextServer.string_get_character_breaks; English JSON under assets/data/strings/en/"
+    referenced_by:
+      - docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    added: 2026-10-16
+    revised: ""
+
+  - contract: session_settings
+    status: active
+    pattern: signal
+    producer: foundation-settings
+    consumers:
+      - all-presentation-systems
+      - onboarding-first-shift
+    adr: docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    signal_signature: "Settings (RefCounted, plain data): ui_scale, reduced_motion, coach_marks, reveal_cps; set_value(key, value) validates; setting_changed(key: StringName); to_dict / from_dict for VS Save/Load"
+    referenced_by:
+      - docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    added: 2026-10-16
     revised: ""
 
 # Example:
@@ -419,6 +501,34 @@ forbidden_patterns:
     why: "RefCounted cycles are never freed (probed: ObjectDB leak at exit)."
     adr: docs/architecture/adr-0006-composition-root-and-service-wiring.md
     added: 2026-10-15
+
+  - pattern: signal_connection_order_dependence
+    status: active
+    description: "No consumer may depend on the order in which one signal calls its connections, or on the order of call_deferred calls from different objects; same-frame line order goes through the Dialogue reaction queue."
+    why: "Connection call order is not sourceable for 4.7, and the RD-19 inversion comes from call nesting, not connection order."
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    added: 2026-10-16
+
+  - pattern: self_wired_gameplay_signals
+    status: active
+    description: "Gameplay systems must not connect themselves to another system's signals; all gameplay connections are made in GameplayWiring.connect_all."
+    why: "Keeps the cross-system graph in one place and avoids consumers holding producer references."
+    adr: docs/architecture/adr-0010-gameplay-signal-contracts.md
+    added: 2026-10-16
+
+  - pattern: hardcoded_tuning_or_player_text
+    status: active
+    description: "No gameplay tuning value or player-facing string literal in src/; values via GameConfig, text via StringTable."
+    why: "Coding standard (data-driven) and dialogue RD-12; one validated source per knob and string id."
+    adr: docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    added: 2026-10-16
+
+  - pattern: translation_server_at_mvp
+    status: active
+    description: "Do not use tr() / TranslationServer at MVP; the UI root sets auto_translate_mode = DISABLED."
+    why: "Probed: a registered Translation silently re-translates already-resolved text whose content matches a key."
+    adr: docs/architecture/adr-0007-tuning-config-string-tables-and-settings.md
+    added: 2026-10-16
 
 # Example:
 #
