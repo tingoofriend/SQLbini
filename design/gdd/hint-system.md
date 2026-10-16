@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (cross-review 6d: challenge-mode event owned by Constraint Challenges; Guided suppression window; Restart resets the rule 4a comparison; statuses; earlier: 2026-10-14: re-review 6b fixes: rule 4b `hint_counted`, tokenize normalization, `shown(p)`; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-16 (Open Question 7 resolved — locked state on the tab, condition in the panel (user decision at `/ux-design`); earlier: cross-review 6d: challenge-mode event owned by Constraint Challenges; Guided suppression window; Restart resets the rule 4a comparison; statuses; earlier: 2026-10-14: re-review 6b fixes: rule 4b `hint_counted`, tokenize normalization, `shown(p)`; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 1 — The Condition, Not the Screen
 
@@ -396,4 +396,4 @@ opening the panel is covered by workbench QW-19. [UI] = retained screenshot in
 | 4 | ~~A player who never submits never becomes `exhausted`?~~ **Resolved** (design review 2026-10-14): time path `exhausted_minutes` (default 5) after step 2 — rule 11; tune from playtest logs. | game-designer | Resolved 2026-10-14 |
 | 6 | Boss 1-11 needs a per-puzzle override (longer `hint1_minutes` / `exhausted_minutes`); set the values from playtest timings, which also settle the ~4.6 min vs 5–15 min per-puzzle conflict (Formulas). See Progression OQ1. | game-designer (playtest) | Zero-SQL playtest |
 | 5 | The locked label's counts ("1 wrong answer" / "2 wrong answers") need a localisation-safe plural rule. | localization-lead | Before localisation |
-| 7 | (art bible 2026-10-14) The full unlock condition (UI Requirement 1, HS-01) does not fit a strip tab at any `ui_scale` (art bible 7.1, 7.9). ux-designer recommends: the button shows a short locked state (glyph + word), and the condition goes in the hint panel (Ctrl+H opens it while locked) and the button's accessible description. Not decided here. | Hint GDD owner + ux-designer | `/ux-design` |
+| 7 | (art bible 2026-10-14) The full unlock condition (UI Requirement 1, HS-01) does not fit a strip tab at any `ui_scale` (art bible 7.1, 7.9). ux-designer recommends: the button shows a short locked state (glyph + word), and the condition goes in the hint panel (Ctrl+H opens it while locked) and the button's accessible description. **Resolved 2026-10-16 (`design/ux/query-workbench.md`, user): the tab reads "Hint · locked"; Ctrl+H opens the panel, which shows the condition from the puzzle's thresholds; the same sentence is the tab's accessible description.** | Hint GDD owner + ux-designer | `/ux-design` |

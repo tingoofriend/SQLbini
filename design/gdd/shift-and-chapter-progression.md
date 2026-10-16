@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (6g check: 6f fixes confirmed — side requests `Open` when the briefing ends (States note, PR-03, rule 5), PR-19, Onboarding → Progression answer signal — APPROVED; earlier: re-review 6f: NEEDS REVISION → revised — side requests become `Open` when the briefing ends (States, PR-03); PR-19 briefing wording; Onboarding → Progression answer signal (Interactions); earlier: re-review 6e: NEEDS REVISION → revised — `Unavailable` resolves a main request in rules 4, 6, States, PR-02/PR-04, payslip mark; first main opens when the briefing ends; side messages after the briefing; earlier: cross-review 6d: rule 7a UNAVAILABLE → Kenji's offer / Unavailable state, request_restart logged, briefing opens the first request, PR-22 (rule changes); OQ1 G2 note, statuses; earlier: 2026-10-15: re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-16 (UI Requirement 2 — "Leave it for Kenji" location set by the workbench UX spec; earlier: 6g check: 6f fixes confirmed — side requests `Open` when the briefing ends (States note, PR-03, rule 5), PR-19, Onboarding → Progression answer signal — APPROVED; earlier: re-review 6f: NEEDS REVISION → revised — side requests become `Open` when the briefing ends (States, PR-03); PR-19 briefing wording; Onboarding → Progression answer signal (Interactions); earlier: re-review 6e: NEEDS REVISION → revised — `Unavailable` resolves a main request in rules 4, 6, States, PR-02/PR-04, payslip mark; first main opens when the briefing ends; side messages after the briefing; earlier: cross-review 6d: rule 7a UNAVAILABLE → Kenji's offer / Unavailable state, request_restart logged, briefing opens the first request, PR-22 (rule changes); OQ1 G2 note, statuses; earlier: 2026-10-15: re-review 6c fixes: Workbench subscribes to Restart; `skip.offer` / `skip.accept` and side-request messages contracted with Dialogue; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 4 — Real Store, Real SQL; Pillar 3 — Fast Hands, Cheap Mistakes
 
@@ -317,7 +317,7 @@ judgement. Mastery is visible (the star) but never required to keep going.
 ## UI Requirements
 
 1. Shift screen: current shift name, requests done / total, access to the chapter list.
-2. Kenji's offer: **Leave it for Kenji** / **Keep trying**, keyboard reachable; the "Leave it for Kenji" button stays on an exhausted request (its location is deferred to `/ux-design`).
+2. Kenji's offer: **Leave it for Kenji** / **Keep trying**, keyboard reachable; the "Leave it for Kenji" button stays on an exhausted request, as a secondary "↷ Leave it for Kenji" button on the workbench feedback receipt (`design/ux/query-workbench.md`, 2026-10-16).
 3. Payslip after each shift with **Next shift** / **Stop for today**.
 4. Chapter list: every request with state (locked / open / passed / left for later / unavailable), challenge mark, replay/reopen and restart actions.
 5. All states glyph + word; ≥ 4.5:1 contrast.

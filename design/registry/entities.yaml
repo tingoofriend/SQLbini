@@ -294,7 +294,7 @@ constants:
       - design/gdd/query-workbench.md
     value: 30
     unit: rows per visible table
-    notes: "Safe range 24-40. Below 24 withholds all of Chapter 1. On-screen readability at 1280x720 is pending /ux-design (dedicated visible-data view vs reading the data by Run; Puzzle Definition OQ 6)."
+    notes: "Safe range 24-40. Below 24 withholds all of Chapter 1. Readability resolved 2026-10-16 (design/ux/query-workbench.md, user): no dedicated visible-data view; the data is read by Run and a full table scrolls in the result grid; value 30 kept."
     added: 2026-10-14
     revised: "2026-10-14"  # cross-GDD review (C26): status -> pending /ux-design
   - name: exec_time_limit_ms
@@ -352,7 +352,7 @@ constants:
       - design/gdd/query-workbench.md
     value: 18
     unit: px at 1280x720
-    notes: "Range 14-32; table_font_px default 16; ui_scale 1.0-2.0 multiplies both."
+    notes: "Range 14-24 (narrowed from 14-32 on 2026-10-16, workbench UX spec); table_font_px default 16; ui_scale 1.0-2.0 multiplies both."
     added: 2026-10-14
     revised: ""
   - name: feedback_max_level

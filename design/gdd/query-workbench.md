@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (cross-review 6d: Guided suppression window (rule 6), challenge draft (rule 14), Progression soft upstream; cross-reference rule numbers, statuses; earlier: 2026-10-15: Restart subscriber, from the Progression re-review 6c; earlier: re-review 6b: TOO_MANY_ROWS strip text; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-16 (UX spec decisions — `H_table` uses `h_view`, font base range 14–24, Open Questions 6–9 resolved (user decisions at `/ux-design`); earlier: cross-review 6d: Guided suppression window (rule 6), challenge draft (rule 14), Progression soft upstream; cross-reference rule numbers, statuses; earlier: 2026-10-15: Restart subscriber, from the Progression re-review 6c; earlier: re-review 6b: TOO_MANY_ROWS strip text; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 2 — Your Query, Your Way
 
@@ -259,16 +259,17 @@ hidden data — that is the game). The 5-row drinks query → no note.
 The **readability** constants are defined as:
 
 `row_px = round(1.5 × table_font_px × ui_scale)`;
-`H_table = 0.40 × (720 − strip_h − 32) − 48 × ui_scale`;
+`H_table = 0.40 × (h_view − strip_h − 32) − 48 × ui_scale`;
 `rows_visible = floor(H_table / row_px)`
 
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| editor_font_px | int | 14–32 (default 18) | data file | Editor font **base** size at 1280×720; the 14–32 clamp applies to the base only, and the effective size = base × `ui_scale`, not clamped again (art bible 7.2) |
-| table_font_px | int | 14–32 (default 16) | data file | Result-table and schema font **base** size; same clamp rule as `editor_font_px` (art bible 7.2) |
+| editor_font_px | int | 14–24 (default 18) | data file | Editor font **base** size at 1280×720; the 14–24 clamp applies to the base only, and the effective size = base × `ui_scale`, not clamped again (art bible 7.2) |
+| table_font_px | int | 14–24 (default 16) | data file | Result-table and schema font **base** size; same clamp rule as `editor_font_px` (art bible 7.2) |
 | ui_scale | float | 1.0–2.0, step 0.25 (default 1.0) | data file | Multiplies all fonts (Accessibility Options) |
 | contrast_min | float | 4.5 | constant | WCAG AA minimum for text in every theme and state; glyphs, borders and focus rings ≥ 3:1 |
+| h_view | int (px) | 720 at 16:9 (e.g. 800 at 16:10) | engine | Logical viewport height (`canvas_items` stretch, `expand` aspect — taller windows gain rows; resolves Open Question 8) |
 | strip_h | int (px) | 120 | constant | Counter-scene height — fixed at every `ui_scale` (pixel art stays ×4; `request-and-reaction-dialogue.md`) |
 | H_table | int (px) | ≈ 131–179 | calculated | Height of one result table body: 40% of the area under the counter scene and 32 px of margins, minus the header and count line (48 px × `ui_scale`) |
 
@@ -539,7 +540,7 @@ dataset, target Mineral Water 500ml 110 / Green Tea 500ml 160 / Canned Coffee 14
 
 **Scale and limits**
 - **QW-23 [Logic]** GIVEN a 576-row cross join, THEN 200 rows render, the count reads "576 rows — showing the first 200", and marks cover all 576; GIVEN a truncated sandbox result at the default `grader_row_cap`, THEN "5,000+ rows — too many to compare" (formatted from the knob) and no marks.
-- **QW-24 [Logic]** GIVEN default settings, THEN `editor_font_px = 18`, `table_font_px = 16`, `row_px = 24`, `rows_visible = 7`; at `ui_scale` 1.25 / 1.5 / 1.75 / 2.0, `rows_visible` = 5 / 4 / 3 / 2 and the counter scene stays 120 px; base fonts outside 14–32 and scale outside 1.0–2.0 (step 0.25) are clamped; the effective font (base × `ui_scale`, e.g. editor 36 px at 2.0) is not clamped again (art bible 7.2).
+- **QW-24 [Logic]** GIVEN default settings, THEN `editor_font_px = 18`, `table_font_px = 16`, `row_px = 24`, `rows_visible = 7`; at `ui_scale` 1.25 / 1.5 / 1.75 / 2.0, `rows_visible` = 5 / 4 / 3 / 2 and the counter scene stays 120 px; base fonts outside 14–24 and scale outside 1.0–2.0 (step 0.25) are clamped; the effective font (base × `ui_scale`, e.g. editor 36 px at 2.0) is not clamped again (art bible 7.2).
 
 **Back Room tab**
 - **QW-25 [UI] [Alpha]** GIVEN the Back Room tab active, THEN "Back Room — practice data" is always visible, the Target table and marks are hidden, and the Run note is absent.
@@ -558,7 +559,7 @@ GDDs.
 | 3 | Does `CodeEdit` expose its text and caret to screen readers via AccessKit in Godot 4.7? | ui-programmer / accessibility-specialist | Before the accessibility requirements doc |
 | 4 | Korean/Japanese IME composition inside `CodeEdit` on Windows and Linux — verify early (the developer types Korean). | ui-programmer | First workbench prototype |
 | 5 | Should the Target table be hideable (an "expert" mode where the player works only from the request)? | game-designer | After Chapter 1 playtest |
-| 6 | Hint panel layout slot: where the Hint System's panel sits (the manual panel already covers the results column), and one rule for manual vs. hint overlays. Deferred, not designed here (cross-review W8). | ux-designer | `/ux-design` |
-| 7 | Dedicated visible-data view vs. "read the shelf by Run": does the player need a view of the visible dataset, and what is `visible_rows_max` (registry 30, pending)? Scope decision for the user (cross-review W30). | ux-designer + user | `/ux-design` |
-| 8 | (art bible 2026-10-14) `H_table` uses the constant 720; with `expand` aspect on 16:10 windows the logical viewport is taller than 720 (technical-artist, art bible Section 8). Should the formula use the actual logical viewport height? | systems-designer + technical-artist | `/ux-design` |
-| 9 | (art bible 2026-10-14) A 32 px base font × `ui_scale` 2.0 = 64 px effective (art bible 7.2): must layout support it, or should the 14–32 knob range narrow (QW-24)? | systems-designer | `/ux-design` |
+| 6 | **Resolved 2026-10-16 (`design/ux/query-workbench.md`, user): the hint panel opens in the Manual's slot over the two grids, one side panel at a time; the feedback receipt stays visible.** Hint panel layout slot: where the Hint System's panel sits (the manual panel already covers the results column), and one rule for manual vs. hint overlays. Deferred, not designed here (cross-review W8). | ux-designer | `/ux-design` |
+| 7 | **Resolved 2026-10-16 (`design/ux/query-workbench.md`, user): no dedicated view — the player reads the shelf by Run; `visible_rows_max` stays 30.** Dedicated visible-data view vs. "read the shelf by Run": does the player need a view of the visible dataset, and what is `visible_rows_max` (registry 30, pending)? Scope decision for the user (cross-review W30). | ux-designer + user | `/ux-design` |
+| 8 | **Resolved 2026-10-16 (`design/ux/query-workbench.md`): Formulas use `h_view`, the logical viewport height.** (art bible 2026-10-14) `H_table` uses the constant 720; with `expand` aspect on 16:10 windows the logical viewport is taller than 720 (technical-artist, art bible Section 8). Should the formula use the actual logical viewport height? | systems-designer + technical-artist | `/ux-design` |
+| 9 | **Resolved 2026-10-16 (`design/ux/query-workbench.md`, user): base range narrowed to 14–24, so the maximum effective size is 48 px at 2.0.** (art bible 2026-10-14) A 32 px base font × `ui_scale` 2.0 = 64 px effective (art bible 7.2): must layout support it, or should the 14–32 knob range narrow (QW-24)? | systems-designer | `/ux-design` |

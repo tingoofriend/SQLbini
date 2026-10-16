@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (6g check of the Progression/Dialogue 6f fixes: Progression Interactions row → bidirectional (the "Ever used SQL before?" answer opens 1-1), wording only; Dialogue cross-reference → Approved; earlier: re-review 6e: APPROVED; earlier: cross-review 6d: Guided suppression window (rule 7), 1-3.manual Done when the Manual is already open, question after the briefing, OB-24/OB-25 (rule changes); submit-before-run wording, statuses; earlier: 2026-10-15: re-review 6c-3: APPROVED; earlier: re-review 6c-2 fix: coach-mark Done conditions scoped to their own puzzle; earlier: re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
+> **Last Updated**: 2026-10-16 (UI Requirement 4: minimal options panel also holds the reduced-motion toggle, Open Question 4 resolved — user decision at `/ux-design accessibility`; earlier: 2026-10-15: 6g check of the Progression/Dialogue 6f fixes: Progression Interactions row → bidirectional (the "Ever used SQL before?" answer opens 1-1), wording only; Dialogue cross-reference → Approved; earlier: re-review 6e: APPROVED; earlier: cross-review 6d: Guided suppression window (rule 7), 1-3.manual Done when the Manual is already open, question after the briefing, OB-24/OB-25 (rule changes); submit-before-run wording, statuses; earlier: 2026-10-15: re-review 6c-3: APPROVED; earlier: re-review 6c-2 fix: coach-mark Done conditions scoped to their own puzzle; earlier: re-review 6c fix: coach-mark table with mark ids, 1-2 has only the schema mark; earlier: 2026-10-14 cross-GDD review fixes; art-bible sync 2026-10-14)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 3 — Fast Hands, Cheap Mistakes; Pillar 4 — Real Store, Real SQL
 
@@ -234,9 +234,11 @@ they no longer need it.
 2. Coach marks anchored to Run, Submit, schema browser and Manual button; "Got
    it" button; Esc dismisses when the mark has focus (workbench Esc precedence).
 3. Ghost text in an empty editor, labelled "shape".
-4. Settings toggle "Coach marks" (MVP: in a minimal options panel owned by
-   Onboarding, holding only this toggle; the answer and toggle last for the
-   session until Save/Load & Settings exists — Vertical Slice).
+4. Settings toggles "Coach marks" and "Reduced motion" (MVP: in a minimal
+   options panel owned by Onboarding, holding only these two toggles; the
+   answer and toggles last for the session until Save/Load & Settings exists —
+   Vertical Slice). Reduced motion follows `design/accessibility-requirements.md`
+   (decided 2026-10-16, Open Question 4).
 
 > **📌 UX Flag — Onboarding**: include coach marks, ghost text and the opening
 > question in the Query Workbench UX spec (`/ux-design`, Pre-Production).
@@ -302,4 +304,4 @@ retained screenshot in `production/qa/evidence/`.*
 | 1 | Is a prefilled 1-1 too trivial for zero-SQL players to feel they did something? Watch time-to-first-Run and reactions. | ux-designer | Zero-SQL playtest |
 | 2 | Does the ghost text in 1-3 (`… WHERE …`) help, or does it make players guess syntax instead of opening the manual? | ux-designer | Zero-SQL playtest |
 | 3 | Should "Yes, I know SQL" also skip 1-1 and 1-2 (straight to 1-3)? | game-designer | After MVP playtest |
-| 4 | (art bible 2026-10-14) Reduced motion must be reachable at MVP (art bible 7.6; UX R-04): add a reduced-motion toggle to the minimal options panel (UI Requirement 4), or follow the OS preference? Not decided here. | Onboarding owner + ux-designer | `/ux-design` |
+| 4 | (art bible 2026-10-14) Reduced motion must be reachable at MVP (art bible 7.6; UX R-04): add a reduced-motion toggle to the minimal options panel (UI Requirement 4), or follow the OS preference? **Resolved 2026-10-16 (user, `/ux-design accessibility`): a toggle in the minimal options panel (UI Requirement 4); following the OS preference is revisited with Accessibility Options (VS).** | Onboarding owner + ux-designer | `/ux-design` |

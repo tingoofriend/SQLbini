@@ -84,3 +84,14 @@ gate reports and GDD review logs; earlier entries are reconstructed from those.
 | 2026-10-15 | New should-have ADR-0010 Gameplay signal contracts proposed | One more ADR before the Grader/Hint/Dialogue stories | Claude (review) | review report |
 | 2026-10-16 | Install gdUnit4 **v6.2.2** from the official GitHub tag into `addons/gdUnit4/`; CI via `gdUnit4-action@v1` pinned to Godot 4.7.2 and the committed addon (rec.) | No game impact; tests run on every push | User | `tests/README.md` |
 | 2026-10-16 | Example tests double as ADR-0006 checks (no autoloads; `scene_runner` with a set-up instance) | Bookkeeping | Claude | ADR-0006 Verification |
+| 2026-10-16 | Accessibility tier **Standard + reduced motion + full keyboard** (rec.); screen reader best effort, colourblind palette mode replaced by "no colour-only information" | VS Accessibility Options must implement remapping + `ui_scale`; no extra MVP work beyond the toggle | User | `design/accessibility-requirements.md` |
+| 2026-10-16 | MVP reduced motion = toggle in Onboarding's minimal options panel (rec.) | ≈ half a day at MVP | User | onboarding OQ4, art bible R-04 |
+| 2026-10-16 | Interaction pattern library v1 (IP-01…IP-21) drafted from GDDs + art bible; details such as "offers never steal focus", "one side panel at a time", Restart confirmation wording | UI behaviour only, inside GDD rules | Claude | `design/ux/interaction-patterns.md` |
+| 2026-10-16 | Onboarding minimal options panel holds "Coach marks" + "Reduced motion"; onboarding OQ4 resolved (rec.) | GDD text aligned | User | `onboarding-first-shift.md` UI Req 4 |
+| 2026-10-16 | Hint panel opens in the Manual's slot over the grids, one side panel at a time (rec.) | Results hidden while reading a hint; receipt stays visible | User | `design/ux/query-workbench.md` |
+| 2026-10-16 | No dedicated visible-data view; data read by Run; `visible_rows_max` stays 30 (rec.) | No extra work; revisit after zero-SQL playtest | User | workbench OQ7, puzzle-def OQ6 |
+| 2026-10-16 | Locked hint: tab "Hint · locked", unlock condition in the panel (rec.) | — | User | hint OQ7 |
+| 2026-10-16 | Editor/table base font range narrowed 14–32 → 14–24 (max 48 px at 2.0) (rec.) | Defaults unchanged | User | workbench OQ9, QW-24 |
+| 2026-10-16 | `H_table` uses the logical viewport height `h_view`; receipt grows by shrinking Target (≥ 2 rows); "Leave it for Kenji" on the receipt; tab cluster ≥ 1.5 moves Log into the Shift menu (provisional); opening question takes focus | Layout only | Claude | `design/ux/query-workbench.md` |
+| 2026-10-16 | Apply the UX decisions to the GDDs, art bible and registry (rec.) | Docs aligned | User | — |
+

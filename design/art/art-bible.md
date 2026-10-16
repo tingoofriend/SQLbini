@@ -643,15 +643,15 @@ All faces are SIL Open Font License 1.1 and bundled with the game. **System font
 |---|---|---|---|---|---|---|
 | `display` | 32 | Bold | 1.2 | Sans | Shift-start card title, chapter-list day header | This bible |
 | `title` | 20 | SemiBold | 1.3 | Sans | Panel titles: manual page, hint note, log, payslip, receipt header | This bible |
-| `editor` | 18 (`editor_font_px`) | Regular; keywords **Bold**; comments and ghost *Italic* | 1.4 | Mono | Editor | Workbench knob 14–32 |
+| `editor` | 18 (`editor_font_px`) | Regular; keywords **Bold**; comments and ghost *Italic* | 1.4 | Mono | Editor | Workbench knob 14–24 |
 | `bubble` | 18 (`font_px`) | Regular | 1.25 | Sans | Request and reaction bubble, offer ticket | Dialogue knob 16–20 |
 | `body` | 16 | Regular | 1.45 | Sans | Receipt lines, sticky-note text, hint, manual body, message log, coach-mark label, Run note, payslip lines, Run / Submit labels (SemiBold) | Hint UI Req 4; manual "body size or larger" |
-| `table` | 16 (`table_font_px`) | Regular; header **SemiBold** | 1.5 (= `row_px`) | Mono | Grid cells and header, column chips, error-strip text | Workbench knob 14–32 |
+| `table` | 16 (`table_font_px`) | Regular; header **SemiBold** | 1.5 (= `row_px`) | Mono | Grid cells and header, column chips, error-strip text | Workbench knob 14–24 |
 | `mark` | 16 (= `table_font_px`) | SemiBold | 1.5 | Sans | Row-mark words in the gutter ("✓ match", "+ extra", "− missing") | Tied to `table`, because a mark belongs to its row |
 | `label` | 14 | SemiBold (tabs, name tags, tab words) / Regular (meta) | 1.2 | Sans | Tabs, name tags, count line, "Stale — run again", "shape" label, rule tags, "1/3 ▸", "new" / "later", shortcut hints, "Esc: leave editor" | This bible |
 | **Minimum readable** | **14** | — | — | Any | **Nothing that carries meaning is below 14 px base**, CJK included. Effective floors: 14 / 16 / 18 at 1.0, 21 / 24 / 27 at 1.5, 28 / 32 / 36 at 2.0 (label / table / editor and bubble) | Workbench Formulas |
 
-- **The knob clamp applies to the base value only.** `editor_font_px` and `table_font_px` are clamped to 14–32 before scaling. The effective size is base × `ui_scale` and is not clamped again, so the editor is 36 px at 2.0. A 32 px base at 2.0 reaches 64 px, which layout must survive or the knob range must narrow (systems-designer to clarify QW-24).
+- **The knob clamp applies to the base value only.** `editor_font_px` and `table_font_px` are clamped to 14–24 before scaling (narrowed from 14–32 on 2026-10-16, workbench UX spec). The effective size is base × `ui_scale` and is not clamped again, so the editor is 36 px at 2.0 and the maximum is 48 px (24 × 2.0).
 - **Hierarchy comes from size, weight and the `header` band, never from lowering contrast** below the 4.4 floors. At every scale the editor stays at least one step (≥ 2 px base) above the tables.
 - **Paragraph measure** in the manual, hint and log is ≤ 80 characters per line where layout allows, at line height 1.4–1.5. The bubble is exempt because it holds at most 2 lines.
 - **Count-line budget:** the grid header row (`row_px`) plus the count line (`label`, ≤ 24 px with padding) fit the workbench's `48 × ui_scale` allowance in `H_table`.
@@ -738,7 +738,7 @@ All faces are SIL Open Font License 1.1 and bundled with the game. **System font
 - **Easings allowed:** linear, quad and cubic in/out. Moves ≤ 12 px. Nothing scales above 1.12.
 - **No looping or blinking anything** on the work surface or the UI over the strip: no caret blink, no chevron blink, no pulsing badges. Nothing flashes, and no area changes luminance as a whole (WCAG 2.3.1 is met with margin).
 - **Motion never gates input.** Typing, scrolling and pane switching stay live. A new event jumps any running animation to its final state.
-- **Reduced motion** must be reachable at MVP, either as a toggle in Onboarding's minimal options panel or by following the OS preference (handed to `/ux-design` and Onboarding). The information shown is identical with and without motion.
+- **Reduced motion** must be reachable at MVP, as a toggle in Onboarding's minimal options panel (decided 2026-10-16, `design/accessibility-requirements.md`; following the OS preference is revisited at VS). The information shown is identical with and without motion.
 
 ### 7.7 Spacing and grid
 

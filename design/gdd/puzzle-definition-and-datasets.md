@@ -2,7 +2,7 @@
 
 > **Status**: Approved (design review 2026-10-14)
 > **Author**: tingoofriend + Claude (design-system, autonomous)
-> **Last Updated**: 2026-10-15 (cross-review 6d: Query Workbench reads prefill_sql; statuses; earlier: 2026-10-14: 2026-10-14 cross-GDD review fixes)
+> **Last Updated**: 2026-10-16 (Open Question 6 resolved — `visible_rows_max` stays 30, no visible-data view (user decision at `/ux-design`); earlier: cross-review 6d: Query Workbench reads prefill_sql; statuses; earlier: 2026-10-14: 2026-10-14 cross-GDD review fixes)
 > **Last Verified**: 2026-10-14
 > **Implements Pillar**: Pillar 1 — The Condition, Not the Screen; Pillar 4 — Real Store, Real SQL
 
@@ -484,4 +484,4 @@ and names the failing check.
 | 3 | Chapter 1 migration: author trap tags, key column, `trap_priority`, level-1 feedback, `alt_valid` and the rewritten requests for all 13 puzzles. Who checks the rewritten 1-4/1-5/1-7/1-8 make players fail on first submit? | level design + zero-SQL playtest | Before Chapter 1 content locks |
 | 4 | Should a later chapter's schema (e.g. `sales`, `customers`) be a superset of Chapter 1's `products`, or a fresh store database per chapter? | game-designer | Chapter 2 design |
 | 5 | ~~`ch1.py` has 15 traps while `chapter-1-puzzles.md` says 16~~ — closed: 15 is correct; `chapter-1-puzzles.md:175` miscounted (cross-GDD review 2026-10-14). | — | Resolved 2026-10-14 |
-| 6 | Do 24–30 visible rows read comfortably in the workbench's 7-row result panel, or should `visible_rows_max` drop (or the panel grow)? Pending `/ux-design` (dedicated visible-data view question, cross-GDD review W30). | ux-designer (`/ux-design`) + playtest | Query Workbench UX spec / first playtest |
+| 6 | Do 24–30 visible rows read comfortably in the workbench's 7-row result panel, or should `visible_rows_max` drop (or the panel grow)? **Resolved 2026-10-16 (`design/ux/query-workbench.md`, user): no dedicated visible-data view; `visible_rows_max` stays 30 and a full table scrolls in the result grid (7 rows at 1.0). Revisit if the zero-SQL playtest shows players stuck.** | ux-designer (`/ux-design`) + playtest | Query Workbench UX spec / first playtest |
