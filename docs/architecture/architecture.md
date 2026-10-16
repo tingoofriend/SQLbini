@@ -278,7 +278,7 @@ Callables (`hint_counter`, `draft_is_empty`).
 - **Onboarding answer**: Onboarding `line_requested` ("Ever used SQL?") →
   Dialogue renders the choice → `choice_made` → Onboarding →
   `sql_question_answered(knows_sql)` → Progression (1-1 opens).
-- **Restart**: the Workbench view confirms, then calls
+- **Restart**: the chapter-list view confirms (IP-18), then calls
   `ShiftProgression.request_restart(puzzle_id)` → logs `request_restart`
   (`draft_was_empty` from the `draft_is_empty` Callable) → `request_restarted` →
   Workbench controller (draft, Run, verdict, per-cause counters, "↷ Leave it for

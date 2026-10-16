@@ -1,8 +1,8 @@
 # Interaction Pattern Library
 
-> **Status**: In Design (v1 — drafted from the approved GDDs and the art bible; no screen spec exists yet)
+> **Status**: In Design — revised after /ux-review 2026-10-16, re-review pending
 > **Author**: tingoofriend + Claude (`/ux-design patterns`, autonomous)
-> **Last Updated**: 2026-10-16
+> **Last Updated**: 2026-10-16 (revision after the workbench `/ux-review`: IP-02 regions, IP-07/IP-10 visible word at every scale, IP-08 clears on edit, IP-15 slot decided, IP-20 "unavailable", new IP-22 Shift menu and IP-23 rule tag; then, after the shift-flow `/ux-review`: IP-02 two regions on paper screens, IP-03 chapter-list step, IP-19 one-choice variant, IP-20 side rows and actions, IP-22 paper-screen behaviour, paper card gap)
 > **Template**: Interaction Pattern Library
 > **Input**: Keyboard + mouse only (PC); keyboard-first — every pattern must be fully operable without the mouse
 > **Accessibility tier**: Standard + reduced motion + full keyboard (`design/accessibility-requirements.md`)
@@ -43,7 +43,7 @@ Rules every pattern inherits:
 | ID | Pattern | Category | One line |
 |---|---|---|---|
 | IP-01 | Chorded shortcut with visible label | Input | Every action has a default chord, shown on its control |
-| IP-02 | Pane cycling (F6) | Navigation | F6 / Shift+F6 move focus between the workbench regions |
+| IP-02 | Pane cycling (F6) | Navigation | F6 / Shift+F6 move focus between the workbench regions (two regions on paper screens) |
 | IP-03 | Esc precedence | Navigation | One Esc rule for overlays, coach marks and leaving the editor |
 | IP-04 | Run vs Submit pair | Input | Two commit actions that can never be confused |
 | IP-05 | Insert at caret | Input | Clicking a schema chip or "Copy example" inserts text where the caret is |
@@ -60,9 +60,11 @@ Rules every pattern inherits:
 | IP-16 | Full overlay with scrim | Overlay | Message log: scrim, focus trapped inside, Esc / same key closes |
 | IP-17 | Coach mark | Onboarding | Dashed ring + paper tag + "Got it", scoped to its puzzle |
 | IP-18 | Inline one-line confirmation | Choice | Confirm a destructive action in place (Restart with a draft) |
-| IP-19 | Paper screen with two choices | Navigation / Choice | Payslip: a receipt with a primary and a secondary action |
+| IP-19 | Paper screen with two choices | Navigation / Choice | Payslip: a receipt with a primary and a secondary action (one-choice variant: End of day) |
 | IP-20 | Clipboard checklist | Navigation / Data display | Chapter list: rows with state marks and row actions |
 | IP-21 | Options toggle | Settings | On/off row in the minimal options panel |
+| IP-22 | Strip menu (Shift button) | Navigation | One small menu from the strip's Shift button to the satellite screens |
+| IP-23 | Rule tag with live check | Feedback | A dare's rule in the editor header with a glyph + word live check |
 
 ---
 
@@ -80,7 +82,9 @@ the keys without a manual.
 **Specification**:
 - Defaults (workbench rule 15): Run `Ctrl+Enter`, Submit `Ctrl+Shift+Enter`,
   Hint `Ctrl+H`, Manual `Ctrl+M`, Back Room `Ctrl+B` (Chapter 2+), Log `Ctrl+L`,
-  panes `F6` / `Shift+F6`, leave editor `Esc`.
+  panes `F6` / `Shift+F6`, leave editor `Esc`; plus the Shift menu
+  `Ctrl+Shift+S` (IP-22; workbench UX spec, developer decision 2026-10-16 — not
+  in workbench rule 15's table, which lists the GDD defaults).
 - The chord label sits after the button word in the `label` style, `ink_muted`
   (art bible F-08), e.g. "Run  Ctrl+Enter". It reflects the current binding
   (VS remapping) — never a hard-coded string.
@@ -102,7 +106,7 @@ visible buttons, no chord.
 ### IP-02 Pane cycling (F6)
 
 **Category**: Navigation
-**Used In**: Workbench
+**Used In**: Workbench; paper screens (payslip, End of day, shift screen, chapter list — `shift-flow.md`)
 
 **Description**: The workbench has five regions; F6 moves keyboard focus to the
 next one in a fixed order so keyboard players never Tab through dozens of
@@ -111,6 +115,13 @@ controls.
 **Specification**:
 - Order (workbench rule 15): counter strip (bubble) → editor → schema browser →
   results → feedback; `Shift+F6` reverses; wraps around.
+- Region membership (workbench UX spec, Focus Order): **Request** = bubble,
+  inline offers, tickets, tab cluster (Shift, Log, Hint, Manual, Back Room);
+  **SQL editor** = editor, Run, Submit, Leave challenge (the error strip is a
+  live region, not a stop); **Shelves** = collapse toggle, chips; **Results** =
+  Your result grid, Target grid (each one Tab stop, arrows move the cell cursor
+  inside — no separate pane stop), or the open side panel (IP-15) in their place;
+  **Feedback** = the receipt (one read-only stop), "↷ Leave it for Kenji".
 - Focus lands on the region's first control, or the last focused control in it
   if it had one this session.
 - The focused region's header shows a 4 px `focus` bar at its left edge and its
@@ -120,16 +131,22 @@ controls.
   lists and grids.
 - AccessKit: each region is a named landmark ("Request", "SQL editor",
   "Shelves (schema)", "Results", "Feedback").
+- **Paper screens** (`shift-flow.md`): the work surface is replaced by one paper
+  object while the counter strip stays, so there are **two regions** — **Paper**
+  (the screen's controls and scroll containers) and **Request** (the strip, as
+  above). F6 / Shift+F6 toggle between them; Tab cycles inside the current
+  region and wraps. Focus arrives in Paper, never in the strip. Strip controls
+  that are inert on a screen (shift-flow "Strip controls per screen") are skipped.
 
-**When to Use**: The workbench and any future multi-region screen.
-**When NOT to Use**: Single-column screens (payslip, chapter list) — Tab order is enough.
+**When to Use**: The workbench, the paper screens, and any future multi-region screen.
+**When NOT to Use**: Inside a single region — Tab and arrows are enough.
 
 ---
 
 ### IP-03 Esc precedence
 
 **Category**: Navigation
-**Used In**: Workbench, overlays, coach marks
+**Used In**: Workbench, overlays, coach marks, paper screens
 
 **Description**: Esc always does the most local thing first, so it is never
 ambiguous.
@@ -140,6 +157,13 @@ ambiguous.
 2. Focus on a shown coach mark (IP-17) → dismiss that mark.
 3. Focus in the editor → leave the editor (focus moves to the editor's region
    frame, so Tab moves on). A shown coach mark stays.
+4. Focus on an open inline confirmation (IP-18) → Cancel it; focus returns to
+   the action that opened it.
+5. Focus on the chapter list (IP-20) → back to the shift screen; focus lands on
+   its *Chapter list* button.
+6. Focus on the shift screen with a request shown in the workbench → *Back to
+   work*; otherwise nothing.
+- On the payslip and End of day (IP-19) Esc does nothing.
 - Esc never closes the game, never discards a draft and never cancels a Run or
   Submit.
 - The editor shows the hint "Esc: leave editor" in `label` style while it has
@@ -237,6 +261,14 @@ a word.
 - Glyph first, then the word, same size and colour as the word (glyphs are text
   in the SQLbini Glyphs fallback font, never emoji).
 - AccessKit reads the word only ("Extra row", not "plus extra row").
+- The word stays **visible at every `ui_scale`**; a compact layout may shorten
+  the word or wrap it to a second line, never move it only into the accessible
+  description.
+- **Word-only states:** a few states have no glyph and are shown by the word
+  alone, never with a dash or a placeholder glyph — `unavailable` (chapter list,
+  payslip) is written "unavailable", with no en dash (Claude decision,
+  shift-flow OQ2), "locked" and "open". They stay distinguishable because no other
+  state is word-only with the same word.
 - No new glyph without a new art-bible 3.3 row.
 
 **When to Use**: Any state the player must tell apart.
@@ -247,26 +279,34 @@ a word.
 ### IP-08 Outcome object appears in place
 
 **Category**: Feedback
-**Used In**: Workbench feedback column (Run result receipt + tally note, FAIL sticky note, error strip, PASS stamp, star hanko)
+**Used In**: Workbench feedback receipt (tally note, FAIL sticky note, PASS stamp, star hanko) and the error strip under the editor
 
 **Description**: Each Run or Submit produces one new paper object beside the
-data; it is the only new shape on screen at that moment.
+work; it is the only new shape on screen at that moment.
 
 **Specification**:
 - Objects: result receipt (Run/Submit feedback), pencil tally note "≈ Looks
-  right on today's data" (Run match, never green), FAIL sticky note
-  "? Not accepted" + level-1 statement, jammed register strip "⚠ …" with
-  SQLite text, PASS stamp + "✓ ACCEPTED", star hanko (challenge).
+  right today (not checked)" (Run match, never green; GDD workbench rule 8
+  string), FAIL sticky note "? Not accepted" + level-1 statement, jammed register
+  strip "⚠ …" with SQLite text, PASS stamp + "✓ ACCEPTED", star hanko (challenge).
+- Placement: the tally note, FAIL note and stamp sit on the receipt below the
+  grids, never over data; the stamp has a reserved landing spot. The **error
+  strip sits directly under the editor**, between the editor and the Run/Submit
+  row; the editor shrinks to make room and the buttons never move (developer
+  decision 2026-10-16; grader Visual/Audio "at the editor").
 - All text appears in final position on frame 1. Only the stamp and star hanko
   animate (≤ 180 ms, no bounce); star follows stamp by 60 ms; reduced motion →
   final state.
-- Placed beside the grids, never over data; the stamp has a reserved landing
-  spot on the receipt.
 - The previous outcome object is replaced, not stacked; the message log keeps the
   history (IP-16).
 - Outcome text is announced through an AccessKit live region (polite), once.
-- Persists until the next Run/Submit, Restart or puzzle change — never
-  auto-dismissed.
+- Lifetime: the **stamp, FAIL note and error strip clear on any editor edit**
+  (developer decision 2026-10-16; workbench rule 12, grader UI Req 5); the tally
+  note is hidden on edit with the Stale state (workbench rule 9). Every outcome
+  object also clears on the next Run/Submit, Restart or puzzle change. Never
+  auto-dismissed by time.
+- The receipt grows to fit up to 3 lines of outcome text, taking height from the
+  Target grid (floor 2 rows), then scrolls (workbench UX spec).
 
 **When to Use**: Results of player actions on the work surface.
 **When NOT to Use**: Characters' reactions — those belong in the bubble (IP-13).
@@ -306,7 +346,9 @@ attention.
 
 **Specification**:
 - Indigo dot + the word "new" on the button or tab (art bible `accent`); no
-  pulse, no blink, no badge counter (art bible 7.6).
+  pulse, no blink, no badge counter (art bible 7.6). The word stays visible at
+  every `ui_scale` (on a second line if needed); the dot alone is never enough
+  (IP-07).
 - Cleared when the player opens the thing it points to.
 - Suppressed during Onboarding's Guided suppression window
   (`onboarding-first-shift.md` rule 7).
@@ -406,7 +448,9 @@ never blocks the work.
 - Two buttons inside the bubble under the line; the recommended / safe choice
   ("Later", "Keep trying") is first in Tab order; neither is filled indigo.
 - Keyboard: when the offer appears, focus does **not** jump to it (the player may
-  be typing); F6 to the strip region, then Tab / Enter.
+  be typing); F6 to the strip region, then Tab / Enter. The same rule holds for
+  the "↷ Leave it for Kenji" button on the receipt (announced once, never
+  focused automatically).
 - Never a modal; the editor stays live.
 - **Exception — Day One opening question** ("Ever used SQL before?"): no request
   is open yet, so focus moves to the first choice when it appears; it must be
@@ -430,15 +474,20 @@ never blocks the work.
 and type at the same time.
 
 **Specification**:
-- Covers only the results column; never the editor or the counter strip (Store
-  Manual UI Req 4, SM-09). Appears in place (no slide); reduced motion identical.
+- Covers the two grids of the results column; never the editor, the counter
+  strip or the feedback receipt (Store Manual UI Req 4, SM-09; the receipt stays
+  visible so a FAIL note and a hint can be read together). Appears in place (no
+  slide); reduced motion identical. While open it is the "Results" F6 region.
 - Opening (button or chord) moves focus into the panel; Esc or the same chord
   closes it and focus returns to the opener (IP-03).
 - Focus is **not** trapped: F6 / clicking the editor leaves the panel open and
   moves focus out (the player types while reading).
 - Scrolls at high `ui_scale`; never shrinks text.
-- One side panel at a time: opening the manual closes the hint, and vice versa
-  (provisional — the hint panel slot is decided in the workbench spec).
+- One side panel at a time, in one slot: opening the manual closes the hint,
+  and vice versa (decided in the workbench UX spec, developer decision
+  2026-10-16 — workbench OQ6).
+- A locked feature (the Hint before its unlock) still opens its panel, which
+  shows the unlock condition and progress (workbench UX spec, Hint OQ7).
 - Manual: index (unlocked / later) + page, arrows + Enter; "Copy example" uses
   IP-05.
 
@@ -514,17 +563,25 @@ uses it.
 ### IP-19 Paper screen with two choices
 
 **Category**: Navigation / Choice
-**Used In**: Payslip (Next shift / Stop for today)
+**Used In**: Payslip (Next shift / Stop for today; after the Closing shift: End of day only), End of day (Back to the store — one-choice variant), shift screen (primary + secondary actions — `shift-flow.md`)
 
 **Description**: A full-screen or centred paper object that waits for one of two
-answers.
+answers (or, in the one-choice variant, for the player to move on).
 
 **Specification**:
 - Primary choice first in Tab order and focused on arrival; Enter activates the
   focused button. Esc does nothing here: both answers matter, so the player
   picks one.
+- **One-choice variant** (End of day receipt; the Closing-shift payslip): a
+  summary receipt with a single focused button; Esc still does nothing — the
+  summary is read, then dismissed on purpose.
+- **Shift screen**: same focus rule (primary focused on arrival, others after it
+  in Tab order), but Esc follows IP-03 step 6 because the screen is optional.
 - Content appears in final position on frame 1; the receipt form (zigzag edge)
-  for the payslip.
+  for the payslip and End of day; the paper card for the shift screen.
+- When the receipt body outgrows its rect (high `ui_scale`), it becomes a
+  focusable scroll container after the buttons in Tab order (Up/Down,
+  PageUp/PageDown, Home/End); the buttons never scroll.
 - Both buttons ≥ 32 × `ui_scale` px, separated ≥ 16 px.
 
 **When to Use**: Moments that genuinely need an answer before play continues.
@@ -541,13 +598,25 @@ answers.
 
 **Specification**:
 - One row per request: id, short title, state as glyph + word (locked / open /
-  ✓ passed / ↷ left for later / unavailable), challenge mark (★ cleared / ☆
-  available).
-- Up/Down move between rows; Enter opens; row actions (Replay / Reopen /
-  Restart) reachable with Tab inside the focused row; Restart uses IP-18.
+  ✓ passed / ↷ left for later / unavailable — "locked", "open" and
+  "unavailable" are word-only, no dash or placeholder glyph, IP-07), challenge
+  mark (★ dare cleared / ☆ dare available).
+- **Side requests** are rows too, after the mains of their shift group, marked
+  "(side)"; their states are locked / open / ✓ passed (never left for later).
+- Row actions by state (`shift-flow.md` Row actions table): open → *Resume*,
+  *Restart*; ✓ passed → *Replay*, *Try the dare* (only with "☆ dare
+  available"), *Restart*; ↷ left for later → *Reopen*, *Restart*; unavailable
+  (left by Kenji, Progression rule 7a) → *Reopen*; unavailable (withheld by the
+  content check) and locked → none. The action word *Resume* is used instead of
+  "Open" so it never repeats the state word "open".
+- Up/Down move between rows (PageUp/PageDown a page, Home/End first/last; the
+  focused row scrolls into view); Enter runs the row's first action; the row's
+  actions are reachable with Tab inside the focused row; Restart uses IP-18 and
+  focus returns to the row's *Restart* afterwards.
 - Locked rows are focusable and read "locked" (players can see what is ahead).
-- Scrolls at high `ui_scale`; the current request row carries the word
-  "(current)" — no extra glyph (IP-07) and not colour alone.
+- Scrolls at high `ui_scale` (actions stack under the focused row); the current
+  request row carries the word "(current)" — no extra glyph (IP-07) and not
+  colour alone.
 
 **When to Use**: Lists of items with state and actions.
 **When NOT to Use**: Tabular query data (IP-11).
@@ -576,18 +645,78 @@ defined (Gaps).
 
 ---
 
+### IP-22 Strip menu (Shift button)
+
+**Category**: Navigation
+**Used In**: Workbench counter strip; same definition in `design/ux/shift-flow.md`
+
+**Description**: One small menu, opened from the strip's Shift button, reaches
+the satellite screens without a main menu.
+
+**Specification** (developer decision 2026-10-16):
+- Items, in order: **Shift screen**, **Chapter list**, **Options**, and **Log**
+  when `ui_scale` ≥ 1.5 (and Back Room when the bubble would otherwise go
+  under 360 px — workbench UX spec).
+- Open: click, Enter on the focused button, or `Ctrl+Shift+S` (IP-01). The menu
+  appears in place under the button (no slide) and takes focus on its first item;
+  Up/Down move, Enter chooses, Esc closes and returns focus to the button.
+- **Challenge mode**: the button is disabled and shows the visible words "Leave
+  the dare first" on its second line (also its accessible description); it stays
+  focusable; the chord does nothing.
+- The draft is always kept; no item discards anything.
+- **Options** opens the shift screen with the options panel (IP-21) open.
+- **On paper screens** (`shift-flow.md`): on the shift screen and chapter list
+  the menu works as above, and the item for the screen already shown is disabled
+  with the word "(here)"; on the payslip and End of day the button is inert
+  (skipped by Tab, no hover) because the receipt waits for its own answer (IP-19).
+- AccessKit: menu button role with the item count.
+
+**When to Use**: Reaching the shift screen, chapter list, options from the workbench.
+**When NOT to Use**: Actions on the current request (those have their own controls).
+
+---
+
+### IP-23 Rule tag with live check
+
+**Category**: Feedback
+**Used In**: Workbench editor header in challenge mode (CC UI Req 2)
+
+**Description**: Shows the dare's rule and whether the current draft meets it.
+
+**Specification**:
+- A small paper rule tag in the editor header ("Dare: no `IN`", token in IP-12
+  style) followed by the live check: "✓ rule met" or "☆ not yet" (IP-07),
+  ≥ 4.5:1, and the "Leave challenge" button.
+- The check updates on each edit (from `tokenize`), in place, no animation; it is
+  never a verdict — only Submit clears a dare.
+- AccessKit: the rule is the tag's name; a change of the check is announced
+  politely, at most once per edit burst.
+
+**When to Use**: Constraint challenges.
+**When NOT to Use**: Ordinary requests.
+
+---
+
 ## Gaps & Patterns Needed
 
 | Gap | Needed by | Note |
 |---|---|---|
 | Stepped slider (`ui_scale` 1.0–2.0, step 0.25; reveal speed; volumes) | Accessibility Options, Audio (VS) | Must preview text size live without moving the slider under the pointer |
 | Key remapping row (press a key, conflict warning) | Accessibility Options (VS) | Conflict rule from accessibility requirements (Motor) |
-| Single-line text input (tester id; F9 note) | Playtest Log setup prompt / F9 (playtest builds) | Facilitator-facing; IP-21-like rows + IME support |
-| Loading state (boot verification ≈ 0.6 s) | Boot (ADR-0003/0006) | Static paper "Opening the store…", input blocked, no spinner |
-| Tab cluster layout at `ui_scale` ≥ 1.5 and locked Hint condition text placement | Workbench / strip spec | Tabs may grow leftward over the shelf zone, never over the niche (art bible 7.1); hint OQ7 |
-| Challenge mode banner + live rule check | Workbench spec (CC UI Req 2) | Probably IP-07 + a rule tag object; define in the workbench spec |
-| Shift-start card | Progression | 300 ms strip crossfade (art bible exception 1) |
+| Single-line text input (tester id; F9 note) | Playtest Log setup prompt / F9 (playtest builds) | Facilitator-facing; IP-21-like rows + IME support; F9 rules in ADR-0004 §4 and the workbench UX spec |
+| Loading state and boot failure | Boot (ADR-0003/0006) | Loading: static paper "Opening the store…", input blocked, no spinner. Failure (provisional, workbench UX spec): "The store can't open today." + "Content error — reported" + focused Quit |
+| Growing outcome receipt | Workbench | Receipt grows to 3 lines from the Target grid (floor 2 rows), then scrolls — candidate pattern if another screen needs it (IP-08) |
+| Locked feature panel | Workbench (Hint) | Locked tab opens its panel with the unlock condition and progress; candidate pattern for later locked features (IP-15) |
+| Shift-start card | Progression | 300 ms strip crossfade (art bible exception 1); still unspecified — `shift-flow.md` names it but does not define its layout or duration on screen |
+| Paper card screen | Shift screen (`shift-flow.md`) | Centred paper card (560 × 360 at 1.0) with a title, a progress line and stacked buttons using IP-19 focus rules; a second card can sit beside it (options panel). Candidate pattern if another card screen appears |
+| End-of-day receipt | End of day (`shift-flow.md`) | Covered by IP-19's one-choice variant; listed so the art bible can confirm the receipt form for a summary with no wage |
 | Back Room tab and "practice data" label | Back Room (Alpha) | Workbench UI Req 6 |
+
+Resolved by the workbench UX spec (2026-10-16): tab cluster at `ui_scale` ≥ 1.5
+and locked Hint condition placement; challenge banner + live check (IP-23).
+
+Note: ADR-0004 §4 lists the "Restart confirmation" among embedded dialogs; IP-18
+keeps it inline (no dialog). The F9 rule works either way; IP-18 is unchanged.
 
 ---
 
@@ -595,7 +724,7 @@ defined (Gaps).
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | Can `CodeEdit` leave Ctrl+Enter / Ctrl+Shift+Enter / F6 to the shortcut layer without swallowing them, with an IME composition active? (IP-01) | ui-programmer | ADR-0008 / IME probe |
-| 2 | Should the bubble advance with Enter / Space only when the strip has focus, or also from the editor with a dedicated chord? (IP-13) | ux-designer | Workbench spec |
-| 3 | Grid keyboard: does the cell cursor need its own pane stop, or is it part of "results" (IP-02, IP-11)? | ux-designer | Workbench spec |
+| 1 | Can `CodeEdit` leave Ctrl+Enter / Ctrl+Shift+Enter / Ctrl+Shift+S / F6 to the shortcut layer without swallowing them, with an IME composition active? (IP-01) | ui-programmer | ADR-0008 / IME probe |
+| 2 | ~~Bubble advance from the editor?~~ **Resolved** (workbench UX spec): Enter / Space only with the strip focused, or a click; no editor chord (IP-13) | ux-designer | Done 2026-10-16 |
+| 3 | ~~Grid cell cursor pane stop?~~ **Resolved** (workbench UX spec): part of "Results"; each grid is one Tab stop, arrows move the cursor inside (IP-02, IP-11) | ux-designer | Done 2026-10-16 |
 | 4 | Player journey map does not exist; arrival context is assumed | ux-designer | Before `/ux-review` |

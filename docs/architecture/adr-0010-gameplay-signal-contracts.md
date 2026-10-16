@@ -221,8 +221,9 @@ another consumer's state during the reset, so their order does not matter:
 
 Constraint Challenges is **not** a consumer: challenge drafts and their counter
 sets are untouched (CC 6c). Progression's entry point is
-`ShiftProgression.request_restart(puzzle_id)`, called by the Workbench view after
-the confirmation; it logs `request_restart {state, draft_was_empty}` with
+`ShiftProgression.request_restart(puzzle_id)`, called by the chapter-list view
+(Progression rule 12a — Restart lives on the chapter list) after its IP-18
+confirmation; it logs `request_restart {state, draft_was_empty}` with
 `draft_was_empty` from the `draft_is_empty` Callable, called before emitting.
 
 ### 7. Input activity (hint `last_input_t`) and pause
