@@ -4,6 +4,8 @@
 # Usage:  tools/session/start-session.sh <id>        e.g. 10b, 11
 #         tools/session/start-session.sh --list
 #         tools/session/start-session.sh <id> --print   (show the prompt, do not start)
+#         tools/session/start-session.sh <id> --new-window  (open the session in a new
+#                                    terminal window; usable from inside Claude Code)
 #
 # Reads production/session-prompts/session-<id>-*.md and sends the content of its
 # FIRST ``` code block. Always starts from the project root, so the project's
@@ -41,6 +43,29 @@ fi
 
 if [[ "${2:-}" == "--print" ]]; then
   printf '%s\n' "$prompt"
+  exit 0
+fi
+
+if [[ "${2:-}" == "--new-window" ]]; then
+  self="$root/tools/session/start-session.sh"
+  if command -v ptyxis >/dev/null; then
+    term=(ptyxis --new-window --)
+  elif command -v gnome-terminal >/dev/null; then
+    term=(gnome-terminal --)
+  elif command -v x-terminal-emulator >/dev/null; then
+    term=(x-terminal-emulator -e)
+  else
+    echo "error: no terminal emulator found (ptyxis, gnome-terminal, x-terminal-emulator)" >&2
+    exit 1
+  fi
+  # Drop the calling Claude Code session's variables so the new window starts a
+  # top-level session, not a child of this one.
+  clean=(env)
+  while IFS='=' read -r k _; do
+    [[ "$k" == CLAUDECODE || "$k" == CLAUDE_* ]] && clean+=(-u "$k")
+  done < <(env)
+  setsid "${clean[@]}" "${term[@]}" bash -lc "cd '$root' && '$self' '$1'; exec bash" >/dev/null 2>&1 < /dev/null &
+  echo "Opened a new terminal window for: $file" >&2
   exit 0
 fi
 

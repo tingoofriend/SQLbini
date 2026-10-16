@@ -3,6 +3,8 @@
 # Usage:  .\tools\session\start-session.ps1 <id>          e.g. 10b, 11
 #         .\tools\session\start-session.ps1 -List
 #         .\tools\session\start-session.ps1 <id> -Print   (show the prompt, do not start)
+#         .\tools\session\start-session.ps1 <id> -NewWindow  (open the session in a new
+#                                    pwsh window; usable from inside Claude Code)
 #
 # Reads production/session-prompts/session-<id>-*.md and sends the content of its
 # FIRST ``` code block. Always starts from the project root, so the project's
@@ -10,7 +12,8 @@
 param(
     [Parameter(Position = 0)] [string] $Id,
     [switch] $List,
-    [switch] $Print
+    [switch] $Print,
+    [switch] $NewWindow
 )
 $ErrorActionPreference = 'Stop'
 # The prompt contains double quotes and newlines; Windows PowerShell 5.1 mangles
@@ -56,6 +59,13 @@ if ([string]::IsNullOrWhiteSpace($prompt)) {
 
 if ($Print) {
     $prompt
+    exit 0
+}
+
+if ($NewWindow) {
+    $self = Join-Path $root 'tools\session\start-session.ps1'
+    Start-Process pwsh -WorkingDirectory $root -ArgumentList @('-NoExit', '-File', $self, $Id)
+    Write-Host "Opened a new pwsh window for: $file"
     exit 0
 }
 
