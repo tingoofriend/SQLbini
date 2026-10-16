@@ -2,13 +2,14 @@
 
 > 선행 세션: 세션 10b(UX 스펙 재검토 → 세 스펙 NEEDS REVISION → 수정, 컨트롤 매니페스트 갱신 2026-10-17)
 > 사용법: **Windows PC**에서 저장소를 받고(`git pull`), Godot 4.7.2와 Claude Code를 준비한 뒤
-> 자동 시작: 프로젝트 폴더의 터미널에서 `pwsh tools\session\start-session.ps1 11` (PowerShell 7.3+) — 새 세션을 열고 아래 블록을 첫 메시지로 넣습니다(`--print` / `-Print`로 내용만 확인).
+> 자동 연속 진행: `pwsh tools\session\auto-session.ps1` (session-handoff.md를 읽어 이 세션부터 시작하고, /exit 후 다음 세션을 자동으로 엶).
+> 이 세션만 시작: 프로젝트 폴더의 터미널에서 `pwsh tools\session\start-session.ps1 11` (PowerShell 7.3+) — 새 세션을 열고 아래 블록을 첫 메시지로 넣습니다(`--print` / `-Print`로 내용만 확인).
 > **새 Claude Code 세션**(`06.Game_Studio` 폴더에서 시작)에 아래 블록 전체를 첫 메시지로 붙여 넣으세요.
 > 준비물: Godot 4.7.2 Windows 실행 파일, godot-sqlite v4.9 Windows 바이너리(`.dll`), 목표 PC 후보 정보(CPU·GPU·RAM).
 
 ```
 SQLbini 프로젝트를 이어서 진행할게. 이번 세션은 Windows PC에서 해.
-먼저 production/session-state/active.md, production/decision-log.md,
+먼저 production/session-handoff.md(이 PC에는 active.md가 없으니 Carry-over가 기준), production/decision-log.md,
 docs/architecture/architecture-review-2026-10-16.md, docs/architecture/requirements-traceability.md를 읽고
 현재 상태를 한국어로 짧게 요약해줘.
 진행 규칙:
@@ -25,7 +26,7 @@ docs/architecture/architecture-review-2026-10-16.md, docs/architecture/requireme
 이번 세션 작업은 0단계 + 네 단계야.
 0. UX 스펙 가벼운 확인(세션 10b에서 고친 부분만): design/ux/query-workbench.md,
    design/ux/shift-flow.md, design/ux/interaction-patterns.md의 "Revision 2026-10-17" /
-   Last Updated에 적힌 수정이 10b 지적(active.md "Session Extract — /ux-review 2026-10-17")을
+   Last Updated에 적힌 수정이 10b 지적(session-handoff.md Carry-over의 "/ux-review 2026-10-17")을
    해결했는지만 확인해줘. 전체 재검토는 하지 마. 문제없으면 스펙마다 Approved로 바꿀지 물어봐줘.
    Windows에서 Ctrl+Shift+S·Ctrl+Enter가 OS에 잡히지 않는지도
    prototypes/codeedit-shortcut-probe-2026-10-17/로 한 번 돌려봐줘.
@@ -45,7 +46,9 @@ docs/architecture/architecture-review-2026-10-16.md, docs/architecture/requireme
    /settings 로 commands.build 설정. ADR-0005 승인은 하나씩 물어봐줘.
 4. /architecture-review 로 ADR-0005 반영 후 커버리지를 확인하고(새 세션이 아니면 coverage 모드만),
    준비가 되면 /gate-check pre-production 을 실행해줘.
-끝나면 active.md를 갱신하고 커밋할지 물어봐줘.
+끝나면 active.md(이 PC에서 새로 만들어도 됨)와 production/session-handoff.md를 갱신하고
+(Updated, Next prompt — 보통 auto, Next machine, Auto-continue, Next step, Carry-over), 커밋할지 물어봐줘.
+마지막 줄에 "다음 세션으로 넘어가려면 /exit 를 입력하세요"라고 알려줘.
 ```
 
 ## 참고
