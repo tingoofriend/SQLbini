@@ -1,6 +1,6 @@
 # 세션 11 — Windows 스파이크 + ADR-0005 + export 설정 (Technical Setup 마무리)
 
-> 선행 세션: 세션 10b(UX 스펙 재검토, 컨트롤 매니페스트 갱신)
+> 선행 세션: 세션 10b(UX 스펙 재검토 → 세 스펙 NEEDS REVISION → 수정, 컨트롤 매니페스트 갱신 2026-10-17)
 > 사용법: **Windows PC**에서 저장소를 받고(`git pull`), Godot 4.7.2와 Claude Code를 준비한 뒤
 > 자동 시작: 프로젝트 폴더의 터미널에서 `pwsh tools\session\start-session.ps1 11` (PowerShell 7.3+) — 새 세션을 열고 아래 블록을 첫 메시지로 넣습니다(`--print` / `-Print`로 내용만 확인).
 > **새 Claude Code 세션**(`06.Game_Studio` 폴더에서 시작)에 아래 블록 전체를 첫 메시지로 붙여 넣으세요.
@@ -22,7 +22,13 @@ docs/architecture/architecture-review-2026-10-16.md, docs/architecture/requireme
   목록으로 모아 두었다가 나에게 물어봐줘(문구만 어긋난 것은 권고로 기록). 재검토 사이클은 만들지 마.
 요약이 끝나면 아래 이번 세션 작업을 진행해줘.
 
-이번 세션 작업은 네 단계야.
+이번 세션 작업은 0단계 + 네 단계야.
+0. UX 스펙 가벼운 확인(세션 10b에서 고친 부분만): design/ux/query-workbench.md,
+   design/ux/shift-flow.md, design/ux/interaction-patterns.md의 "Revision 2026-10-17" /
+   Last Updated에 적힌 수정이 10b 지적(active.md "Session Extract — /ux-review 2026-10-17")을
+   해결했는지만 확인해줘. 전체 재검토는 하지 마. 문제없으면 스펙마다 Approved로 바꿀지 물어봐줘.
+   Windows에서 Ctrl+Shift+S·Ctrl+Enter가 OS에 잡히지 않는지도
+   prototypes/codeedit-shortcut-probe-2026-10-17/로 한 번 돌려봐줘.
 1. Windows 스파이크 (prototypes/ 아래, 결과는 README로):
    - godot-sqlite v4.9 Windows .dll이 Godot 4.7.2에서 로드되는지, SB-01…12 상당 동작 확인
    - ADR-0001 스레드 프로브 재실행(prototypes/sandbox-timeout-spike-2026-10-15/thread_probe.gd, quit_probe.gd)

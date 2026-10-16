@@ -1,8 +1,8 @@
 # Interaction Pattern Library
 
-> **Status**: In Design — revised after /ux-review 2026-10-16, re-review pending
+> **Status**: In Design — revised after /ux-review 2026-10-17 (first patterns review, 10b), light check of the changed parts pending (session 11 step 0)
 > **Author**: tingoofriend + Claude (`/ux-design patterns`, autonomous)
-> **Last Updated**: 2026-10-16 (revision after the workbench `/ux-review`: IP-02 regions, IP-07/IP-10 visible word at every scale, IP-08 clears on edit, IP-15 slot decided, IP-20 "unavailable", new IP-22 Shift menu and IP-23 rule tag; then, after the shift-flow `/ux-review`: IP-02 two regions on paper screens, IP-03 chapter-list step, IP-19 one-choice variant, IP-20 side rows and actions, IP-22 paper-screen behaviour, paper card gap)
+> **Last Updated**: 2026-10-17 (10b `/ux-review patterns`: Animation and Sound Standards tables, IP-13 reveal inputs, IP-20 cleared-dare replay, IP-01 implementation note from the CodeEdit probe, IP-08 verdict kept through a Run and restored on return, IP-03 Shift menu, no tooltips); 2026-10-16 (revision after the workbench `/ux-review`: IP-02 regions, IP-07/IP-10 visible word at every scale, IP-08 clears on edit, IP-15 slot decided, IP-20 "unavailable", new IP-22 Shift menu and IP-23 rule tag; then, after the shift-flow `/ux-review`: IP-02 two regions on paper screens, IP-03 chapter-list step, IP-19 one-choice variant, IP-20 side rows and actions, IP-22 paper-screen behaviour, paper card gap)
 > **Template**: Interaction Pattern Library
 > **Input**: Keyboard + mouse only (PC); keyboard-first — every pattern must be fully operable without the mouse
 > **Accessibility tier**: Standard + reduced motion + full keyboard (`design/accessibility-requirements.md`)
@@ -35,6 +35,9 @@ Rules every pattern inherits:
    its end.
 6. **Sizes from tokens.** Spacing from the 4 px scale, text from the art-bible
    7.2 sizes × `ui_scale`, minimum target 32 × `ui_scale` px.
+7. **No tooltips.** Nothing is explained only on hover (workbench Visual/Audio
+   anti-patterns: hover-only affordances); a control's purpose is its visible
+   word, and extra detail goes in its accessible description.
 
 ---
 
@@ -54,7 +57,7 @@ Rules every pattern inherits:
 | IP-10 | "New" indicator | Feedback | Something unlocked: glyph + word on its button, never a pulse |
 | IP-11 | Result / target grid | Data display | Positional table with a mark gutter, tints, ghost rows, NULL boxes |
 | IP-12 | Inline SQL token in prose | Data display | Any value the player might type is set in mono on a header run |
-| IP-13 | Paged speech bubble | Dialogue | Measured pages, static ▸, any key completes the reveal |
+| IP-13 | Paged speech bubble | Dialogue | Measured pages, static ▸, a bubble click or Enter / Space on the strip completes the reveal |
 | IP-14 | Inline offer in the bubble | Dialogue / Choice | Two buttons inside the bubble, never a modal; unanswered → ticket |
 | IP-15 | Side panel over the results column | Overlay | Manual and hint open beside the editor; Esc closes, focus returns |
 | IP-16 | Full overlay with scrim | Overlay | Message log: scrim, focus trapped inside, Esc / same key closes |
@@ -89,8 +92,13 @@ the keys without a manual.
   (art bible F-08), e.g. "Run  Ctrl+Enter". It reflects the current binding
   (VS remapping) — never a hard-coded string.
 - Chords work from any focus inside the workbench, including the editor;
-  `CodeEdit` must not consume them (implementation: handle in
-  `_shortcut_input` / shortcut context — ADR-0008).
+  `CodeEdit` must not consume them. **Probed 2026-10-17** (Godot 4.7.2,
+  `prototypes/codeedit-shortcut-probe-2026-10-17/`): a focused `CodeEdit`
+  consumes Ctrl+Enter (`ui_text_newline_blank`), Ctrl+Shift+Enter
+  (`ui_text_newline_above`) and Ctrl+M (`ui_focus_mode`) before
+  `_shortcut_input` runs, so those chords must be taken earlier (`_input`, or
+  by removing those events from the default actions); Ctrl+Shift+S, F6, Ctrl+H,
+  Ctrl+L and Esc are not consumed. Mechanism decided in ADR-0008.
 - Matching by key event type and keycode, never by `event.device` (4.7 device-ID
   change, ADR-0004 §4 precedent).
 - While an overlay (IP-16) is open, workbench chords are inactive except the
@@ -152,8 +160,8 @@ controls.
 ambiguous.
 
 **Specification** (workbench rule 15, first match wins):
-1. Focus inside an open overlay or panel (IP-15, IP-16) → close it; focus returns
-   to the control that opened it.
+1. Focus inside an open overlay, panel or menu (IP-15, IP-16, IP-22) → close it;
+   focus returns to the control that opened it.
 2. Focus on a shown coach mark (IP-17) → dismiss that mark.
 3. Focus in the editor → leave the editor (focus moves to the editor's region
    frame, so Tab moves on). A shown coach mark stays.
@@ -302,9 +310,12 @@ work; it is the only new shape on screen at that moment.
 - Outcome text is announced through an AccessKit live region (polite), once.
 - Lifetime: the **stamp, FAIL note and error strip clear on any editor edit**
   (developer decision 2026-10-16; workbench rule 12, grader UI Req 5); the tally
-  note is hidden on edit with the Stale state (workbench rule 9). Every outcome
-  object also clears on the next Run/Submit, Restart or puzzle change. Never
-  auto-dismissed by time.
+  note is hidden on edit with the Stale state (workbench rule 9). A verdict
+  stays through a Run of the unchanged text — the Run's tally note appears
+  beside it (workbench rule 12; developer decision 2026-10-17). A new Submit
+  replaces the verdict; Restart clears everything. On a puzzle change the
+  objects are hidden and **restored** when that puzzle is shown again (workbench
+  Edge Cases). Never auto-dismissed by time.
 - The receipt grows to fit up to 3 lines of outcome text, taking height from the
   Target grid (floor 2 rows), then scrolls (workbench UX spec).
 
@@ -424,8 +435,9 @@ text means more pages, never a bigger bubble.
 - Static "1/3 ▸" at the bottom right (the chevron never blinks).
 - Advance: click anywhere on the bubble, or Enter / Space while the strip region
   has focus (IP-02). The whole bubble is one target (H-03).
-- Typewriter reveal (≤ 1.0 s per page): any key or click completes it; the full
-  line goes to AccessKit at once; off under reduced motion; never used for
+- Typewriter reveal (≤ 1.0 s per page): the same inputs as Advance complete it
+  (a bubble click, or Enter / Space with the strip focused — dialogue rule 5);
+  typing in the editor never affects it; the full line goes to AccessKit at once; off under reduced motion; never used for
   verdict or error text.
 - Request tickets (square, notched, "REQUEST" tab) stay until the request
   changes; reactions (rounded, name tag) return to the request after
@@ -604,8 +616,9 @@ answers (or, in the one-choice variant, for the player to move on).
 - **Side requests** are rows too, after the mains of their shift group, marked
   "(side)"; their states are locked / open / ✓ passed (never left for later).
 - Row actions by state (`shift-flow.md` Row actions table): open → *Resume*,
-  *Restart*; ✓ passed → *Replay*, *Try the dare* (only with "☆ dare
-  available"), *Restart*; ↷ left for later → *Reopen*, *Restart*; unavailable
+  *Restart*; ✓ passed → *Replay*, *Try the dare* (with "☆ dare
+  available" or "★ dare cleared" — a cleared dare can be replayed, CC States),
+  *Restart*; ↷ left for later → *Reopen*, *Restart*; unavailable
   (left by Kenji, Progression rule 7a) → *Reopen*; unavailable (withheld by the
   content check) and locked → none. The action word *Resume* is used instead of
   "Open" so it never repeats the state word "open".
@@ -697,6 +710,49 @@ the satellite screens without a main menu.
 
 ---
 
+## Animation Standards
+
+Values from art bible 7.6 (authoritative); every motion answers a player action
+or the game's direct response, never gates input, and under reduced motion is
+replaced by its final state (`Settings.reduced_motion`, ADR-0007).
+
+| Motion | Duration | Pattern / where | Reduced motion |
+|---|---|---|---|
+| Text-bearing objects (results, notes, error strip, panels, menus, "new", screens) | 0 ms — final position, full opacity on frame 1 | IP-08, IP-10, IP-15, IP-19, IP-22 | Same |
+| PASS stamp | 180 ms, no bounce | IP-08 | Final state |
+| Star hanko (challenge) / chapter ★ stamp | +60 ms after the stamp / 180 ms | IP-08, `shift-flow.md` | Final state |
+| Log scrim | 120 ms open, 90 ms close | IP-16 | Instant |
+| Insert fade (`selection` fill) | 200 ms, text never moves | IP-05 | None |
+| Coach-mark ring settle | 200 ms, once | IP-17 | Final state |
+| NPC step-in | 200 ms, stepped | Counter strip | Final state |
+| Shift palette crossfade | 300 ms, strip only, shift-start card | Art bible exception | Instant |
+| Typewriter reveal | `len / reveal_cps`, capped at `reveal_cap` (1.0 s) per page | IP-13 | Off (`effective_reveal_cps()` = 0) |
+| Idle eye blink | Art bible 7.6 exception | Counter strip | Off |
+| Caret, ▸ chevron, focus ring | Static — never blink or animate | All | Same |
+
+A new event jumps any running motion to its end (Overview rule 5).
+
+## Sound Standards
+
+**No sound is required at MVP** — Audio is a Vertical Slice system
+(`systems-index.md`); `audio-director` owns the palette and mix. Rules every
+future cue must keep (accessibility requirements, Auditory):
+
+| Cue (planned) | Pattern / source | Visual it duplicates |
+|---|---|---|
+| Run: soft register tick | IP-04, workbench Visual/Audio | Result grid / error strip |
+| PASS stamp sound | IP-08, grader | Stamp + "✓ ACCEPTED" |
+| FAIL sound | IP-08, grader | Sticky note + "? Not accepted" |
+| Bubble blips / HQ printer tick | IP-13, Dialogue | The line itself |
+| Pane switch: faint paper slide | IP-02 | Focus bar on the region |
+| Payslip receipt-printer | IP-19, Progression | The receipt |
+| Typing | Silent by default (optional quiet tap, off by default) | — |
+
+- Every sound duplicates a visual event; nothing is audio-only; no cue loops.
+- Independent volumes (music, SFX, blips; blips 0 = none) arrive with
+  Accessibility Options / Audio (VS).
+- Verdict sounds stay in the mid frequency range (hearing-aid note).
+
 ## Gaps & Patterns Needed
 
 | Gap | Needed by | Note |
@@ -724,7 +780,7 @@ keeps it inline (no dialog). The F9 rule works either way; IP-18 is unchanged.
 
 | # | Question | Owner | Resolve by |
 |---|---|---|---|
-| 1 | Can `CodeEdit` leave Ctrl+Enter / Ctrl+Shift+Enter / Ctrl+Shift+S / F6 to the shortcut layer without swallowing them, with an IME composition active? (IP-01) | ui-programmer | ADR-0008 / IME probe |
+| 1 | `CodeEdit` and the workbench chords — **partly answered 2026-10-17** (IP-01 probe): Ctrl+Shift+S / F6 / Ctrl+H / Ctrl+L / Esc pass; Ctrl+Enter / Ctrl+Shift+Enter / Ctrl+M are consumed and must be taken first. Still open: behaviour with an IME composition active, and the Windows OS layer | ui-programmer | ADR-0008 / IME probe (session 11 for Windows) |
 | 2 | ~~Bubble advance from the editor?~~ **Resolved** (workbench UX spec): Enter / Space only with the strip focused, or a click; no editor chord (IP-13) | ux-designer | Done 2026-10-16 |
 | 3 | ~~Grid cell cursor pane stop?~~ **Resolved** (workbench UX spec): part of "Results"; each grid is one Tab stop, arrows move the cursor inside (IP-02, IP-11) | ux-designer | Done 2026-10-16 |
 | 4 | Player journey map does not exist; arrival context is assumed | ux-designer | Before `/ux-review` |

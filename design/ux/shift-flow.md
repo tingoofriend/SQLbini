@@ -1,8 +1,8 @@
 # UX Spec: Shift Flow (Shift Screen, Payslip / End of Day, Chapter List)
 
-> **Status**: In Design — revised after /ux-review 2026-10-16, re-review pending
+> **Status**: In Design — revised after /ux-review 2026-10-17 (re-review 10b), light check of the changed parts pending (session 11 step 0)
 > **Author**: tingoofriend + Claude (`/ux-design shift-flow`, autonomous; revision decisions by the developer, 2026-10-16)
-> **Last Updated**: 2026-10-16
+> **Last Updated**: 2026-10-17 (10b `/ux-review`: a cleared dare can be replayed from the chapter list; chapter-list dare start logged; withheld side requests not listed; OQ6 closed)
 > **Journey Phase(s)**: between shifts (clock-out, start of a shift), returning to a skipped request, session end at MVP
 > **Platform Target**: PC (Windows, Linux), 1280×720 logical canvas; keyboard + mouse, keyboard-first (no gamepad, no touch — `technical-preferences.md`)
 > **Template**: UX Spec
@@ -160,12 +160,13 @@ only — IP-07. The payslip shows ★ only in the *Dares cleared* block.)
 |---|---|
 | locked | none (row focusable, reads "locked") |
 | open (main or side) | *Resume*, *Restart* |
-| ✓ passed | *Replay*, *Try the dare* (only with "☆ dare available"), *Restart* |
+| ✓ passed | *Replay*, *Try the dare* (with "☆ dare available" or "★ dare cleared" — a cleared dare can be played again, CC States `Cleared` → `Cleared`), *Restart* |
 | ↷ left for later | *Reopen*, *Restart* |
 | unavailable — left under rule 7a | *Reopen* (a later PASS makes it passed) |
-| unavailable — withheld by the content check | none; accessible description "can't be opened in this build" |
+| unavailable — withheld by the content check (main requests only) | none; accessible description "can't be opened in this build" |
 
-Side requests are never left for later (Progression States).
+Side requests are never left for later (Progression States). A withheld side
+request is not offered at all, so it has no row (Progression Edge Cases).
 
 **Glyph note (closes Open Question 2):** "unavailable", "locked" and "open" are
 words only, in `ink_muted` for "unavailable" — no en dash, because no glyph for
@@ -268,7 +269,7 @@ Inert controls are skipped by Tab and show no hover; they keep their look.
 | Shift screen *Options* | Activate | Enter / click | Panel appears | Minimal options panel (IP-21) |
 | Chapter list rows | Move | Up / Down / PageUp / PageDown / Home / End | Focus ring on row | — |
 | *Resume* / *Replay* / *Reopen* | Activate | Tab into row + Enter / click | — | Workbench with that request (`request_shown`) |
-| *Try the dare* | Activate | Tab into row + Enter / click | — | Constraint Challenges starts challenge mode (start source: chapter list, CC rule 5); return per CC rule 6a |
+| *Try the dare* | Activate | Tab into row + Enter / click | — | Constraint Challenges starts challenge mode (start source: chapter list, CC rule 6 / States); logged `challenge_start {source: chapter_list}` by Constraint Challenges; return per CC rule 6a. The view's call into Constraint Challenges is not named in ADR-0010 (Open Question 7) |
 | *Restart* | Activate | Tab into row + Enter / click | Inline confirm if the draft is non-empty (Cancel focused) | `ShiftProgression.request_restart(puzzle_id)`; stays on the list, focus back on the row's *Restart* |
 | Confirm *Cancel* | Cancel | Enter / Esc / click | Confirm closes | Nothing changes; focus back on *Restart* |
 | *Back* | Leave | Esc / click | — | Shift screen |
@@ -318,7 +319,8 @@ Per ADR-0010; this spec's screens emit no gameplay signals themselves.
   `request_restart {state, draft_was_empty}` and emits
   `request_restarted(puzzle_id)`. Cancel calls nothing and logs nothing.
 - **Playtest Log** (Progression, `playtest-log.md` rule 4): `shift_clockout`,
-  `chapter_complete {starred}`, `request_restart {…}`.
+  `chapter_complete {starred}`, `request_restart {…}`; Constraint Challenges
+  writes `challenge_start {source: chapter_list}` for *Try the dare*.
 
 ---
 
@@ -385,7 +387,7 @@ title, never the state word; buttons grow in height, not by truncation.
 
 - **UX-SF-01 [UI]** At `ui_scale` 1.0 and 2.0, the payslip shows every main and side request of the shift with "✓ passed", "↷ left for later" or "unavailable", a "Dares cleared" block when a dare was cleared during the shift (including one on an earlier shift's request), and "Wage ¥3,000"; *Next shift* has focus; capture retained.
 - **UX-SF-02 [UI]** After the Closing shift the payslip shows only *End of day*; End of day shows "✓ Chapter complete", "★ starred" or "not starred yet", the left-for-later list, and dares cleared after the final clock-out; *Back to the store* leads to a shift screen titled "Chapter complete" with *Chapter list* focused and no *Continue*.
-- **UX-SF-03 [UI]** The chapter list shows main and side rows with the five state words, the dare mark, and the row actions in the Row actions table; Up/Down + Tab + Enter opens a request; Esc returns to the shift screen with focus on *Chapter list*.
+- **UX-SF-03 [UI]** The chapter list shows main and side rows with the five state words, the dare mark, and the row actions in the Row actions table (*Try the dare* on both ☆ and ★ rows); Up/Down + Tab + Enter opens a request; Esc returns to the shift screen with focus on *Chapter list*.
 - **UX-SF-04 [UI]** Restart on a row with a non-empty draft shows "Start this request over? Your query will be cleared." with Cancel focused; Esc cancels and the list stays open; with an empty draft it restarts at once; the player stays on the list.
 - **UX-SF-05 [UI]** In challenge mode the Shift button is disabled and shows the visible words "Leave the dare first"; `Ctrl+Shift+S` does nothing; outside challenge mode the menu lists Shift screen, Chapter list, Options (and Log at `ui_scale` ≥ 1.5).
 - **UX-SF-06 [UI]** After *Stop for today* the shift screen names the next shift, shows the MVP note, and *Continue* starts that shift's briefing; after reopening a request from the list, *Continue* is still primary and *Back to work* secondary.
@@ -406,4 +408,5 @@ title, never the state word; buttons grow in height, not by truncation.
 | 3 | Is the wage line worth keeping vs a manager comment (Progression OQ 2)? | Progression owner | After MVP playtest |
 | 4 | ~~Side tickets on the shift screen~~ — **Resolved 2026-10-16:** side requests are rows in the chapter list; tickets stay active in the strip | — | — |
 | 5 | ~~Pattern-library additions~~ — **Resolved 2026-10-16:** IP-02 (two regions), IP-03 (steps 4–6), IP-19 (one-choice variant, shift screen), IP-20 (side rows, *Resume*, *Try the dare*), IP-22 (Shift menu, paper-screen behaviour); paper card and shift-start card remain library Gaps | ux-designer | — |
-| 6 | ADR-0010 names the Workbench view as the caller of `ShiftProgression.request_restart`; this spec gives the chapter-list confirmation to the chapter-list view | technical-director | ADR-0010 text amendment |
+| 6 | ~~Restart caller in ADR-0010~~ — **Resolved 2026-10-16:** ADR-0010 §6 names the chapter-list view | — | — |
+| 7 | *Try the dare* from the chapter list has no named entry point in ADR-0010 (the offer path is `choice_made`); name it in the ADR-0010 catalogue (e.g. `ConstraintChallenges.start_from_list(puzzle_id)`) | technical-director | Before the Constraint Challenges story |

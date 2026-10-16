@@ -1,8 +1,8 @@
 # UX Spec: Query Workbench
 
-> **Status**: In Design — revised after /ux-review 2026-10-16, re-review pending
+> **Status**: In Design — revised after /ux-review 2026-10-17 (re-review 10b), light check of the changed parts pending (session 11 step 0)
 > **Author**: tingoofriend + Claude (`/ux-design query-workbench`, autonomous; layout choices by the developer 2026-10-16)
-> **Last Updated**: 2026-10-16 (revision after `/ux-review`: error strip under the editor, verdict clears on edit, Shift menu, focus order, Restart / skip-button lifetimes, ADR-0010 signals)
+> **Last Updated**: 2026-10-17 (revision after the 10b `/ux-review`: Options via the shift screen (IP-22), F9 note written on any close, Target-unavailable / previous-text / returning-request states, verdict kept through a Run, order line from the GDD, boot failure Quit-only; earlier 2026-10-16: error strip under the editor, verdict clears on edit, Shift menu, focus order, Restart / skip-button lifetimes, ADR-0010 signals)
 > **Journey Phase(s)**: every request of every shift (≈ 90% of play time); Day One Morning (1-1…1-3) in its Guided variant
 > **Platform Target**: PC (Windows, Linux), 1280×720 logical canvas (`canvas_items` stretch, `expand` aspect — ADR-0005 pending); keyboard + mouse, keyboard-first
 > **Template**: UX Spec
@@ -123,7 +123,10 @@ space comes from the **Target** grid body, which shrinks down to a floor of 2 ro
 (the grid scrolls). Beyond that the receipt text scrolls inside the receipt. Your
 result never shrinks for feedback. The receipt holds the Run tally note, the FAIL
 note, the PASS stamp and the "↷ Leave it for Kenji" button — never error text
-(that is the strip under the editor).
+(that is the strip under the editor). A verdict stays until the editor text
+changes (workbench rule 12): a Run of the unchanged text keeps the FAIL note or
+stamp and adds its tally note beside it (developer decision 2026-10-17), so "≈
+Looks right today" and "? Not accepted" can be read together.
 
 ### ASCII Wireframe
 
@@ -251,9 +254,10 @@ Shift+Tab move between the stops below; arrows move inside a grid, list or menu.
   (IP-14, IP-17); the only automatic moves are the Day One opening question
   (first choice) and the briefing (bubble), when no request is open.
 - Overlays: the Shift menu takes focus on its first item; Esc closes it and
-  returns to the Shift button. The log traps focus (IP-16). The options panel
-  takes focus on its first toggle; Esc returns to the Shift button. A coach
-  mark's tag follows its target in Tab order (IP-17).
+  returns to the Shift button. The log traps focus (IP-16). *Options* leaves the
+  workbench for the shift screen with the options panel open (IP-22); focus
+  there follows `shift-flow.md`. A coach mark's tag follows its target in Tab
+  order (IP-17).
 
 ---
 
@@ -263,21 +267,26 @@ Shift+Tab move between the stops below; arrows move inside a grid, list or menu.
 |---|---|---|
 | Loading | Boot verification (≈ 0.6 s) | Full paper screen "Opening the store…", input blocked, no spinner (new pattern → IP library Gaps) |
 | Boot: puzzle withheld | `verify_all` marks a puzzle `withheld` (ADR-0003) | Boot continues; that request is "unavailable" on the chapter list (word only, IP-20) and is never displayed; Progression owns the skip |
-| Boot failure | No playable content after verification (e.g. the chapter cannot load) | *Provisional:* paper screen "The store can't open today." + "Content error — reported" (no raw text) + **Quit** button (focused, Enter); no retry at MVP (Open Question 6) |
+| Boot failure | No playable content after verification (e.g. the chapter cannot load) | Paper screen "The store can't open today." + "Content error — reported" (no raw text) + **Quit** button (focused, Enter); no retry — content is bundled, so a retry gives the same result (developer decision 2026-10-17) |
 | Briefing | Shift start | Bubble shows Tanaka's `briefing` (paged); editor read-only, empty, placeholder "The first order comes after the briefing"; focus on the bubble (Enter/Space pages) |
 | Opening question (Day One) | `line_requested` from Onboarding after the first briefing | Bubble: "Ever used SQL before?" with two inline choices; **focus moves to the first choice** (nothing else to do yet); then 1-1 is displayed |
-| Request shown (default) | `request_shown` (display) — not `request_opened` (state only) | Ticket bubble; editor focused with the request's draft (or `prefill_sql` on first draft); grids empty with "Run to see your result" in `ink_muted`; Target shown |
+| Request shown (default) | `request_shown` (display) — not `request_opened` (state only) — for a request with no Run yet this session | Ticket bubble; editor focused with the request's draft (or `prefill_sql` on first draft); grids empty with "Run to see your result" in `ink_muted`; Target shown |
+| Request shown again | `request_shown` for a request already worked on this session (side request, Reopen, Replay, return from challenge mode) | Draft, last Run result (marks, or Stale if edited after it) and last verdict restored as they were (workbench Edge Cases "leaves and reopens"); the skip button returns if Progression still offers it |
+| Target unavailable | Reference cannot be computed (sandbox `CONTENT_ERROR` on the target, workbench Edge Cases) | Target grid shows "Target unavailable — content error" (word only, no raw text); no row marks, no tally note; Run and Submit stay available; a Submit then gives the UNAVAILABLE state |
 | Reaction | A verdict / Run-error reaction, explainer or start-over line | Rounded bubble + name tag; returns to the request after `reaction_hold`, a click on the speaker, a Run (`run_started`), or an edit once fully visible for `reaction_grace` (Dialogue state table) |
 | Pass reaction | PASS (or `skip.accept`) | Pass line (+ challenge offer merged into the same bubble, ADR-0010 §5); ended only by its hold or click / Enter / Space on the strip — edits and Run do not end it; then the next request is displayed |
 | Guided (Day One Morning) | Onboarding rule 7, `guided_window_changed(true)` | Coach marks per rule 7a; ghost text on 1-3; Hint/Manual "new" hidden by the view while the window is open |
 | Checking | No result 200 ms after Run/Submit | Receipt shows "checking…" (static) |
-| Run result | Run returns `ok` | Your result filled with marks; count line "4 rows · 3 ✓ · 1 + extra · 0 − missing"; tally note "≈ Looks right today (not checked)" on the receipt when everything matches |
+| Run result | Run returns `ok` | Your result filled with marks; count line "4 rows · 3 ✓ · 1 + extra · 0 − missing"; tally note "≈ Looks right today (not checked)" on the receipt when everything matches; a verdict on the unchanged text stays beside it |
+| Zero rows | Run `ok`, 0 rows | Your result shows "0 rows" (never a blank panel); every target row marked "− missing" when column counts match (workbench Edge Cases) |
+| Over display cap | Run `ok`, more rows than `display_rows_max` (≤ `grader_row_cap`) | First `display_rows_max` rows built; count line "1,000 rows — showing the first 200" (true count; marks over all rows) |
 | Column mismatch | Run `ok`, column count ≠ target | Count line replaced by "You returned 3 columns; the request needs 2" (workbench rule 8); row marks, tints and tally note not shown |
-| Order mismatch | *Provisional:* `ordered` puzzle, same rows as the target in a different order | Count line "! Same rows, different order"; ✓ marks stay. Not used in Chapter 1 (no ordered puzzles); exact rule to confirm with the GDD owner (Open Question 7) |
+| Order mismatch | `ordered` puzzle (Chapter 2+), every row matches but the order differs | Order line "! Rows match; order differs" (workbench Edge Cases text, `!` = watch out, art bible 3.3); ✓ marks stay (marks ignore order); tally note hidden (it requires order). Not used in Chapter 1 |
 | Stale | Draft edited after a Run | "Stale — run again" header tag; marks/tints and tally note hidden; grid text `ink_muted` (no opacity, no italic) |
 | Run error | Sandbox error on Run | Error strip under the editor: "⚠" + label + SQLite `error_text` (mono) or the fixed message; error token wavy-underlined; grids keep the last result marked Stale; Kenji's reaction in the bubble |
 | Run TOO_MANY_ROWS | Visible Run above `grader_row_cap` | No grid fill; Your result count line "{grader_row_cap}+ rows — too many to compare" (same string as the Submit strip, workbench rule 13) |
-| Submitting | Submit pressed | Run and Submit disabled with "checking…"; typing stays live |
+| Submitting | Submit pressed | Run and Submit disabled with "checking…" (Claude decision, IP-09: Submit is exclusive); typing stays live |
+| Verdict for previous text | The editor was edited while `Submitting`, then the verdict arrives | Verdict shown as usual plus the tag "for the previous text" on the receipt (or the strip); cleared on the next edit (workbench Edge Cases) |
 | Submit error | SUBMIT_ERROR (sandbox kinds) | Error strip under the editor as Run error; the requester's reaction in the bubble |
 | Submit TOO_MANY_ROWS | SUBMIT_ERROR `TOO_MANY_ROWS` | Error strip: "⚠ Too many rows" + "{grader_row_cap}+ rows — too many to compare"; no `error_text` |
 | UNAVAILABLE | Verdict `UNAVAILABLE` | Back to editing; error strip "⚠ Content error — reported" with **no raw text**; Dialogue's `error.CONTENT_ERROR` line in the bubble; the request may be left (Progression rule 7a) |
@@ -291,7 +300,7 @@ Shift+Tab move between the stops below; arrows move inside a grid, list or menu.
 | Side panel open | Ctrl+H / Ctrl+M | Panel over the grids; receipt visible |
 | Log open | Ctrl+L | Scrim + log; workbench inert until closed |
 | Shift menu open | Shift button / Ctrl+Shift+S | Menu under the button; Up/Down, Enter, Esc |
-| Options open | Shift menu → "Options" | Minimal options panel (IP-21) |
+| Options | Shift menu → "Options" | Leaves the workbench: the shift screen opens with the minimal options panel (IP-21) open (IP-22; `shift-flow.md`); the draft is kept |
 | `ui_scale` ≥ 1.5 | Setting (VS; at MVP only via `settings.json`) | Grids scroll horizontally under frozen header + gutter; tab cluster variant; bubble pages sooner |
 | Chapter 2+ | Chapter | Back Room tab present; "Back Room — practice data" label while active (Alpha) |
 
@@ -331,7 +340,7 @@ request's first Submit, or clock-out = Later); then it is removed in place.
 | Grid | Move cell / scroll | Arrows, PgUp/PgDn, Home/End, wheel | Focus ring on cell | — |
 | Coach mark | Dismiss | "Got it" / Esc with mark focused | Mark removed | `mark_dismissed`; Done on target action → `mark_done` |
 | Panes | Cycle | F6 / Shift+F6 | Pane focus bar | Focus moves (IP-02) |
-| Leave it for Kenji | Skip request | Click / Enter | Kenji's accept line | `choice_made` → Progression; `request_skip`; next request or clock-out |
+| Leave it for Kenji | Skip request | Click / Enter | Kenji's accept line | Same outcome as the bubble's "Leave it for Kenji" choice: Progression accepts the skip → `skip_accepted`; `request_skip`; next request or clock-out. The call path from this receipt button is not named in ADR-0010 (the bubble path is Dialogue's `choice_made`) — Open Question 9 |
 | Leave challenge | Exit dare | Click / Enter | — | Main request (CC rule 6a) |
 | Playtest F9 | Help marker | F9 (facilitator) | One-line note field | See F9 below |
 
@@ -339,9 +348,10 @@ request's first Submit, or clock-out = Later); then it is removed in place.
 and keycode, never `_input` or `event.device`. F9 records `help_given` at once
 and opens the note field **only when no embedded subwindow is open** (with a
 dialog open it records the marker without the field). F9 is ignored while the
-field is open. Enter saves `help_note`; Esc or 5 s idle closes without a note;
-either way focus returns to the editor (deferred). Esc here is not "leave
-editor". The 5 s idle close is facilitator-only, not player-timed input
+field is open. Enter, Esc or 5 s without a key closes the field; on any close a
+non-empty note is written as a separate `help_note {note}` event and an empty
+note writes nothing (`playtest-log.md` rule 7, ADR-0004 §4); focus returns to
+the editor (deferred). Esc here is not "leave editor". The 5 s idle close is facilitator-only, not player-timed input
 (accessibility requirements, Input timing).
 
 ---
@@ -411,7 +421,13 @@ Nothing loops or blinks; the caret is steady. No transition delays input.
 - [x] No hold, no rapid input, no player-timed input (F9's 5 s idle is facilitator-only).
 - [x] Chord labels shown on controls and update with remapping (VS).
 - [ ] IME composition committed before Run — verify (workbench OQ4, ADR-0008).
-- [ ] `CodeEdit` does not swallow Ctrl+Enter / Ctrl+Shift+S / F6 — verify (IP library OQ1).
+- [ ] `CodeEdit` does not swallow the workbench chords — **probed 2026-10-17** on
+      Godot 4.7.2 (`prototypes/codeedit-shortcut-probe-2026-10-17/`): Ctrl+Shift+S,
+      F6, Ctrl+H, Ctrl+L and Esc reach the shortcut layer; **Ctrl+Enter
+      (`ui_text_newline_blank`), Ctrl+Shift+Enter (`ui_text_newline_above`) and
+      Ctrl+M (`ui_focus_mode`) are consumed by a focused `CodeEdit`** and never
+      reach `_shortcut_input` — ADR-0008 must take them first (`_input` or by
+      removing those events from the default actions). IME part still open.
 - [x] Gamepad / touch: not supported (accessibility requirements, Known Intentional Limitations).
 
 ---
@@ -474,6 +490,11 @@ Tier: Standard + reduced motion + full keyboard (`design/accessibility-requireme
 - **UX-QW-16 [Integration]** First Submit of the game (onboarding off) that FAILs: the FAIL reaction shows first; after its hold Tanaka's explainer shows; both are in the log.
 - **UX-QW-17 [Perf]** On the target PC, Run result, marks and tally note appear within 200 ms of Ctrl+Enter at p95 over 100 Runs on 1-5 (TIMEOUT exempt).
 - **UX-QW-18 [UI]** Greyscale and protan / deutan / tritan captures of PASS, FAIL, error strip, 1-5 row marks, tab states and the live check: every state identifiable by glyph + word.
+- **UX-QW-19 [UI]** On 1-5, Run a query, Submit it to a FAIL, open side request S-1, then return to 1-5: the draft, the marked result and the FAIL note are shown exactly as before.
+- **UX-QW-20 [UI]** With a stub reference returning `CONTENT_ERROR`, the Target grid reads "Target unavailable — content error" with no SQLite text, no marks and no tally note; Run and Submit stay enabled.
+- **UX-QW-21 [UI]** Press Submit and type one character before the verdict arrives: the verdict shows with the tag "for the previous text"; the next keystroke removes both.
+- **UX-QW-22 [UI]** After a FAIL on 1-5's `… price < 200`, press Run without editing: the FAIL note stays and the tally note "≈ Looks right today (not checked)" appears beside it on the receipt.
+- **UX-QW-23 [Integration]** Playtest build: F9, type "pointed at Run", press Esc: `help_given` then `help_note {note: "pointed at Run"}` are written; F9 then 5 s idle with no text writes `help_given` only; focus is back in the editor both times.
 
 ---
 
@@ -485,10 +506,11 @@ Tier: Standard + reduced motion + full keyboard (`design/accessibility-requireme
 | 2 | Do zero-SQL players need a data view after all (workbench OQ7, decided "no")? | ux-designer | Zero-SQL playtest |
 | 3 | Tab cluster at ≥ 1.5: do the two-line tabs fit 120 px at 2.0, and does moving Log / Back Room into the Shift menu read well? Verify by capture | ux-designer + art-director | First strip/workbench build |
 | 4 | Feedback receipt height at 2.0 with a long FAIL statement — enough with Target at 2 rows? | ux-designer | Capture at 2.0 |
-| 5 | Shift screen, payslip and chapter list specs (`shift-flow.md`) must keep the Shift menu definition identical (IP-22) | ux-designer | `shift-flow.md` review |
-| 6 | Boot failure screen (no playable content): Quit only, or a retry? Owner GDD (Game Shell is VS) | ux-designer + producer | Before the boot story |
-| 7 | "Order line" (workbench UI Req 3) has no defining rule in the GDDs; provisional text "! Same rows, different order". Confirm with the workbench / grader owner before any ordered puzzle ships (none in Chapter 1) | game-designer | Before Chapter 2 content |
-| 8 | Ctrl+Shift+S for the Shift menu: confirm `CodeEdit` and the OS do not claim it (IP library OQ1) | ui-programmer | ADR-0008 probe |
+| 5 | ~~Shift menu identical in `shift-flow.md`~~ — **Resolved 2026-10-17:** both specs point at IP-22; *Options* opens the shift screen with the panel in both | — | — |
+| 6 | ~~Boot failure: Quit only or retry?~~ — **Resolved 2026-10-17 (developer):** Quit only (bundled content; a retry gives the same result) | — | — |
+| 7 | ~~Order line has no GDD rule~~ — **Resolved 2026-10-17:** workbench Edge Cases defines it ("Rows match; order differs", tally note hidden); the spec uses that text with `!` | — | — |
+| 8 | ~~Ctrl+Shift+S vs `CodeEdit`~~ — **Resolved 2026-10-17 (probe):** not claimed by `CodeEdit` or the default InputMap; Ctrl+Enter / Ctrl+Shift+Enter / Ctrl+M are (Input checklist) → ADR-0008. OS claim not seen on Linux; recheck on Windows (session 11) | ui-programmer | ADR-0008 |
+| 9 | The receipt's "↷ Leave it for Kenji" has no named call path in ADR-0010 (the bubble path is `choice_made`); name it in the ADR-0010 catalogue (e.g. Progression `accept_skip(puzzle_id)` called by the view) | technical-director | Before the Progression / Workbench stories |
 
 **Decisions recorded in this revision (developer decision 2026-10-16):** S1 —
 SUBMIT_ERROR / Run error strip directly under the editor in Z2, editor shrinks;
@@ -497,6 +519,12 @@ menu (Shift screen, Chapter list, Options, + Log at ≥ 1.5), Ctrl+Shift+S,
 disabled in challenge mode with "Leave the dare first". **Claude decisions:**
 grid = one Tab stop with an internal cell cursor (IP OQ3); no editor chord for
 bubble paging (IP OQ2); "No hints for dares." in the Hint tab's slot; Back Room
-joins the Shift menu when the bubble would go under 360 px. **Note:** ADR-0004
+joins the Shift menu when the bubble would go under 360 px.
+**Revision 2026-10-17 (10b `/ux-review`):** developer decisions — boot failure
+Quit only; a Run of unchanged text keeps the verdict and adds the tally note
+(GDD rule 12). Claude fixes — *Options* via the shift screen (IP-22), F9 note on
+any close (ADR-0004 §4), states Request shown again / Target unavailable /
+Verdict for previous text / Zero rows / Over display cap, order line from the
+GDD, Submit-exclusive recorded as a Claude decision, UX-QW-19…23. **Note:** ADR-0004
 §4 lists "Restart confirmation" as an embedded dialog, while IP-18 keeps it
 inline; IP-18 stays inline — the F9 rule works either way.

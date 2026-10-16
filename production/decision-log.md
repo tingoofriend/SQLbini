@@ -116,3 +116,15 @@ gate reports and GDD review logs; earlier entries are reconstructed from those.
 | 2026-10-16 | Shift button disabled in challenge mode with a visible reason ("Leave the dare first") (rec.) | UX specs (shift-flow + workbench) | User | `/ux-review` shift-flow S5 |
 | 2026-10-16 | Shift-flow spec follows the GDD for cross-shift challenge clears (separate payslip line), side requests + dare start on the chapter list, all-unavailable payslip note; "unavailable" mark = word only, no en dash (rec. for OQ2) | Spec catches up with Approved GDD rules; GDD Visual wording "– unavailable" → recommendation | Claude | `/ux-review` shift-flow |
 | 2026-10-16 | Restart is started from the chapter-list view (Progression rule 12a), not the Workbench view — ADR-0010 §6 / architecture.md wording corrected | Wording only | Claude | shift-flow revision |
+
+## UX re-review (session 10b)
+
+| Date | Decision | Impact | By | Source |
+|---|---|---|---|---|
+| 2026-10-17 | `/ux-review` ×3: query-workbench NEEDS REVISION (3 blocking: Options vs IP-22, F9 note on close vs ADR-0004 §4, missing GDD states), shift-flow NEEDS REVISION (1: cleared dare replay), interaction-patterns NEEDS REVISION (3: no Animation/Sound tables, IP-13 reveal keys, IP-20 replay); all session-10 blockers resolved | Specs stay In Design | Claude (review) | this session |
+| 2026-10-17 | Fix the blockers now; light check of the changed parts as session 11 step 0, then Approved (rec.) | ≈ 20–30 min in session 11; no extra session | User | — |
+| 2026-10-17 | Boot failure screen: Quit only, no retry (rec.) | No extra work | User | `query-workbench.md` States |
+| 2026-10-17 | A Run of unchanged text keeps the FAIL note / stamp and adds the tally note beside it — follows GDD rule 12 (rec.) | IP-08 wording; no GDD change | User | `query-workbench.md`, IP-08 |
+| 2026-10-17 | Keep the CodeEdit shortcut probe in `prototypes/codeedit-shortcut-probe-2026-10-17/` (rec.) | Evidence for ADR-0008 | User | probe README |
+| 2026-10-17 | Spec fixes: Options via the shift screen; F9 note written on any close; states Request shown again / Target unavailable / Verdict for previous text / Zero rows / Over display cap; order line = GDD text "! Rows match; order differs"; Submit-exclusive kept; cleared dare replayable from the chapter list; withheld side requests have no row; Animation + Sound Standards tables; IP-13 reveal = same inputs as paging; no tooltips | UX specs only | Claude | the three specs |
+| 2026-10-17 | Probe finding: a focused CodeEdit consumes Ctrl+Enter, Ctrl+Shift+Enter and Ctrl+M before `_shortcut_input`; Ctrl+Shift+S is free | ADR-0008 must take these chords first; no game change | Claude (probe) | probe README |
